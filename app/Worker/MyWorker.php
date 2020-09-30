@@ -7,7 +7,7 @@ use App\Redis\Cache;
 use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
 use Workerman\Worker;
-use function Amp\call as async;
+use function Amp\asyncCall;
 
 class MyWorker
 {
@@ -50,7 +50,7 @@ class MyWorker
     }
 
     private function response($connection) {
-        async(function() use ($connection) {
+        asyncCall(function() use ($connection) {
             $ret = yield $this->cache->get("lastvisit", "None");
 
             $connection->send("get: ".print_r($ret, true));

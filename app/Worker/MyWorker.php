@@ -19,10 +19,18 @@ class MyWorker
     {
         $worker = new Worker("http://0.0.0.0:2345");
         $worker->count = 1;
+        $worker->onWorkerStart = [$this, 'onWorkerStart'];
         $worker->onMessage = [$this, 'onMessage'];
         $this->worker = $worker;
 
         $this->cache = new Cache();
+    }
+
+    public function onWorkerStart() {
+    	//必须使用 Loop::run 启动 Amp 的全局事件轮询器才能使用它的异步和协程
+    	Loop::run(function() {
+    		echo "Amp Loop running..\n";
+	    });
     }
 
     /**
@@ -38,16 +46,10 @@ class MyWorker
             return;
         }
 
-        echo "start onMessage\n";
-
-        Loop::run(function() use ($connection) {
-            $this->controller($connection);
-        });
-
-        echo "end onMessage\n";
+        $this->response($connection);
     }
 
-    public function controller($connection) {
+    private function response($connection) {
         async(function() use ($connection) {
             $ret = yield $this->cache->get("lastvisit", "None");
 

@@ -31,18 +31,10 @@ class MyWorker
     }
 
     public function onWorkerStart() {
-    	//必须使用 Loop::run 启动 Amp 的全局事件轮询器才能使用它的异步和协程
-    	Loop::run(function() {
-    		echo "Amp Loop running..\n";
-
-    		echo "Initialize mysql connection pool..\n";
-
-            $config = Mysql\ConnectionConfig::fromString(
-                "host=192.168.4.2;user=root;password=0000;db=test"
-            );
-
-            $this->dbPool = Mysql\pool($config);
-	    });
+        $config = Mysql\ConnectionConfig::fromString(
+            "host=192.168.4.2;user=root;password=0000;db=test"
+        );
+        $this->dbPool = Mysql\pool($config);
     }
 
     /**

@@ -1,10 +1,10 @@
 <?php
 use Workerman\Worker;
-use App\Worker\MyWorker;
+use App\BootstrapWorker;
 
 require __DIR__.'/vendor/autoload.php';
 
-new MyWorker();
+new BootstrapWorker();
 
 // 运行worker
 Worker::runAll();

@@ -3,6 +3,7 @@
 namespace App\Worker;
 
 use Amp\Loop;
+use App\Context;
 use App\Redis\Cache;
 use Amp\Mysql;
 use Workerman\Connection\TcpConnection;
@@ -50,19 +51,21 @@ class MyWorker
             return;
         }
 
-        Loop::run(function() use ($path, $connection) {
+        $context = new Context();
+
+        Loop::run(function() use ($path, $connection, $context) {
             switch ($path) {
                 case "/":
-                    $this->index($connection);
+                    $this->index($connection, $context);
                     break;
                 case "/db":
-                    $this->db($connection);
+                    $this->db($connection, $context);
                     break;
             }
         });
     }
 
-    private function index($connection) {
+    private function index($connection, $context) {
         asyncCall(function() use ($connection) {
             $ret = yield $this->cache->get("lastvisit", "None");
 
@@ -72,7 +75,7 @@ class MyWorker
         });
     }
 
-    private function db($connection) {
+    private function db($connection, $context) {
         asyncCall(function() use ($connection) {
             $result = yield $this->dbPool->query("SELECT * FROM soul ORDER BY RAND() LIMIT 1");
 

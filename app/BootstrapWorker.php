@@ -86,6 +86,7 @@ class BootstrapWorker
                     goto notfound;
                 }
 
+                //实例化控制器类不在协程中，所以不能使用协程
                 $controllerInstance = new $controller;
 
                 if ($controllerInstance instanceof Controller == false) {
@@ -98,6 +99,7 @@ class BootstrapWorker
                 }
 
                 Loop::run(function() use ($controllerInstance, $action, $context, $connection) {
+                    //init() 在此处处理协程的返回状态，所以 init 中可以使用协程，需要在控制器初始化时使用协程请在 init 中使用
                     $initReturn = $controllerInstance->init();
 
                     if ($initReturn instanceof Promise || $initReturn instanceof \Generator) {

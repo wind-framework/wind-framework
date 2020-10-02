@@ -58,13 +58,6 @@ class BootstrapWorker
      */
     public function onMessage($connection, $request)
     {
-        $path = $request->path();
-
-        if ($path == "/favicon.ico") {
-            $connection->send("");
-            return;
-        }
-
         $routeInfo = $this->dispatcher->dispatch($request->method(), $request->uri());
 
         switch ($routeInfo[0]) {

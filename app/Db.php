@@ -44,7 +44,6 @@ class Db
 
     }
 
-
     /**
      * @param string $sql
      * @param array $params
@@ -55,6 +54,30 @@ class Db
     public static function execute(string $sql, array $params = []): Promise
     {
         return self::$pool->execute($sql, $params);
+    }
+
+    /**
+     * 查询一条数据出来
+     *
+     * @param string $sql
+     * @param array $params
+     * @return Promise<\Amp\Mysql\ResultSet>
+     */
+    public static function fetchOne($sql, array $params=[]): Promise {
+        return call(function() use ($sql, $params) {
+            $result = yield self::query($sql, $params);
+
+            if (yield $result->advance()) {
+                $row = $result->getCurrent();
+                //必须持续调用 nextResultSet 或 advance 直到无数据为止
+                //防止资源未释放时后面的查询建立新连接的问题
+                //如果查询出的数据行数大于一条，则仍然可能出现此问题
+                yield $result->nextResultSet();
+                return $row;
+            } else {
+                return null;
+            }
+        });
     }
 
 }

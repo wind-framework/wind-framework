@@ -10,10 +10,9 @@ class DbController extends Controller
 
     public function soul()
     {
-        $result = yield Db::query("SELECT * FROM soul ORDER BY RAND() LIMIT 1");
+        $row = yield Db::fetchOne("SELECT * FROM soul ORDER BY RAND() LIMIT 1");
 
-        if (yield $result->advance()) {
-            $row = $result->getCurrent();
+        if ($row) {
             Db::execute("UPDATE soul SET hits=hits+1 WHERE `id`=?", [$row['id']]);
             return <<<TMPL
 <!DOCTYPE html>

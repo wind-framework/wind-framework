@@ -2,7 +2,7 @@
 /**
  * @url https://github.com/CismonX/Workerman-Amp
  */
-namespace App;
+namespace Framework\Base;
 
 use Amp\Loop;
 use Workerman\Events\EventInterface;

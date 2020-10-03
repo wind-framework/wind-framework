@@ -1,9 +1,10 @@
 <?php
 
-namespace App;
+namespace Framework\Base;
 
 use App\Redis\Cache;
 use FastRoute\Dispatcher;
+use Framework\Db\Db;
 use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
 use Workerman\Protocols\Http\Response;
@@ -24,6 +25,8 @@ class Bootstrap
 
     public function __construct()
     {
+        Worker::$eventLoopClass = AmpEvent::class;
+
         $worker = new Worker("http://0.0.0.0:2345");
         $worker->count = 1;
         $worker->onWorkerStart = [$this, 'onWorkerStart'];
@@ -36,7 +39,7 @@ class Bootstrap
     public function onWorkerStart() {
         //初始化路由
         echo "Initialize Router..\n";
-        $routes = require BASE_DIR.'/config/route.php';
+        $routes = require BASE_DIR . '/config/route.php';
         $this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $c) use ($routes) {
             foreach ($routes as $r) {
                 $c->addRoute($r[0], $r[1], $r[2]);

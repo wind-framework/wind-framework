@@ -3,8 +3,8 @@
 namespace App\Controller;
 
 use Amp\Promise;
-use App\Controller;
-use App\Db;
+use Framework\Base\Controller;
+use Framework\Db\Db;
 
 class DbController extends Controller
 {

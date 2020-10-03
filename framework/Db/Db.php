@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace Framework\Db;
 
 use Amp\Mysql\ConnectionConfig;
 use Amp\Promise;

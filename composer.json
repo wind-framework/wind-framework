@@ -8,8 +8,11 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "app/"
+            "App\\": "app/",
+            "Framework\\": "framework/"
         },
-        "files": ["app/function.php"]
+        "files": [
+          "framework/Base/function.php"
+        ]
     }
 }

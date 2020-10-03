@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Controller;
+use Framework\Base\Controller;
 use function Amp\delay;
 
 class IndexController extends Controller

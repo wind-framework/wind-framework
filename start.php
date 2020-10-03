@@ -1,12 +1,14 @@
 <?php
+
+use App\AmpEvent;
+use App\Bootstrap;
 use Workerman\Worker;
-use App\BootstrapWorker;
 
 require __DIR__.'/vendor/autoload.php';
 
-Worker::$eventLoopClass = \App\AmpEvent::class;
+Worker::$eventLoopClass = AmpEvent::class;
 
-new BootstrapWorker();
+new Bootstrap();
 
 Worker::$pidFile = __DIR__.'/workerman-amphp.pid';
 Worker::runAll();

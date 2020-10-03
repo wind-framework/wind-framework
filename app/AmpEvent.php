@@ -4,8 +4,8 @@
  */
 namespace App;
 
+use Amp\Loop;
 use Workerman\Events\EventInterface;
-use Amp\ {function asyncCall, Loop};
 use Workerman\Worker;
 
 class AmpEvent implements EventInterface {
@@ -43,7 +43,7 @@ class AmpEvent implements EventInterface {
                 $fd_key = intval($fd);
                 $event = Loop::onReadable($fd, function ($id, $socket) use ($func) {
                     //In Workerman the first parameter should be socket stream.
-                    asyncCall($func, $socket);
+                    call_user_func($func, $socket);
                 });
                 $this->_allEvents[$fd_key][$flag] = $event;
                 return true;
@@ -51,7 +51,7 @@ class AmpEvent implements EventInterface {
                 $fd_key = intval($fd);
                 $event = Loop::onWritable($fd, function ($id, $socket) use ($func) {
                     //In Workerman the first parameter should be socket stream.
-                    asyncCall($func, $socket);
+                    call_user_func($func, $socket);
                 });
                 $this->_allEvents[$fd_key][$flag] = $event;
                 return true;
@@ -59,7 +59,7 @@ class AmpEvent implements EventInterface {
                 $fd_key = intval($fd);
                 $event = Loop::onSignal($fd, function ($id, $signal) use ($func) {
                     //In Workerman the first parameter should be signal.
-                    asyncCall($func, $signal);
+                    call_user_func($func, $signal);
                 });
                 $this->_eventSignal[$fd_key] = $event;
                 return true;
@@ -74,7 +74,7 @@ class AmpEvent implements EventInterface {
                         unset($this->_eventTimer[$timer_id]);
                     }
                     try {
-                        asyncCall($param[0], ...$param[1]);
+                        call_user_func_array($param[0], $param[1]);
                     } catch (\Exception $e) {
                         Worker::log($e);
                         exit(250);

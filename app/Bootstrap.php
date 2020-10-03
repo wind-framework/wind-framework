@@ -8,9 +8,10 @@ use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
 use Workerman\Protocols\Http\Response;
 use Workerman\Worker;
+use function Amp\asyncCall;
 use function Amp\call;
 
-class BootstrapWorker
+class Bootstrap
 {
 
     private $worker;
@@ -45,7 +46,7 @@ class BootstrapWorker
             $r->addRoute("GET", "/soul/{id:\d+}", "App\Controller\DbController::soulFind");
             $r->addRoute("GET", "/db/concurrent", "App\Controller\DbController::concurrent");
             $r->addRoute("GET", "/sleep", "App\Controller\IndexController::sleep");
-            $r->addRoute("GET", "/loop-trigger", "App\Controller\IndexController::loopTrigger");
+            $r->addRoute("GET", "/exception", "App\Controller\IndexController::exception");
         });
 
         //初始化数据库
@@ -92,14 +93,15 @@ class BootstrapWorker
                 }
 
                 //init() 在此处处理协程的返回状态，所以 init 中可以使用协程，需要在控制器初始化时使用协程请在 init 中使用
-                call([$controllerInstance, 'init'])->onResolve(function() use ($controllerInstance, $action, $context, $connection) {
-                    call([$controllerInstance, $action], $context)->onResolve(function($err, $value) use ($connection) {
-                        if ($err) {
-                            $connection->send(new Response(500, [], $err));
-                        } else {
-                            $connection->send($value);
-                        }
-                    });
+                asyncCall(function() use ($controllerInstance, $action, $context, $connection) {
+                    try {
+                        yield call([$controllerInstance, 'init']);
+                        $response = yield call([$controllerInstance, $action], $context);
+                        $connection->send($response);
+                    } catch (\Throwable $e) {
+                        $connection->send(new Response(500, [], $e->getMessage()));
+                        throw $e;
+                    }
                 });
                 break;
             case Dispatcher::NOT_FOUND:

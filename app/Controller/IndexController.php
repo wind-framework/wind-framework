@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use Amp\Loop;
 use App\Controller;
 use function Amp\delay;
 
@@ -28,9 +27,9 @@ class IndexController extends Controller
         return 'Sleep';
     }
 
-    public function loopTrigger()
+    public function exception()
     {
-        Loop::run();
+        throw new \Exception('Test something wrong!');
     }
 
 }

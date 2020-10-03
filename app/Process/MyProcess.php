@@ -9,7 +9,6 @@ class MyProcess extends \Framework\Process\Process
 {
 
     public $name = 'MyProcess';
-    public $count = 2;
 
     public function run()
     {

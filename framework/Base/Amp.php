@@ -8,7 +8,7 @@ use Amp\Loop;
 use Workerman\Events\EventInterface;
 use Workerman\Worker;
 
-class AmpEvent implements EventInterface {
+class Amp implements EventInterface {
 
     /**
      * Socket onReadable/onWritable events.

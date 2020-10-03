@@ -25,7 +25,7 @@ class Application
 
     public function __construct()
     {
-        Worker::$eventLoopClass = AmpEvent::class;
+        Worker::$eventLoopClass = Amp::class;
 
         $worker = new Worker("http://0.0.0.0:2345");
         $worker->count = 1;

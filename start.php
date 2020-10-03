@@ -4,7 +4,9 @@ use App\BootstrapWorker;
 
 require __DIR__.'/vendor/autoload.php';
 
+Worker::$eventLoopClass = \App\AmpEvent::class;
+
 new BootstrapWorker();
 
-// 运行worker
+Worker::$pidFile = __DIR__.'/workerman-amphp.pid';
 Worker::runAll();

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use Amp\Promise;
 use App\Controller;
 use App\Db;
 
@@ -52,6 +53,16 @@ TMPL;
         } else {
             return "无该丧。";
         }
+    }
+
+    public function concurrent()
+    {
+        $a = Db::execute("SELECT SLEEP(3)");
+        $b = Db::execute("SELECT SLEEP(3)");
+
+        yield Promise\all([$a, $b]);
+
+        return 'concurrent';
     }
 
 }

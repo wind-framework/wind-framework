@@ -1,15 +1,14 @@
 <?php
 
-use Framework\Base\Bootstrap;
-use Framework\Process\Manage as ProcessManage;
+use Framework\Base\Application;
 use Workerman\Worker;
 
 require __DIR__.'/vendor/autoload.php';
 
 define('BASE_DIR', __DIR__);
 
-new Bootstrap();
-new ProcessManage();
+$application = new Application();
+$application->addComponent(\Framework\Process\Component::class);
 
 Worker::$pidFile = __DIR__.'/workerman-amphp.pid';
 Worker::runAll();

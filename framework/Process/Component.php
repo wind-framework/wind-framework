@@ -5,10 +5,10 @@ namespace Framework\Process;
 use Amp\Loop;
 use Workerman\Worker;
 
-class Manage
+class Component implements \Framework\Base\Component
 {
 
-    public function __construct()
+    public static function start()
     {
         $config = BASE_DIR.'/config/process.php';
         if (!is_file($config)) return;

@@ -94,8 +94,7 @@ class Bootstrap
                         $response = yield call([$controllerInstance, $action], $context);
                         $connection->send($response);
                     } catch (\Throwable $e) {
-                        $connection->send(new Response(500, [], $e->getMessage()));
-                        throw $e;
+                        $connection->send(new Response(500, [], $e->getMessage().'<br><pre>'.$e->getTraceAsString().'</pre>'));
                     }
                 });
                 break;

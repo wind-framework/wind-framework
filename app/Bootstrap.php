@@ -35,21 +35,16 @@ class Bootstrap
 
     public function onWorkerStart() {
         //初始化路由
-        $this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $r) {
-            // {id} must be a number (\d+)
-            $r->addRoute('GET', '/user/{id:\d+}', 'get_user_handler');
-            // The /{title} suffix is optional
-            $r->addRoute('GET', '/articles/{id:\d+}[/{title}]', 'get_article_handler');
-            $r->addRoute("GET", "/", "App\Controller\IndexController::index");
-            $r->addRoute("GET", "/cache", "App\Controller\IndexController::cache");
-            $r->addRoute("GET", "/soul", "App\Controller\DbController::soul");
-            $r->addRoute("GET", "/soul/{id:\d+}", "App\Controller\DbController::soulFind");
-            $r->addRoute("GET", "/db/concurrent", "App\Controller\DbController::concurrent");
-            $r->addRoute("GET", "/sleep", "App\Controller\IndexController::sleep");
-            $r->addRoute("GET", "/exception", "App\Controller\IndexController::exception");
+        echo "Initialize Router..\n";
+        $routes = require BASE_DIR.'/config/route.php';
+        $this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $c) use ($routes) {
+            foreach ($routes as $r) {
+                $c->addRoute($r[0], $r[1], $r[2]);
+            }
         });
 
         //初始化数据库
+        echo "Initialize Database..\n";
         new Db();
     }
 

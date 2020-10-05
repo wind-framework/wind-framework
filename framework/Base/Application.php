@@ -28,7 +28,7 @@ class Application
         Worker::$eventLoopClass = Amp::class;
 
         $worker = new Worker("http://0.0.0.0:2345");
-        $worker->count = 1;
+        $worker->count = 2;
 
         $worker->onWorkerStart = function() {
             //初始化路由

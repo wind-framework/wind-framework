@@ -10,5 +10,7 @@ return [
     ["GET", "/soul/{id:\d+}", "App\Controller\DbController::soulFind"],
     ["GET", "/db/concurrent", "App\Controller\DbController::concurrent"],
     ["GET", "/sleep", "App\Controller\IndexController::sleep"],
+    ["GET", "/block", "App\Controller\IndexController::block"],
     ["GET", "/exception", "App\Controller\IndexController::exception"],
+    ['GET', '/gc-status', "App\Controller\IndexController::gcStatus"],
 ];

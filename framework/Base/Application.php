@@ -28,6 +28,7 @@ class Application
         Worker::$eventLoopClass = Amp::class;
 
         $worker = new Worker("http://0.0.0.0:2345");
+        $worker->reusePort = false;
         $worker->count = 2;
 
         $worker->onWorkerStart = function() {

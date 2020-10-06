@@ -8,6 +8,7 @@ Worker::$pidFile = __DIR__.'/runtime/test.pid';
 Worker::$logFile = __DIR__.'/runtime/test.log';
 
 $worker = new Worker('http://0.0.0.0:2346');
+$worker->reusePort = false;
 $worker->count = 10;
 $worker->onMessage = function($connection, $request) {
     sleep(5);

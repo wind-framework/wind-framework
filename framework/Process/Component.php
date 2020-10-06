@@ -30,4 +30,7 @@ class Component implements \Framework\Base\Component
         }
     }
 
+    public static function start() {
+    }
+
 }

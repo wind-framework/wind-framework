@@ -17,5 +17,6 @@ if (!is_dir(RUNTIME_DIR)) {
 
 $application = new Application();
 $application->addComponent(\Framework\Process\Component::class);
+$application->addComponent(\Framework\Collector\Component::class);
 
 Worker::runAll();

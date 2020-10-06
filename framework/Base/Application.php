@@ -16,12 +16,21 @@ class Application
 {
 
     private $worker;
-    private $cache;
+    private $components = [];
 
     /**
      * @var Dispatcher
      */
     private $dispatcher;
+
+    private $cache;
+
+    private static $instance;
+
+    public static function getInstance()
+    {
+        return self::$instance;
+    }
 
     public function __construct()
     {
@@ -44,6 +53,11 @@ class Application
             //初始化数据库
             echo "Initialize Database..\n";
             new Db();
+
+            //初始化系统组件
+            foreach ($this->components as $component) {
+                call_user_func([$component, 'start']);
+            }
         };
 
         /**
@@ -109,6 +123,17 @@ class Application
         $this->worker = $worker;
 
         $this->cache = new Cache();
+
+        self::$instance = $this;
+    }
+
+    public function getWorkerInfo()
+    {
+        return [
+            'id' => $this->worker->id,
+            'name' => $this->worker->name,
+            'count' => $this->worker->count
+        ];
     }
 
     /**
@@ -126,6 +151,8 @@ class Application
         }
 
         call_user_func([$component, 'provide']);
+
+        $this->components[] = $component;
     }
 
 }

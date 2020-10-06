@@ -125,7 +125,7 @@ class Application
             throw new \Exception("Component $component is not a implement of ".Component::class.".");
         }
 
-        call_user_func([$component, 'start']);
+        call_user_func([$component, 'provide']);
     }
 
 }

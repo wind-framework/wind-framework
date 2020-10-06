@@ -8,7 +8,7 @@ use Workerman\Worker;
 class Component implements \Framework\Base\Component
 {
 
-    public static function start()
+    public static function provide()
     {
         $config = BASE_DIR.'/config/process.php';
         if (!is_file($config)) return;

@@ -6,6 +6,7 @@ use Amp\Deferred;
 use Channel\Client;
 use Framework\Base\Application;
 use Workerman\Timer;
+use Workerman\Worker;
 use function Amp\call;
 
 abstract class Collector
@@ -31,7 +32,7 @@ abstract class Collector
             $countDown = $workerInfo['count'];
             $event = $collector.'@'.$id;
 
-            echo "Publish ".self::class." -> $event\n";
+            Worker::log("[Collector] Worker {$workerInfo['id']} request $event");
             Client::publish(self::class, $event);
 
             $defer = new Deferred();
@@ -47,7 +48,7 @@ abstract class Collector
 
             //监听回应消息
             Client::on($event, function($result) use (&$countDown, &$response, $id, $defer, $event, $workerInfo, $timerId) {
-                echo "Worker {$workerInfo['id']} received $event response\n";
+                Worker::log("[Collector] Worker {$workerInfo['id']} received $event response");
 
                 $response[] = $result;
                 $countDown--;
@@ -56,7 +57,7 @@ abstract class Collector
                     Timer::del($timerId);
                     Client::unsubscribe($event);
                     $defer->resolve($response);
-                    echo "========Finished========\n";
+                    Worker::log("[Collector] ===== $event Finished =====");
                 }
             });
 

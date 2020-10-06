@@ -5,6 +5,8 @@ namespace Framework\Collector;
 use Channel\Client;
 use Channel\Server;
 use Framework\Base\Application;
+use Workerman\Timer;
+use Workerman\Worker;
 
 class Component implements \Framework\Base\Component
 {
@@ -39,24 +41,27 @@ class Component implements \Framework\Base\Component
             return;
         }
 
-        Client::connect(self::$ip, self::$port);
+        //延迟启动，减少启动时 Server 未启动而重连的现象
+        Timer::add(1, function() {
+            Client::connect(self::$ip, self::$port);
 
-        //收到请求后运行，并通过事件反馈请求
-        Client::on(Collector::class, function($event) {
-            list($collector) = explode('@', $event);
-            $workerInfo = Application::getInstance()->getWorkerInfo();
+            //收到请求后运行，并通过事件反馈请求
+            Client::on(Collector::class, function($event) {
+                list($collector) = explode('@', $event);
+                $workerInfo = Application::getInstance()->getWorkerInfo();
 
-            echo "Worker {$workerInfo['id']} received $event request\n";
+                Worker::log("[Collector] Worker {$workerInfo['id']} received $event request");
 
-            /* @var $res Collector */
-            $res = new $collector;
-            $res->collect();
-            $res->pid = posix_getpid();
-            $res->workerId = $workerInfo['id'];
-            $res->workerName = $workerInfo['name'];
+                /* @var $res Collector */
+                $res = new $collector;
+                $res->collect();
+                $res->pid = posix_getpid();
+                $res->workerId = $workerInfo['id'];
+                $res->workerName = $workerInfo['name'];
 
-            Client::publish($event, $res);
-        });
+                Client::publish($event, $res);
+            });
+        }, [], false);
     }
 
 }

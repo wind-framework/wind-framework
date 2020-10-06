@@ -6,7 +6,9 @@ interface Component
 {
 
     /**
-     *  框架初始化时运行
+     * 框架初始化时运行
+     *
+     * 整个框架启动时每个组件只执行一次
      *
      * @return void
      */
@@ -14,6 +16,9 @@ interface Component
 
     /**
      * 框架 onWorkerStart 时运行
+     *
+     * 每个 Worker 启动后执行一次
+     *
      * @return void
      */
     public static function start();

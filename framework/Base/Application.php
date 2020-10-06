@@ -42,7 +42,6 @@ class Application
 
         $worker->onWorkerStart = function() {
             //初始化路由
-            echo "Initialize Router..\n";
             $routes = require BASE_DIR . '/config/route.php';
             $this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $c) use ($routes) {
                 foreach ($routes as $r) {
@@ -51,7 +50,6 @@ class Application
             });
 
             //初始化数据库
-            echo "Initialize Database..\n";
             new Db();
 
             //初始化系统组件

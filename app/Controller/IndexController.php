@@ -16,9 +16,9 @@ class IndexController extends Controller
         return 'Hello World';
     }
 
-    public function cache($context)
+    public function cache()
     {
-        $cache = $context->get('cache');
+        $cache = getApp()->cache;
         $ret = yield $cache->get("lastvisit", "None");
         yield $cache->set("lastvisit", ["last"=>date('Y-m-d H:i:s'), "timestamp"=>time()], 86400);
         return "get: ".print_r($ret, true);

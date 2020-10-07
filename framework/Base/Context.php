@@ -2,25 +2,32 @@
 
 namespace Framework\Base;
 
+use Workerman\Protocols\Http\Request;
+
+/**
+ * Class Context
+ * @package Framework\Base
+ *
+ * @property Request $request
+ * @property array $vars
+ */
 class Context
 {
 
-    private $content = [];
+    private $container = [];
 
-    /**
-     * @param string $id
-     * @return mixed|null
-     */
-    public function get($id) {
-        return $this->content[$id] ?? null;
+    public function __get($name)
+    {
+        if (isset($this->container[$name])) {
+            return $this->container[$name];
+        } else {
+            throw new \Exception("No found '$name' in Context container.");
+        }
     }
 
-    /**
-     * @param string $id
-     * @param mixed $value
-     */
-    public function set($id, $value) {
-        $this->content[$id] = $value;
+    public function __set($name, $value)
+    {
+        $this->container[$name] = $value;
     }
 
 }

@@ -15,8 +15,5 @@ if (!is_dir(RUNTIME_DIR)) {
     mkdir(RUNTIME_DIR, 0775);
 }
 
-$application = new Application();
-$application->addComponent(\Framework\Process\Component::class);
-$application->addComponent(\Framework\Collector\Component::class);
-
+Application::start();
 Worker::runAll();

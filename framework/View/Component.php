@@ -5,7 +5,7 @@ namespace Framework\View;
 class Component implements \Framework\Base\Component
 {
 
-    public static function provide()
+    public static function provide($app)
     {
         $viewDir = BASE_DIR.'/view';
         $cacheDir = RUNTIME_DIR.'/view';
@@ -13,7 +13,7 @@ class Component implements \Framework\Base\Component
         new Twig($viewDir, $cacheDir);
     }
 
-    public static function start()
+    public static function start($worker)
     {}
 
 }

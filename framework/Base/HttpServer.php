@@ -28,7 +28,10 @@ class HttpServer extends Worker
         $this->onMessage = [$this, 'onMessage'];
     }
 
-    public function onWorkerStart()
+    /**
+     * @param Worker $worker
+     */
+    public function onWorkerStart($worker)
     {
         $app = getApp();
 
@@ -43,7 +46,7 @@ class HttpServer extends Worker
         //初始化数据库
         new Db();
 
-        $app->startComponents();
+        $app->startComponents($worker);
 
         $app->cache = new Cache();
     }

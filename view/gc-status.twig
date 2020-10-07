@@ -17,9 +17,8 @@ tbody tr:nth-child(even) td {background-color:#F7F5F5;}
 <table style="width:100%;">
     <thead>
         <tr>
-            <th>WorkerID</th>
-            <th class="l">Worker名称</th>
             <th>PID</th>
+            <th class="l">Worker</th>
             <th>内存用量</th>
             <th>内存占用</th>
             <th>内存峰值</th>
@@ -33,9 +32,8 @@ tbody tr:nth-child(even) td {background-color:#F7F5F5;}
     <tbody>
     {% for item in info %}
     <tr>
-        <td>{{item.workerId}}</td>
-        <td class="l">{{item.workerName}}</td>
         <td>{{item.pid}}</td>
+        <td class="l">{{item.workerName}}[{{item.workerId}}]</td>
         <td>{{ item.memoryUsage }}</td>
         <td>{{ item.memoryUsageOccupy }}</td>
         <td>{{ item.memoryUsagePeak }}</td>

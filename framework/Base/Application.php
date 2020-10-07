@@ -14,7 +14,10 @@ use Workerman\Worker;
 class Application
 {
 
-    private $worker;
+    /**
+     * @var Worker[]
+     */
+    private $workers = [];
     private $components = [];
 
     /**
@@ -50,7 +53,7 @@ class Application
                     $worker = new HttpServer('http://'.$srv['listen']);
                     $worker->count = $srv['worker_num'];
                     $worker->reusePort = false;
-                    $this->worker = $worker;
+                    $this->addWorker($worker);
                     break;
             }
         }
@@ -63,21 +66,14 @@ class Application
         }
     }
 
-    //初始化系统组件
-    public function startComponents()
+    public function addWorker(Worker $worker)
     {
-        foreach ($this->components as $component) {
-            call_user_func([$component, 'start']);
-        }
+        $this->workers[] = $worker;
     }
 
-    public function getWorkerInfo()
+    public function getWorkers()
     {
-        return [
-            'id' => $this->worker->id,
-            'name' => $this->worker->name,
-            'count' => $this->worker->count
-        ];
+        return $this->workers;
     }
 
     /**
@@ -98,9 +94,23 @@ class Application
             throw new \Exception("Component $component is not a implement of ".Component::class.".");
         }
 
-        call_user_func([$component, 'provide']);
+        call_user_func([$component, 'provide'], $this);
 
         $this->components[] = $component;
+    }
+
+    /**
+     * 初始化系统组件
+     *
+     * 在需要挂载的 Worker 的 onWorkerStart 中执行
+     *
+     * @param Worker $worker
+     */
+    public function startComponents(Worker $worker)
+    {
+        foreach ($this->components as $component) {
+            call_user_func([$component, 'start'], $worker);
+        }
     }
 
 }

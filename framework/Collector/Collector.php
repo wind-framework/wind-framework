@@ -4,7 +4,6 @@ namespace Framework\Collector;
 
 use Amp\Deferred;
 use Channel\Client;
-use Framework\Base\Application;
 use Workerman\Timer;
 use Workerman\Worker;
 use function Amp\call;
@@ -18,6 +17,12 @@ abstract class Collector
 
     public abstract function collect();
 
+    /**
+     * 获取指定 Collector 类的结果
+     *
+     * @param string $collector
+     * @return \Amp\Promise<$collector[]>
+     */
     public static function get($collector)
     {
         return call(function() use ($collector) {
@@ -28,12 +33,15 @@ abstract class Collector
             }
 
             $id = uniqid();
-            $workerInfo = Application::getInstance()->getWorkerInfo();
-            $countDown = $workerInfo['count'];
-            $event = $collector.'@'.$id;
 
-            Worker::log("[Collector] Worker {$workerInfo['id']} request $event");
-            Client::publish(self::class, $event);
+            $workers = getApp()->getWorkers();
+            $countDown = 0;
+            foreach ($workers as $worker) {
+                $countDown += $worker->count;
+            }
+
+            $worker = Component::getCurrentWorker();
+            $event = $collector.'@'.$id;
 
             $defer = new Deferred();
             $response = [];
@@ -47,8 +55,8 @@ abstract class Collector
             }, [], false);
 
             //监听回应消息
-            Client::on($event, function($result) use (&$countDown, &$response, $id, $defer, $event, $workerInfo, $timerId) {
-                Worker::log("[Collector] Worker {$workerInfo['id']} received $event response");
+            Client::on($event, function($result) use (&$countDown, &$response, $id, $defer, $event, $worker, $timerId) {
+                Worker::log("[Collector] Worker {$worker->id} received $event response");
 
                 $response[] = $result;
                 $countDown--;
@@ -60,6 +68,9 @@ abstract class Collector
                     Worker::log("[Collector] ===== $event Finished =====");
                 }
             });
+
+            Worker::log("[Collector] Worker {$worker->id} request $event");
+            Client::publish(self::class, $event);
 
             return $defer->promise();
         });

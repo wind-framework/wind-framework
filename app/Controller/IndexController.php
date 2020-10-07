@@ -48,7 +48,7 @@ class IndexController extends Controller
         $info = yield Collector::get(GcStatusCollect::class);
 
         usort($info, function($a, $b) {
-            return $a->workerId <=> $b->workerId;
+            return $a->pid <=> $b->pid;
         });
 
         foreach ($info as &$r) {

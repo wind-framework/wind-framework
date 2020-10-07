@@ -8,7 +8,7 @@ use Workerman\Worker;
 class Component implements \Framework\Base\Component
 {
 
-    public static function provide()
+    public static function provide($app)
     {
         $config = BASE_DIR.'/config/process.php';
         if (!is_file($config)) return;
@@ -22,15 +22,18 @@ class Component implements \Framework\Base\Component
                 $worker = new Worker();
                 $worker->name = $process->name ?: $class;
                 $worker->count = $process->count;
-                $worker->onWorkerStart = function () use ($process, $class) {
+                $worker->onWorkerStart = function ($worker) use ($process, $class) {
                     Worker::log("Process $class starting..");
+                    getApp()->startComponents($worker);
                     Loop::defer([$process, 'run']);
                 };
+
+                $app->addWorker($worker);
             }
         }
     }
 
-    public static function start() {
+    public static function start($worker) {
     }
 
 }

@@ -13,15 +13,22 @@ class Db
     /**
      * @var \Amp\Mysql\Pool
      */
-    protected static $pool;
+    private static $pool;
 
-    public function __construct()
+    /**
+     * @return \Amp\Mysql\Pool
+     */
+    protected static function conn()
     {
-        //初始化数据库连接池
-        $config = ConnectionConfig::fromString(
-            "host=192.168.4.2;user=root;password=0000;db=test"
-        );
-        self::$pool = pool($config);
+        if (self::$pool === null) {
+            //初始化数据库连接池
+            $config = ConnectionConfig::fromString(
+                "host=192.168.4.2;user=root;password=0000;db=test"
+            );
+            self::$pool = pool($config);
+        }
+
+        return self::$pool;
     }
 
     /**
@@ -33,6 +40,8 @@ class Db
      */
     public static function query(string $sql, array $params=[]): Promise
     {
+        self::conn();
+
         if ($params) {
             return call(function() use ($sql, $params) {
                 $statement = yield self::$pool->prepare($sql);
@@ -53,6 +62,7 @@ class Db
      */
     public static function execute(string $sql, array $params = []): Promise
     {
+        self::conn();
         return self::$pool->execute($sql, $params);
     }
 

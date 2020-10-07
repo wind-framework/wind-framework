@@ -43,9 +43,6 @@ class HttpServer extends Worker
             }
         });
 
-        //初始化数据库
-        new Db();
-
         $app->startComponents($worker);
 
         $app->cache = new Cache();

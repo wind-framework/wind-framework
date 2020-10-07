@@ -5,7 +5,8 @@ namespace App\Controller;
 use App\Collect\GcStatusCollect;
 use Framework\Base\Controller;
 use Framework\Collector\Collector;
-use Workerman\Protocols\Http\Response;
+use Framework\Utils\FileUtil;
+use Framework\View\Twig;
 use function Amp\delay;
 
 class IndexController extends Controller
@@ -43,8 +44,20 @@ class IndexController extends Controller
 
     public function gcStatus()
     {
+        /* @var $info GcStatusCollect[] */
         $info = yield Collector::get(GcStatusCollect::class);
-        return new Response(200, ['Content-Type'=>'application/json'], json_encode($info));
+
+        usort($info, function($a, $b) {
+            return $a->workerId <=> $b->workerId;
+        });
+
+        foreach ($info as &$r) {
+            $r->memoryUsage = FileUtil::formatSize($r->memoryUsage);
+            $r->memoryUsageOccupy = FileUtil::formatSize($r->memoryUsageOccupy);
+            $r->memoryUsagePeak = FileUtil::formatSize($r->memoryUsagePeak);
+        }
+
+        return Twig::render('gc-status.twig', ['info'=>$info]);
     }
 
 }

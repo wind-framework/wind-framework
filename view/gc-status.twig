@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
+<title>垃圾回收状态</title>
+<style type="text/css">
+html, body {margin:0;}
+th {background-color: #F0F0F0;}
+td {text-align: center;}
+th.l, td.l {text-align: left;}
+tbody tr:nth-child(even) td {background-color:#F7F5F5;}
+.desc {padding:10px;}
+</style>
+</head>
+<body>
+<table style="width:100%;">
+    <thead>
+        <tr>
+            <th>WorkerID</th>
+            <th class="l">Worker名称</th>
+            <th>PID</th>
+            <th>内存用量</th>
+            <th>内存占用</th>
+            <th>内存峰值</th>
+            <th>运行次数</th>
+            <th>已回收对象</th>
+            <th>当前根数量</th>
+            <th>回收根阈值</th>
+            <th class="l">错误</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for item in info %}
+    <tr>
+        <td>{{item.workerId}}</td>
+        <td class="l">{{item.workerName}}</td>
+        <td>{{item.pid}}</td>
+        <td>{{ item.memoryUsage }}</td>
+        <td>{{ item.memoryUsageOccupy }}</td>
+        <td>{{ item.memoryUsagePeak }}</td>
+        <td>{{item.runs}}</td>
+        <td>{{item.collected}}</td>
+        <td>{{item.roots}}</td>
+        <td>{{item.threshold}}</td>
+        <td class="l">{{item.error | default('-')}}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<div class="desc">当“当前根数量”达到“回收根阈值”时，PHP 会做一次垃圾的分析和回收。</div>
+</body>
+</html>

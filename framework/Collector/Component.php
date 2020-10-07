@@ -61,7 +61,7 @@ class Component implements \Framework\Base\Component
                 list($collector) = explode('@', $event);
                 $worker = self::getCurrentWorker();
 
-                Worker::log("[Collector] Worker {$worker->id} received $event request");
+                Worker::log("[Collector] Worker {$worker->name}[{$worker->id}] received $event request");
 
                 /* @var $res Collector */
                 $res = new $collector;

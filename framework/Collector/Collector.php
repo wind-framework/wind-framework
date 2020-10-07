@@ -56,7 +56,7 @@ abstract class Collector
 
             //监听回应消息
             Client::on($event, function($result) use (&$countDown, &$response, $id, $defer, $event, $worker, $timerId) {
-                Worker::log("[Collector] Worker {$worker->id} received $event response");
+                Worker::log("[Collector] Worker {$worker->name}[{$worker->id}] received $event response");
 
                 $response[] = $result;
                 $countDown--;
@@ -69,7 +69,7 @@ abstract class Collector
                 }
             });
 
-            Worker::log("[Collector] Worker {$worker->id} request $event");
+            Worker::log("[Collector] Worker {$worker->name}[{$worker->id}] request $event");
             Client::publish(self::class, $event);
 
             return $defer->promise();

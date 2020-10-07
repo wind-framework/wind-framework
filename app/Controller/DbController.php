@@ -5,6 +5,7 @@ namespace App\Controller;
 use Amp\Promise;
 use Framework\Base\Controller;
 use Framework\Db\Db;
+use Framework\View\Twig;
 
 class DbController extends Controller
 {
@@ -15,27 +16,7 @@ class DbController extends Controller
 
         if ($row) {
             Db::execute("UPDATE soul SET hits=hits+1 WHERE `id`=?", [$row['id']]);
-            return <<<TMPL
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
-<title>毒鸡汤</title>
-<style type="text/css">
-html, body {height: 100%; margin:0;}
-.container {height:100%; display:grid; place-items:center; padding:0 10px;}
-</style>
-</head>
-<body>
-<div class="container">
-    <p>来一杯热翔！</p>
-    <h1>{$row['title']}</h1>
-    <p>干了这碗毒鸡汤！</p>
-</div>
-</body>
-</html>
-TMPL;
+            return Twig::render('soul.twig', ['title'=>$row['title']]);
         } else {
             return "今天不丧。";
         }

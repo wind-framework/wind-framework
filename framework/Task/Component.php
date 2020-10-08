@@ -37,9 +37,14 @@ class Component implements \Framework\Base\Component
 						$callableName = is_array($data['callable']) ? join('::', $data['callable']) : $data['callable'];
 						Worker::log("TaskWorker {$worker->id} call $callableName().");
 						$return = call_user_func_array($data['callable'], $data['args']);
-						Client::publish(Task::class.'@return@'.$data['id'], $return);
+						Client::publish(Task::class.'@return@'.$data['id'], [true, $return]);
 					} catch (\Throwable $e) {
-						//
+						Client::publish(Task::class.'@return@'.$data['id'], [false, [
+							'exception' => get_class($e),
+							'message' => $e->getMessage(),
+							'code' => $e->getCode(),
+							'trace' => $e->getTraceAsString()
+						]]);
 					} finally {
 						//恢复工作
 						Client::publish($controlEvent, ['resume', $worker->id]);

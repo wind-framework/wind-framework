@@ -18,7 +18,7 @@ class Db
     /**
      * @return \Amp\Mysql\Pool
      */
-    protected static function conn()
+    protected static function pool()
     {
         if (self::$pool === null) {
             //初始化数据库连接池
@@ -40,15 +40,13 @@ class Db
      */
     public static function query(string $sql, array $params=[]): Promise
     {
-        self::conn();
-
         if ($params) {
             return call(function() use ($sql, $params) {
-                $statement = yield self::$pool->prepare($sql);
+                $statement = yield self::pool()->prepare($sql);
                 return yield $statement->execute($params);
             });
         } else {
-            return self::$pool->query($sql);
+            return self::pool()->query($sql);
         }
 
     }
@@ -62,8 +60,7 @@ class Db
      */
     public static function execute(string $sql, array $params = []): Promise
     {
-        self::conn();
-        return self::$pool->execute($sql, $params);
+        return self::pool()->execute($sql, $params);
     }
 
     /**

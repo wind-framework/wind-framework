@@ -4,8 +4,8 @@ namespace Framework\Collector;
 
 use Channel\Client;
 use Channel\Server;
-use Workerman\Timer;
 use Workerman\Worker;
+use function Amp\delay;
 
 class Component implements \Framework\Base\Component
 {
@@ -53,26 +53,26 @@ class Component implements \Framework\Base\Component
         self::$currentWorker = $worker;
 
         //延迟启动，减少启动时 Server 未启动而重连的现象
-        Timer::add(1, function() {
-            Client::connect(self::$ip, self::$port);
+	    yield delay(1000);
 
-            //收到请求后运行，并通过事件反馈请求
-            Client::on(Collector::class, function($event) {
-                list($collector) = explode('@', $event);
-                $worker = self::getCurrentWorker();
+        Client::connect(self::$ip, self::$port);
 
-                Worker::log("[Collector] Worker {$worker->name}[{$worker->id}] received $event request");
+        //收到请求后运行，并通过事件反馈请求
+        Client::on(Collector::class, function($event) {
+            list($collector) = explode('@', $event);
+            $worker = self::getCurrentWorker();
 
-                /* @var $res Collector */
-                $res = new $collector;
-                $res->collect();
-                $res->pid = posix_getpid();
-                $res->workerId = $worker->id;
-                $res->workerName = $worker->name;
+            Worker::log("[Collector] Worker {$worker->name}[{$worker->id}] received $event request");
 
-                Client::publish($event, $res);
-            });
-        }, [], false);
+            /* @var $res Collector */
+            $res = new $collector;
+            $res->collect();
+            $res->pid = posix_getpid();
+            $res->workerId = $worker->id;
+            $res->workerName = $worker->name;
+
+            Client::publish($event, $res);
+        });
     }
 
     public static function getCurrentWorker()

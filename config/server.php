@@ -8,7 +8,7 @@ return [
             'type' => 'http'
         ],
 	    'channel' => [
-		    'enable' => false,
+		    'enable' => true,
 	    	'listen' => '127.0.0.1:2206',
 		    'type' => 'channel'
 	    ]

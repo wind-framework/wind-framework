@@ -3,6 +3,7 @@
 namespace Framework\Base;
 
 use Workerman\Worker;
+use function Amp\asyncCall;
 
 /**
  * 应用程序
@@ -117,7 +118,7 @@ class Application
     public function startComponents(Worker $worker)
     {
         foreach ($this->components as $component) {
-            call_user_func([$component, 'start'], $worker);
+        	asyncCall([$component, 'start'], $worker);
         }
     }
 

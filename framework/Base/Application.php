@@ -48,6 +48,10 @@ class Application
         $server = require BASE_DIR.'/config/server.php';
 
         foreach ($server['servers'] as $srv) {
+        	if (isset($srv['enable']) && $srv['enable'] === false) {
+        		break;
+	        }
+
             switch ($srv['type']) {
                 case 'http':
                     $worker = new HttpServer('http://'.$srv['listen']);
@@ -55,6 +59,10 @@ class Application
                     $worker->reusePort = false;
                     $this->addWorker($worker);
                     break;
+	            case 'channel':
+	            	list($ip, $port) = explode(':', $srv['listen']);
+		            new \Channel\Server($ip, $port);
+	            	break;
             }
         }
 

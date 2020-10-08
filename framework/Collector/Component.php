@@ -28,9 +28,9 @@ class Component implements \Framework\Base\Component
 
         //不指定 channel 时将启动自己的 channel
         if ($config['channel_server'] === null) {
-            new Server();
-            $ip = '127.0.0.1';
-            $port = 2206;
+	        $ip = '127.0.0.1';
+	        $port = 2206;
+	        new Server($ip, $port);
         } else {
             list($ip, $port) = explode(':', $config['channel_server']);
         }

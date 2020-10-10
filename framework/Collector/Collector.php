@@ -3,7 +3,7 @@
 namespace Framework\Collector;
 
 use Amp\Deferred;
-use Channel\Client;
+use Framework\Channel\Client;
 use Workerman\Timer;
 use Workerman\Worker;
 use function Amp\call;

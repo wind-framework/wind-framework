@@ -4,14 +4,11 @@ namespace Framework\Task;
 
 use Amp\Deferred;
 use Amp\Promise;
-use Channel\Client;
+use Framework\Channel\Client;
 use function Amp\call;
-use function Amp\delay;
 
 class Task
 {
-
-	public static $_runnableWorkers = [];
 
 	/**
 	 * @param $callable
@@ -27,20 +24,10 @@ class Task
 		return call(function() use ($callable, $args) {
 			$id = uniqid();
 			$defer = new Deferred();
-			$returnEvent = Task::class.'@return@'.$id;
+			$returnEvent = Task::class.'@'.$id;
 
-			//获取可用的 workerId
-			$workerId = null;
-			do {
-				if (count(self::$_runnableWorkers) > 0) {
-					$workerId = array_rand(self::$_runnableWorkers);
-				} else {
-					print_r(self::$_runnableWorkers);
-					yield delay(100);
-				}
-			} while ($workerId === null);
+			Client::enqueue(Task::class, ['id'=>$id, 'callable'=>$callable, 'args'=>$args]);
 
-			Client::publish(Task::class.'@call@'.$workerId, ['id'=>$id, 'callable'=>$callable, 'args'=>$args]);
 			Client::on($returnEvent, function($data) use ($defer, $returnEvent) {
 				list($state, $return) = $data;
 				if ($state) {

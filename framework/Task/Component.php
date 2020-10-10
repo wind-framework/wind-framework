@@ -3,7 +3,7 @@
 namespace Framework\Task;
 
 use Amp\Loop;
-use Channel\Client;
+use Framework\Channel\Client;
 use Workerman\Worker;
 use function Amp\delay;
 
@@ -24,42 +24,22 @@ class Component implements \Framework\Base\Component
 			$app->startComponents($worker);
 
 			Loop::defer(static function() use ($worker) {
-				$controlEvent = Task::class.'@report';
-				$worker->busy = false;
-
 				self::connect();
-				Client::on(Task::class.'@call@'.$worker->id, static function($data) use ($controlEvent, $worker) {
-					//暂停接收任务
-					Client::publish($controlEvent, ['pause', $worker->id]);
-					$worker->busy = true;
-
+				Client::watch(Task::class, static function($data) use ($worker) {
 					try {
 						$callableName = is_array($data['callable']) ? join('::', $data['callable']) : $data['callable'];
 						Worker::log("TaskWorker {$worker->id} call $callableName().");
 						$return = call_user_func_array($data['callable'], $data['args']);
-						Client::publish(Task::class.'@return@'.$data['id'], [true, $return]);
+						Client::publish(Task::class.'@'.$data['id'], [true, $return]);
 					} catch (\Throwable $e) {
-						Client::publish(Task::class.'@return@'.$data['id'], [false, [
+						Client::publish(Task::class.'@'.$data['id'], [false, [
 							'exception' => get_class($e),
 							'message' => $e->getMessage(),
 							'code' => $e->getCode(),
 							'trace' => $e->getTraceAsString()
 						]]);
-					} finally {
-						//恢复工作
-						Client::publish($controlEvent, ['resume', $worker->id]);
-						$worker->busy = false;
 					}
 				});
-
-				Client::on(Task::class.'@pull', static function() use ($worker, $controlEvent) {
-					if (!$worker->busy) {
-						Client::publish($controlEvent, ['resume', $worker->id]);
-					}
-				});
-
-				//告诉客户端自己已经开始工作
-				Client::publish($controlEvent, ['start', $worker->id]);
 			});
 		};
 		$app->addWorker($worker);
@@ -71,19 +51,6 @@ class Component implements \Framework\Base\Component
 	public static function start($worker) {
 		yield delay(1000);
 		self::connect();
-		Client::on(Task::class.'@report', function($data) {
-			list($command, $id) = $data;
-			switch ($command) {
-				case 'resume':
-				case 'start':
-					Task::$_runnableWorkers[$id] = true;
-					break;
-				case 'pause':
-					unset(Task::$_runnableWorkers[$id]);
-					break;
-			}
-		});
-		Client::publish(Task::class.'@pull', true);
 	}
 
 	private static function connect()

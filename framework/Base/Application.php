@@ -62,7 +62,7 @@ class Application
                     break;
 	            case 'channel':
 	            	list($ip, $port) = explode(':', $srv['listen']);
-		            new \Channel\Server($ip, $port);
+		            new \Framework\Channel\Server($ip, $port);
 	            	break;
             }
         }

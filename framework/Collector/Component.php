@@ -2,8 +2,8 @@
 
 namespace Framework\Collector;
 
-use Channel\Client;
-use Channel\Server;
+use Framework\Channel\Client;
+use Framework\Channel\Server;
 use Workerman\Worker;
 use function Amp\delay;
 

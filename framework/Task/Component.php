@@ -5,6 +5,7 @@ namespace Framework\Task;
 use Amp\Loop;
 use Framework\Channel\Client;
 use Workerman\Worker;
+use function Amp\call;
 use function Amp\delay;
 
 class Component implements \Framework\Base\Component
@@ -26,19 +27,20 @@ class Component implements \Framework\Base\Component
 			Loop::defer(static function() use ($worker) {
 				self::connect();
 				Client::watch(Task::class, static function($data) use ($worker) {
-					try {
-						$callableName = is_array($data['callable']) ? join('::', $data['callable']) : $data['callable'];
-						Worker::log("TaskWorker {$worker->id} call $callableName().");
-						$return = call_user_func_array($data['callable'], $data['args']);
-						Client::publish(Task::class.'@'.$data['id'], [true, $return]);
-					} catch (\Throwable $e) {
-						Client::publish(Task::class.'@'.$data['id'], [false, [
-							'exception' => get_class($e),
-							'message' => $e->getMessage(),
-							'code' => $e->getCode(),
-							'trace' => $e->getTraceAsString()
-						]]);
-					}
+					$callableName = is_array($data['callable']) ? join('::', $data['callable']) : $data['callable'];
+					Worker::log("TaskWorker {$worker->id} call $callableName().");
+					call($data['callable'], ...$data['args'])->onResolve(function($e, $result) use ($data) {
+						if ($e === null) {
+							Client::publish(Task::class.'@'.$data['id'], [true, $result]);
+						} else {
+							Client::publish(Task::class.'@'.$data['id'], [false, [
+								'exception' => get_class($e),
+								'message' => $e->getMessage(),
+								'code' => $e->getCode(),
+								'trace' => $e->getTraceAsString()
+							]]);
+						}
+					});
 				});
 			});
 		};

@@ -21,14 +21,19 @@ class Task
 			throw new \Exception('Can not run closure in Task!');
 		}
 
-		return call(function() use ($callable, $args) {
+		if (is_array($callable) && !is_string($callable[0])) {
+			throw new \Exception('Only static callable availability!');
+		}
+
+		return call(static function() use ($callable, $args) {
 			$id = uniqid();
 			$defer = new Deferred();
 			$returnEvent = Task::class.'@'.$id;
 
 			Client::enqueue(Task::class, ['id'=>$id, 'callable'=>$callable, 'args'=>$args]);
 
-			Client::on($returnEvent, function($data) use ($defer, $returnEvent) {
+			Client::on($returnEvent, static function($data) use ($defer, $returnEvent) {
+				Client::unsubscribe($returnEvent);
 				list($state, $return) = $data;
 				if ($state) {
 					$defer->resolve($return);
@@ -39,7 +44,6 @@ class Task
 						$defer->fail(new \Exception($return['message'], $return['code']));
 					}
 				}
-				Client::unsubscribe($returnEvent);
 			});
 
 			return $defer->promise();

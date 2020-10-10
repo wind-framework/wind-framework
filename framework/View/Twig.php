@@ -12,13 +12,6 @@ class Twig
     private static $twig;
 
 	/**
-	 * 渲染模式
-	 *
-	 * @var string
-	 */
-    private static $renderMode = 'task';
-
-	/**
 	 * @return Environment
 	 */
     protected static function twig() {
@@ -36,23 +29,26 @@ class Twig
 	    ]);
     }
 
-	public static function renderSync($name, array $context = []): string
-	{
+	/**
+	 * @param string $name
+	 * @param array $context
+	 * @return string
+	 */
+    public static function render($name, array $context = [])
+    {
 		return self::twig()->render($name, $context);
 	}
 
 	/**
-	 * @param $name
+	 * Render view by TaskWorker
+	 * 
+	 * @param string $name
 	 * @param array $context
-	 * @return string|\Amp\Promise<string>
+	 * @return \Amp\Promise<string>
 	 */
-    public static function render($name, array $context = [])
-    {
-    	if (self::$renderMode == 'task') {
-		    return Task::execute([self::class, 'renderSync'], $name, $context);
-	    } else {
-		    return self::twig()->render($name, $context);
-	    }
-    }
+	public static function renderByTask($name, array $context=[])
+	{
+		return Task::execute([self::class, 'render'], $name, $context);
+	}
 
 }

@@ -3,10 +3,11 @@
 namespace Framework\Collector;
 
 use Amp\Deferred;
-use Framework\Channel\Client;
 use Workerman\Timer;
 use Workerman\Worker;
 use function Amp\call;
+use Framework\Utils\StrUtil;
+use Framework\Channel\Client;
 
 abstract class Collector
 {
@@ -32,7 +33,7 @@ abstract class Collector
                 return false;
             }
 
-            $id = uniqid();
+            $id = StrUtil::randomString(16);
 
             $workers = getApp()->getWorkers();
             $countDown = 0;

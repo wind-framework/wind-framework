@@ -2,16 +2,22 @@
 
 namespace Framework\Task;
 
-use Amp\Deferred;
 use Amp\Promise;
-use Framework\Channel\Client;
+use Amp\Deferred;
 use function Amp\call;
+use Framework\Utils\StrUtil;
+use Framework\Channel\Client;
 
 class Task
 {
 
+	private static $pid = '';
+	private static $eventId = 0;
+
 	/**
-	 * @param $callable
+	 * Execute and get return in TaskWorker
+	 * 
+	 * @param callable $callable Executor callable, allow coroutinue
 	 * @param mixed ...$args
 	 * @return Promise
 	 */
@@ -26,11 +32,9 @@ class Task
 		}
 
 		return call(static function() use ($callable, $args) {
-			$id = uniqid();
+			$id = self::eventId();
 			$defer = new Deferred();
 			$returnEvent = Task::class.'@'.$id;
-
-			Client::enqueue(Task::class, ['id'=>$id, 'callable'=>$callable, 'args'=>$args]);
 
 			Client::on($returnEvent, static function($data) use ($defer, $returnEvent) {
 				Client::unsubscribe($returnEvent);
@@ -46,8 +50,21 @@ class Task
 				}
 			});
 
+			Client::enqueue(Task::class, ['id'=>$id, 'callable'=>$callable, 'args'=>$args]);
+
 			return $defer->promise();
 		});
+	}
+
+	private static function eventId()
+	{
+		self::$eventId++;
+
+		if (self::$pid === '') {
+			self::$pid = StrUtil::randomString(8);
+		}
+
+		return self::$pid.'-'.self::$eventId;
 	}
 
 }

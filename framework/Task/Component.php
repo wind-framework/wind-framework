@@ -3,10 +3,10 @@
 namespace Framework\Task;
 
 use Amp\Loop;
-use Framework\Channel\Client;
 use Workerman\Worker;
 use function Amp\call;
 use function Amp\delay;
+use Framework\Channel\Client;
 
 class Component implements \Framework\Base\Component
 {

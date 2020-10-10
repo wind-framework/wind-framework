@@ -2,6 +2,7 @@
 
 namespace Framework\View;
 
+use Framework\Task\Task;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -9,6 +10,13 @@ class Twig
 {
 
     private static $twig;
+
+	/**
+	 * 渲染模式
+	 *
+	 * @var string
+	 */
+    private static $renderMode = 'task';
 
 	/**
 	 * @return Environment
@@ -28,9 +36,23 @@ class Twig
 	    ]);
     }
 
-    public static function render($name, array $context = []): string
+	public static function renderSync($name, array $context = []): string
+	{
+		return self::twig()->render($name, $context);
+	}
+
+	/**
+	 * @param $name
+	 * @param array $context
+	 * @return string|\Amp\Promise<string>
+	 */
+    public static function render($name, array $context = [])
     {
-        return self::twig()->render($name, $context);
+    	if (self::$renderMode == 'task') {
+		    return Task::execute([self::class, 'renderSync'], $name, $context);
+	    } else {
+		    return self::twig()->render($name, $context);
+	    }
     }
 
 }

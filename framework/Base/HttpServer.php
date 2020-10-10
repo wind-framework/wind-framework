@@ -5,7 +5,6 @@ namespace Framework\Base;
 use App\Redis\Cache;
 use FastRoute\Dispatcher;
 use Framework\Base\Exception\ExitException;
-use Framework\Db\Db;
 use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
 use Workerman\Protocols\Http\Response;

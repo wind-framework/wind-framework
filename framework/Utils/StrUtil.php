@@ -13,7 +13,7 @@ class StrUtil
      */
     public static function randomString($length)
     {
-        $range = [48, 57, 65, 90, 97, 122];
+        static $range = [48, 57, 65, 90, 97, 122];
         $str = '';
         for ($i=0; $i<$length; $i++) {
 			$s = \mt_rand(0, 2) * 2;

@@ -3,8 +3,9 @@
 namespace Framework\Base;
 
 use Workerman\Worker;
-use Framework\Base\Config;
+use DI\ContainerBuilder;
 use function Amp\asyncCall;
+use function DI\create;
 
 /**
  * 应用程序
@@ -13,7 +14,7 @@ use function Amp\asyncCall;
  *
  * @package Framework\Base
  * 
- * @property Config $config
+ * @property \DI\Container $container
  */
 class Application
 {
@@ -24,7 +25,10 @@ class Application
     private $workers = [];
     private $components = [];
 
-    private $container = [];
+    /**
+     * @var \DI\Container
+     */
+    private $container;
 
     /**
      * @var Application
@@ -51,12 +55,20 @@ class Application
 
     public function __construct()
     {
-        $this->container['config'] = new Config(BASE_DIR.'/config');
+        $config = new Config();
+
+        $builder = new ContainerBuilder();
+        $builder->addDefinitions($config->get('definitions'));
+        $container = $builder->build();
+        $container->set(Config::class, $config);
+
+        $this->container = $container;
     }
 
     private function runServers()
     {
-        $server = $this->config->get('server');
+        $config = $this->container->get(Config::class);
+        $server = $config->get('server');
 
         foreach ($server['servers'] as $srv) {
         	if (isset($srv['enable']) && $srv['enable'] === false) {
@@ -78,7 +90,7 @@ class Application
         }
 
         //Add Components
-        $components = $this->config->get('components');
+        $components = $config->get('components');
 
         foreach ($components as $component) {
             $this->addComponent($component);
@@ -133,10 +145,11 @@ class Application
 
     public function __get($name)
     {
-        if (isset($this->container[$name])) {
-            return $this->container[$name];
-        } else {
-            throw new \Error("Undefined property '$name' of Application.");
+        switch ($name) {
+            case 'container':
+                return $this->container;
+            default:
+                throw new \Error("Try to get undefined property '$name' of Application.");
         }
     }
 

@@ -3,6 +3,7 @@
 namespace Framework\Collector;
 
 use Amp\Deferred;
+use Framework\Base\Config;
 use Workerman\Timer;
 use Workerman\Worker;
 use function Amp\call;
@@ -27,7 +28,7 @@ abstract class Collector
     public static function get($collector)
     {
         return call(function() use ($collector) {
-            $config = getApp()->config->get('collector');
+            $config = di()->get(Config::class)->get('collector');
 
             if (!$config['enable']) {
                 return false;

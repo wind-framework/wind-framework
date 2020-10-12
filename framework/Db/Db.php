@@ -4,6 +4,7 @@ namespace Framework\Db;
 
 use Amp\Mysql\ConnectionConfig;
 use Amp\Promise;
+use Framework\Base\Config;
 use function Amp\call;
 use function Amp\Mysql\pool;
 
@@ -21,7 +22,7 @@ class Db
     protected static function pool()
     {
         if (self::$pool === null) {
-            $default = getApp()->config->get('database.default');
+            $default = di()->get(Config::class)->get('database.default');
 
             //初始化数据库连接池
             $config = ConnectionConfig::fromString("host={$default['host']};user={$default['username']};password={$default['password']};db={$default['database']}");

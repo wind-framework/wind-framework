@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Collect\GcStatusCollect;
+use App\Redis\Cache;
 use Framework\Base\Controller;
 use Framework\Collector\Collector;
 use Framework\Utils\FileUtil;
@@ -19,7 +20,7 @@ class IndexController extends Controller
 
     public function cache()
     {
-        $cache = getApp()->cache;
+        $cache = di()->get(Cache::class);
         $ret = yield $cache->get("lastvisit", "None");
         yield $cache->set("lastvisit", ["last"=>date('Y-m-d H:i:s'), "timestamp"=>time()], 86400);
         return "get: ".print_r($ret, true);

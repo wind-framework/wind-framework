@@ -14,9 +14,9 @@ class Config {
      */
     protected $dotenv;
 
-    public function __construct($configPath)
+    public function __construct()
     {
-        $this->configDir = $configPath;
+        $this->configDir = BASE_DIR.'/config';
 
         $this->dotenv = Dotenv::createImmutable(BASE_DIR);
         $this->dotenv->load();

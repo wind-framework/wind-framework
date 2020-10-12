@@ -2,6 +2,7 @@
 
 namespace Framework\Collector;
 
+use Framework\Base\Config;
 use Framework\Channel\Client;
 use Framework\Channel\Server;
 use Workerman\Worker;
@@ -20,7 +21,7 @@ class Component implements \Framework\Base\Component
 
     public static function provide($app)
     {
-        $config = getApp()->config->get('collector');
+        $config = di()->get(Config::class)->get('collector');
 
         if (!$config['enable']) {
             return;

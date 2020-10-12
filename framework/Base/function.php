@@ -10,6 +10,10 @@ function getApp() {
     return \Framework\Base\Application::getInstance();
 }
 
+function di() {
+    return getApp()->container;
+}
+
 /**
  * 等于普通模式的 exit() 函数
  *

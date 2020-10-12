@@ -3,6 +3,7 @@
 namespace Framework\Process;
 
 use Amp\Loop;
+use Framework\Base\Config;
 use Workerman\Worker;
 
 class Component implements \Framework\Base\Component
@@ -10,7 +11,8 @@ class Component implements \Framework\Base\Component
 
     public static function provide($app)
     {
-        $processes = getApp()->config->get('process');
+        $config = di()->get(Config::class);
+        $processes = $config->get('process');
 
         if ($processes) {
             foreach ($processes as $class) {

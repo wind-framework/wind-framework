@@ -20,11 +20,17 @@ class HttpServer extends Worker
      */
     private $dispatcher;
 
+    /**
+     * @var Application
+     */
+    private $app;
+
     public function __construct($socket_name = '', array $context_option = array())
     {
         parent::__construct($socket_name, $context_option);
         $this->onWorkerStart = [$this, 'onWorkerStart'];
         $this->onMessage = [$this, 'onMessage'];
+        $this->app = Application::getInstance();
     }
 
     /**
@@ -32,19 +38,15 @@ class HttpServer extends Worker
      */
     public function onWorkerStart($worker)
     {
-        $app = getApp();
-
         //初始化路由
-        $routes = $app->config->get('route', []);
+        $routes = $this->app->container->get(Config::class)->get('route', []);
         $this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $c) use ($routes) {
             foreach ($routes as $r) {
                 $c->addRoute($r[0], $r[1], $r[2]);
             }
         });
 
-        $app->startComponents($worker);
-
-        $app->cache = new Cache();
+        $this->app->startComponents($worker);
     }
 
     /**
@@ -59,10 +61,10 @@ class HttpServer extends Worker
             case Dispatcher::FOUND:
                 list(, $handler, $vars) = $routeInfo;
 
-                if (is_string($handler) && str_contains($handler, '::')) {
-                    list($controller, $action) = explode('::', $handler);
+                if (is_string($handler) && str_contains($handler, '@')) {
+                    list($controller, $action) = explode('@', $handler);
                 } else {
-                    list($connection, $action) = $handler;
+                    list($controller, $action) = $handler;
                 }
 
                 if (!class_exists($controller)) {
@@ -70,7 +72,7 @@ class HttpServer extends Worker
                 }
 
                 //实例化控制器类不在协程中，所以不能使用协程
-                $controllerInstance = new $controller;
+                $controllerInstance = $this->app->container->make($controller);
 
                 if ($controllerInstance instanceof Controller == false) {
                     $connection->send(new Response(500, [], "$controller is not a Controller instance."));
@@ -89,7 +91,8 @@ class HttpServer extends Worker
                     try {
                         //init() 在此处处理协程的返回状态，所以 init 中可以使用协程，需要在控制器初始化时使用协程请在 init 中使用
                         yield call([$controllerInstance, 'init']);
-                        $response = yield call([$controllerInstance, $action], $context);
+                        //$response = yield $this->app->container->call('Amp\call', [[$controllerInstance, $action]]);
+                        $response = yield call([$controllerInstance, $action]);
                         $connection->send($response);
                     } catch (ExitException $e) {
                         $connection->send('');

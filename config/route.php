@@ -13,5 +13,6 @@ return [
     ["GET", "/block", "App\Controller\IndexController::block"],
     ["GET", "/exception", "App\Controller\IndexController::exception"],
     ['GET', '/gc-status', "App\Controller\IndexController::gcStatus"],
+    ['GET', '/gc-recycle', 'App\Controller\IndexController::gcRecycle'],
     ['GET', '/test/task', 'App\Controller\TestController::taskCall'],
 ];

@@ -2,11 +2,13 @@
 
 namespace App\Controller;
 
+use App\Collect\GcRecycle;
 use App\Collect\GcStatusCollect;
 use Framework\Base\Controller;
 use Framework\Collector\Collector;
 use Framework\Utils\FileUtil;
 use Framework\View\Twig;
+use Workerman\Protocols\Http\Response;
 use function Amp\delay;
 
 class IndexController extends Controller
@@ -58,6 +60,12 @@ class IndexController extends Controller
         }
 
         return Twig::render('gc-status.twig', ['info'=>$info]);
+    }
+
+    public function gcRecycle()
+    {
+    	$info = yield Collector::get(GcRecycle::class);
+    	return new Response(302, ['Location'=>'/gc-status']);
     }
 
 }

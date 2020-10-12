@@ -19,3 +19,14 @@ function getApp() {
 function done($code=0) {
     throw new Exception('', $code);
 }
+
+/**
+ * 读取 env 配置
+ *
+ * @param string $key
+ * @param mixed $defaultValue
+ * @return mixed
+ */
+function env($key, $defaultValue=null) {
+    return array_key_exists($key, $_ENV) ? $_ENV[$key] : $defaultValue;
+}

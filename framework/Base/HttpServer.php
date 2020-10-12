@@ -35,7 +35,7 @@ class HttpServer extends Worker
         $app = getApp();
 
         //初始化路由
-        $routes = require BASE_DIR . '/config/route.php';
+        $routes = $app->config->get('route', []);
         $this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $c) use ($routes) {
             foreach ($routes as $r) {
                 $c->addRoute($r[0], $r[1], $r[2]);

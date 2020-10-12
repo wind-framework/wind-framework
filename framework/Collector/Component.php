@@ -20,7 +20,7 @@ class Component implements \Framework\Base\Component
 
     public static function provide($app)
     {
-        $config = require BASE_DIR.'/config/collect.php';
+        $config = getApp()->config->get('collector');
 
         if (!$config['enable']) {
             return;

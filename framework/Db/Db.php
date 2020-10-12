@@ -21,11 +21,11 @@ class Db
     protected static function pool()
     {
         if (self::$pool === null) {
+            $default = getApp()->config->get('database.default');
+
             //初始化数据库连接池
-            $config = ConnectionConfig::fromString(
-                "host=192.168.4.2;user=root;password=0000;db=test"
-            );
-            self::$pool = pool($config);
+            $config = ConnectionConfig::fromString("host={$default['host']};user={$default['username']};password={$default['password']};db={$default['database']}");
+            self::$pool = pool($config, $default['pool']['max_connection'], $default['pool']['max_idle_time']);
         }
 
         return self::$pool;

@@ -3,6 +3,7 @@
 namespace Framework\Base;
 
 use Workerman\Worker;
+use Framework\Base\Config;
 use function Amp\asyncCall;
 
 /**
@@ -11,6 +12,8 @@ use function Amp\asyncCall;
  * 应用程序为进程内全局只有一个
  *
  * @package Framework\Base
+ * 
+ * @property Config $config
  */
 class Application
 {
@@ -20,6 +23,8 @@ class Application
      */
     private $workers = [];
     private $components = [];
+
+    private $container = [];
 
     /**
      * @var Application
@@ -44,9 +49,14 @@ class Application
         self::$instance->runServers();
     }
 
+    public function __construct()
+    {
+        $this->container['config'] = new Config(BASE_DIR.'/config');
+    }
+
     private function runServers()
     {
-        $server = require BASE_DIR.'/config/server.php';
+        $server = $this->config->get('server');
 
         foreach ($server['servers'] as $srv) {
         	if (isset($srv['enable']) && $srv['enable'] === false) {
@@ -68,7 +78,7 @@ class Application
         }
 
         //Add Components
-        $components = require BASE_DIR.'/config/component.php';
+        $components = $this->config->get('components');
 
         foreach ($components as $component) {
             $this->addComponent($component);
@@ -109,9 +119,7 @@ class Application
     }
 
     /**
-     * 初始化系统组件
-     *
-     * 在需要挂载的 Worker 的 onWorkerStart 中执行
+     * 在 Worker 启动时初始化系统组件
      *
      * @param Worker $worker
      */
@@ -119,6 +127,16 @@ class Application
     {
         foreach ($this->components as $component) {
         	asyncCall([$component, 'start'], $worker);
+        }
+    }
+
+
+    public function __get($name)
+    {
+        if (isset($this->container[$name])) {
+            return $this->container[$name];
+        } else {
+            throw new \Error("Undefined property '$name' of Application.");
         }
     }
 

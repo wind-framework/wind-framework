@@ -10,10 +10,7 @@ class Component implements \Framework\Base\Component
 
     public static function provide($app)
     {
-        $config = BASE_DIR.'/config/process.php';
-        if (!is_file($config)) return;
-
-        $processes = require $config;
+        $processes = getApp()->config->get('process');
 
         if ($processes) {
             foreach ($processes as $class) {

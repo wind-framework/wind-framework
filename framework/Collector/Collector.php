@@ -27,7 +27,7 @@ abstract class Collector
     public static function get($collector)
     {
         return call(function() use ($collector) {
-            $config = require BASE_DIR.'/config/collect.php';
+            $config = getApp()->config->get('collector');
 
             if (!$config['enable']) {
                 return false;

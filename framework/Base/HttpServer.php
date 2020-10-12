@@ -2,7 +2,6 @@
 
 namespace Framework\Base;
 
-use App\Redis\Cache;
 use FastRoute\Dispatcher;
 use Framework\Base\Exception\ExitException;
 use Workerman\Connection\TcpConnection;
@@ -10,7 +9,6 @@ use Workerman\Protocols\Http\Request;
 use Workerman\Protocols\Http\Response;
 use Workerman\Worker;
 use function Amp\asyncCall;
-use function Amp\call;
 
 class HttpServer extends Worker
 {
@@ -90,9 +88,8 @@ class HttpServer extends Worker
 
                     try {
                         //init() 在此处处理协程的返回状态，所以 init 中可以使用协程，需要在控制器初始化时使用协程请在 init 中使用
-                        yield call([$controllerInstance, 'init']);
-                        //$response = yield $this->app->container->call('Amp\call', [[$controllerInstance, $action]]);
-                        $response = yield call([$controllerInstance, $action]);
+                        yield wireCall([$controllerInstance, 'init']);
+                        $response = yield wireCall([$controllerInstance, $action]);
                         $connection->send($response);
                     } catch (ExitException $e) {
                         $connection->send('');

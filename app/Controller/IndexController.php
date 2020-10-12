@@ -7,7 +7,7 @@ use App\Redis\Cache;
 use Framework\Base\Controller;
 use Framework\Collector\Collector;
 use Framework\Utils\FileUtil;
-use Framework\View\Twig;
+use Framework\View\ViewInterface;
 use function Amp\delay;
 
 class IndexController extends Controller
@@ -18,9 +18,9 @@ class IndexController extends Controller
         return 'Hello World'.\env('APP');
     }
 
-    public function cache()
+    public function cache(Cache $cache)
     {
-        $cache = di()->get(Cache::class);
+        //$cache = di()->get(Cache::class);
         $ret = yield $cache->get("lastvisit", "None");
         yield $cache->set("lastvisit", ["last"=>date('Y-m-d H:i:s'), "timestamp"=>time()], 86400);
         return "get: ".print_r($ret, true);
@@ -43,7 +43,7 @@ class IndexController extends Controller
         throw new \Exception('Test something wrong!');
     }
 
-    public function gcStatus()
+    public function gcStatus(ViewInterface $view)
     {
         /* @var $info GcStatusCollect[] */
         $info = yield Collector::get(GcStatusCollect::class);
@@ -58,7 +58,7 @@ class IndexController extends Controller
             $r->memoryUsagePeak = FileUtil::formatSize($r->memoryUsagePeak);
         }
 
-        return Twig::render('gc-status.twig', ['info'=>$info]);
+        return $view->render('gc-status.twig', ['info'=>$info]);
     }
 
 }

@@ -5,18 +5,18 @@ namespace App\Controller;
 use Amp\Promise;
 use Framework\Base\Controller;
 use Framework\Db\Db;
-use Framework\View\Twig;
+use Framework\View\ViewInterface;
 
 class DbController extends Controller
 {
 
-    public function soul()
+    public function soul(ViewInterface $view)
     {
         $row = yield Db::fetchOne("SELECT * FROM soul ORDER BY RAND() LIMIT 1");
 
         if ($row) {
             Db::execute("UPDATE soul SET hits=hits+1 WHERE `id`=?", [$row['id']]);
-            return Twig::render('soul.twig', ['title'=>$row['title']]);
+            return $view->render('soul.twig', ['title'=>$row['title']]);
         } else {
             return "今天不丧。";
         }

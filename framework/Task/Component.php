@@ -27,9 +27,25 @@ class Component implements \Framework\Base\Component
 			Loop::defer(static function() use ($worker) {
 				self::connect();
 				Client::watch(Task::class, static function($data) use ($worker) {
+					if (is_array($data['callable'])) {
+						list($class, $method) = $data['callable'];
+						$ref = new \ReflectionClass($class);
+						if ($ref->getMethod($method)->isStatic()) {
+							$callable = $data['callable'];
+						} else {
+							//动态类型需要先实例化，这得益于依赖注入才能实现
+							//如果该类的构造函数参数不能依赖注入，则不能通过 Task 动态调用
+							$object = di()->get($class);
+							$callable = [$object, $method];
+						}
+					} else {
+						$callable = $data['callable'];
+					}
+
 					$callableName = is_array($data['callable']) ? join('::', $data['callable']) : $data['callable'];
 					Worker::log("TaskWorker {$worker->id} call $callableName().");
-					call($data['callable'], ...$data['args'])->onResolve(function($e, $result) use ($data) {
+
+					call($callable, ...$data['args'])->onResolve(function($e, $result) use ($data) {
 						if ($e === null) {
 							Client::publish(Task::class.'@'.$data['id'], [true, $result]);
 						} else {

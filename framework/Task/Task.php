@@ -27,8 +27,8 @@ class Task
 			throw new \Exception('Can not run closure in Task!');
 		}
 
-		if (is_array($callable) && !is_string($callable[0])) {
-			throw new \Exception('Only static callable availability!');
+		if (is_array($callable) && is_object($callable[0])) {
+			$callable[0] = get_class($callable[0]);
 		}
 
 		return call(static function() use ($callable, $args) {

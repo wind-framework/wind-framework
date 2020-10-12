@@ -1,5 +1,7 @@
 <?php
 
+use Amp\Promise;
+
 if (!function_exists('str_contains')) {
     function str_contains($str, $search) {
         return strpos($str, $search) !== false;
@@ -12,6 +14,23 @@ function getApp() {
 
 function di() {
     return getApp()->container;
+}
+
+/**
+ * 对协程 callable 进行依赖注入调用
+ *
+ * @param callable $callable
+ * @param mixed ...$args
+ * @return Promise
+ */
+function wireCall($callable, ...$args) {
+	return \Amp\call(function() use ($callable, $args) {
+		$ret = getApp()->container->call($callable, $args);
+		if ($ret instanceof \Generator || $ret instanceof Promise) {
+			$ret = yield from $ret;
+		}
+		return $ret;
+	});
 }
 
 /**

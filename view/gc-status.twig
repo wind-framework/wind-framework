@@ -46,6 +46,9 @@ tbody tr:nth-child(even) td {background-color:#F7F5F5;}
     {% endfor %}
     </tbody>
 </table>
-<div class="desc">当“当前根数量”达到“回收根阈值”时，PHP 会做一次垃圾的分析和回收。</div>
+<div class="desc">
+	<button type="button" style="float:right;" onclick="location.href='/gc-recycle';">立即回收</button>
+	<p>当“当前根数量”达到“回收根阈值”时，PHP 会做一次垃圾的分析和回收。</p>
+</div>
 </body>
 </html>

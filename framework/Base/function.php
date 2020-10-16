@@ -13,6 +13,10 @@ function getApp() {
     return Application::getInstance();
 }
 
+function di() {
+    return Application::getInstance()->container;
+}
+
 /**
  * 对协程 callable 进行依赖注入调用
  *

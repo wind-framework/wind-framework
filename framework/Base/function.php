@@ -20,10 +20,10 @@ function di() {
  * 对协程 callable 进行依赖注入调用
  *
  * @param callable $callable
- * @param mixed ...$args
+ * @param array $args
  * @return Promise
  */
-function wireCall($callable, ...$args) {
+function wireCall($callable, $args=[]) {
 	return \Amp\call(function() use ($callable, $args) {
 		$ret = getApp()->container->call($callable, $args);
 		if ($ret instanceof \Generator || $ret instanceof Promise) {

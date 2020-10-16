@@ -2,8 +2,11 @@
 
 namespace App\Controller;
 
-use App\Data\Invoker;
+use Amp\Promise;
+use App\Helper\Invoker;
 use Framework\Task\Task;
+use Psr\Container\ContainerInterface;
+use Workerman\Protocols\Http\Request;
 
 class TestController extends \Framework\Base\Controller
 {
@@ -14,9 +17,21 @@ class TestController extends \Framework\Base\Controller
 		$this->invoker = $invoker;
 	}
 
-	public function taskCall()
+    public function taskCall()
 	{
-		return yield Task::execute([$this->invoker, 'getCache'], 'ABCDEFG');
+		$a = [
+		    Task::execute([$this->invoker, 'getCache'], 'ABCDEFG'),
+		    Task::execute([$this->invoker, 'someBlock'], 'ABCDEFG')
+        ];
+
+		$b = yield Promise\all($a);
+
+		return json_encode($b);
 	}
+
+	public function request(Request $request, $id, ContainerInterface $container)
+    {
+        return 'Request, id='.$id;
+    }
 
 }

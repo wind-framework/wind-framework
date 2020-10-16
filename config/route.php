@@ -14,4 +14,5 @@ return [
     ["GET", "/exception", "App\Controller\IndexController@exception"],
     ['GET', '/gc-status', "App\Controller\IndexController@gcStatus"],
     ['GET', '/test/task', 'App\Controller\TestController@taskCall'],
+    ['GET', '/test/request/{id:\d+}', 'App\Controller\TestController@request'],
 ];

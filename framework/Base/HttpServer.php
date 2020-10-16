@@ -53,7 +53,7 @@ class HttpServer extends Worker
      */
     public function onMessage($connection, $request)
     {
-        $routeInfo = $this->dispatcher->dispatch($request->method(), $request->uri());
+        $routeInfo = $this->dispatcher->dispatch($request->method(), $request->path());
 
         switch ($routeInfo[0]) {
             case Dispatcher::FOUND:
@@ -72,24 +72,31 @@ class HttpServer extends Worker
                 //实例化控制器类不在协程中，所以不能使用协程
                 $controllerInstance = $this->app->container->make($controller);
 
-                if ($controllerInstance instanceof Controller == false) {
-                    $connection->send(new Response(500, [], "$controller is not a Controller instance."));
-                    return;
-                }
+                //if ($controllerInstance instanceof Controller == false) {
+                //    $connection->send(new Response(500, [], "$controller is not a Controller instance."));
+                //    return;
+                //}
 
                 if (!is_callable([$controllerInstance, $action])) {
                     goto notfound;
                 }
 
                 asyncCall(function() use ($controllerInstance, $action, $connection, $request, $vars) {
-                    $context = new Context();
-                    $context->request = $request;
-                    $context->vars = $vars;
+                    //$context = new Context();
+                    //$context->request = $request;
+                    //$context->vars = $vars;
 
                     try {
                         //init() 在此处处理协程的返回状态，所以 init 中可以使用协程，需要在控制器初始化时使用协程请在 init 中使用
-                        yield wireCall([$controllerInstance, 'init']);
-                        $response = yield wireCall([$controllerInstance, $action]);
+                        if (method_exists($controllerInstance, 'init')) {
+                            yield wireCall([$controllerInstance, 'init']);
+                        }
+
+                        //$invoker = new Invoker(null, di());
+                        //$invoker->call();
+                        //TypeHintContainerResolver::class
+                        $args = ['request'=>$request] + $vars;
+                        $response = yield wireCall([$controllerInstance, $action], $args);
                         $connection->send($response);
                     } catch (ExitException $e) {
                         $connection->send('');

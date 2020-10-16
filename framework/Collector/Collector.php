@@ -28,7 +28,7 @@ abstract class Collector
     public static function get($collector)
     {
         return call(function() use ($collector) {
-            $config = di()->get(Config::class)->get('collector');
+            $config = getApp()->container->get(Config::class)->get('collector');
 
             if (!$config['enable']) {
                 return false;

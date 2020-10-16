@@ -21,7 +21,7 @@ class Component implements \Framework\Base\Component
 
     public static function provide($app)
     {
-        $config = di()->get(Config::class)->get('collector');
+        $config = $app->container->get(Config::class)->get('collector');
 
         if (!$config['enable']) {
             return;

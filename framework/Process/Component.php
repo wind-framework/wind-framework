@@ -11,7 +11,7 @@ class Component implements \Framework\Base\Component
 
     public static function provide($app)
     {
-        $config = di()->get(Config::class);
+        $config = $app->container->get(Config::class);
         $processes = $config->get('process');
 
         if ($processes) {

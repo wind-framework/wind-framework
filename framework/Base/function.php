@@ -1,6 +1,7 @@
 <?php
 
 use Amp\Promise;
+use Framework\Base\Application;
 
 if (!function_exists('str_contains')) {
     function str_contains($str, $search) {
@@ -9,11 +10,7 @@ if (!function_exists('str_contains')) {
 }
 
 function getApp() {
-    return \Framework\Base\Application::getInstance();
-}
-
-function di() {
-    return getApp()->container;
+    return Application::getInstance();
 }
 
 /**

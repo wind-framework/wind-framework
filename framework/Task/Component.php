@@ -34,9 +34,9 @@ class Component implements \Framework\Base\Component
 		$worker->onWorkerStart = static function($worker) use ($app) {
 			$app->startComponents($worker);
 
-			Loop::defer(static function() use ($worker) {
+			Loop::defer(static function() use ($worker, $app) {
 				self::connect();
-				Client::watch(Task::class, static function($data) use ($worker) {
+				Client::watch(Task::class, static function($data) use ($worker, $app) {
 					if (is_array($data['callable'])) {
 						list($class, $method) = $data['callable'];
 						$ref = new \ReflectionClass($class);
@@ -45,7 +45,7 @@ class Component implements \Framework\Base\Component
 						} else {
 							//动态类型需要先实例化，这得益于依赖注入才能实现
 							//如果该类的构造函数参数不能依赖注入，则不能通过 Task 动态调用
-							$object = di()->get($class);
+							$object = $app->container->get($class);
 							$callable = [$object, $method];
 						}
 					} else {
@@ -85,7 +85,7 @@ class Component implements \Framework\Base\Component
 
 	private static function connect()
 	{
-        $config = di()->get(Config::class);
+        $config = getApp()->container->get(Config::class);
         list($host, $port) = explode(':', $config->get('server.task_worker.channel_server', '127.0.0.1:2206'));
 		Client::connect($host, $port);
 	}

@@ -4,6 +4,13 @@ namespace Framework\Base;
 
 use FastRoute\Dispatcher;
 use Framework\Base\Exception\ExitException;
+use Invoker\Invoker;
+use Invoker\ParameterResolver\AssociativeArrayResolver;
+use Invoker\ParameterResolver\Container\TypeHintContainerResolver;
+use Invoker\ParameterResolver\DefaultValueResolver;
+use Invoker\ParameterResolver\NumericArrayResolver;
+use Invoker\ParameterResolver\ResolverChain;
+use Invoker\ParameterResolver\TypeHintResolver;
 use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
 use Workerman\Protocols\Http\Response;
@@ -23,6 +30,11 @@ class HttpServer extends Worker
      */
     private $app;
 
+    /**
+     * @var Invoker
+     */
+    private $invoker;
+
     public function __construct($socket_name = '', array $context_option = array())
     {
         parent::__construct($socket_name, $context_option);
@@ -36,6 +48,8 @@ class HttpServer extends Worker
      */
     public function onWorkerStart($worker)
     {
+        $this->app->startComponents($worker);
+
         //初始化路由
         $routes = $this->app->container->get(Config::class)->get('route', []);
         $this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $c) use ($routes) {
@@ -44,7 +58,18 @@ class HttpServer extends Worker
             }
         });
 
-        $this->app->startComponents($worker);
+        //初始化依赖注入 callable Invoker
+        //此 Invoker 主要加入了 TypeHintResolver，可以调用方法是根据类型注入临时的 Request
+        //否则直接使用 $this->container->call()
+        $parameterResolver = new ResolverChain(array(
+            new NumericArrayResolver,
+            new AssociativeArrayResolver,
+            new DefaultValueResolver,
+            new TypeHintResolver,
+            new TypeHintContainerResolver($this->app->container)
+        ));
+
+        $this->invoker = new Invoker($parameterResolver, $this->app->container);
     }
 
     /**
@@ -82,17 +107,13 @@ class HttpServer extends Worker
                 }
 
                 asyncCall(function() use ($controllerInstance, $action, $connection, $request, $vars) {
-                    //$context = new Context();
-                    //$context->request = $request;
-                    //$context->vars = $vars;
-
                     try {
+                        $vars[Request::class] = $request;
                         //init() 在此处处理协程的返回状态，所以 init 中可以使用协程，需要在控制器初始化时使用协程请在 init 中使用
                         if (method_exists($controllerInstance, 'init')) {
-                            yield wireCall([$controllerInstance, 'init']);
+                            yield wireCall([$controllerInstance, 'init'], $vars, $this->invoker);
                         }
-                        $args = ['request'=>$request] + $vars;
-                        $response = yield wireCall([$controllerInstance, $action], $args);
+                        $response = yield wireCall([$controllerInstance, $action], $vars, $this->invoker);
                         $connection->send($response);
                     } catch (ExitException $e) {
                         $connection->send('');

@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use Amp\Promise;
 use App\Helper\Invoker;
+use App\Redis\Cache;
+use Framework\Base\Config;
 use Framework\Task\Task;
 use Psr\Container\ContainerInterface;
 use Workerman\Protocols\Http\Request;
@@ -29,9 +31,10 @@ class TestController extends \Framework\Base\Controller
 		return json_encode($b);
 	}
 
-	public function request(Request $request, $id, ContainerInterface $container)
+	public function request(Request $req, $id, ContainerInterface $container, Cache $cache)
     {
-        return 'Request, id='.$id;
+        $hello = $container->get(Config::class)->get('components')[0];
+        return 'Request, id='.$id.', name='.$req->get('name').(yield $cache->get('abc', 'def')).$hello;
     }
 
 }

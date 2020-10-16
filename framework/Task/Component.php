@@ -85,7 +85,7 @@ class Component implements \Framework\Base\Component
 
 	private static function connect()
 	{
-        $config = getApp()->container->get(Config::class);
+        $config = di()->get(Config::class);
         list($host, $port) = explode(':', $config->get('server.task_worker.channel_server', '127.0.0.1:2206'));
 		Client::connect($host, $port);
 	}

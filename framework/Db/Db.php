@@ -22,7 +22,7 @@ class Db
     protected static function pool()
     {
         if (self::$pool === null) {
-            $default = getApp()->container->get(Config::class)->get('database.default');
+            $default = di()->get(Config::class)->get('database.default');
 
             //初始化数据库连接池
             $config = ConnectionConfig::fromString("host={$default['host']};user={$default['username']};password={$default['password']};db={$default['database']}");

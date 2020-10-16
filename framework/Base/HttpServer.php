@@ -91,10 +91,6 @@ class HttpServer extends Worker
                         if (method_exists($controllerInstance, 'init')) {
                             yield wireCall([$controllerInstance, 'init']);
                         }
-
-                        //$invoker = new Invoker(null, di());
-                        //$invoker->call();
-                        //TypeHintContainerResolver::class
                         $args = ['request'=>$request] + $vars;
                         $response = yield wireCall([$controllerInstance, $action], $args);
                         $connection->send($response);

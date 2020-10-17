@@ -2,34 +2,27 @@
 
 namespace Framework\Db;
 
-use Amp\Mysql\ConnectionConfig;
 use Amp\Promise;
-use Framework\Base\Config;
-use function Amp\call;
-use function Amp\Mysql\pool;
 
 class Db
 {
 
     /**
-     * @var \Amp\Mysql\Pool
+     * @var Connection[]
      */
-    private static $pool;
+    private static $connections = [];
 
     /**
-     * @return \Amp\Mysql\Pool
+     * @param string $name
+     * @return Connection
      */
-    protected static function pool()
+    protected static function connection($name='default')
     {
-        if (self::$pool === null) {
-            $default = di()->get(Config::class)->get('database.default');
+    	if (isset(self::$connections[$name])) {
+    		return self::$connections[$name];
+	    }
 
-            //初始化数据库连接池
-            $config = ConnectionConfig::fromString("host={$default['host']};user={$default['username']};password={$default['password']};db={$default['database']}");
-            self::$pool = pool($config, $default['pool']['max_connection'], $default['pool']['max_idle_time']);
-        }
-
-        return self::$pool;
+    	return self::$connections[$name] = new Connection($name);
     }
 
     /**
@@ -41,15 +34,7 @@ class Db
      */
     public static function query(string $sql, array $params=[]): Promise
     {
-        if ($params) {
-            return call(function() use ($sql, $params) {
-                $statement = yield self::pool()->prepare($sql);
-                return yield $statement->execute($params);
-            });
-        } else {
-            return self::pool()->query($sql);
-        }
-
+        return self::connection()->query($sql, $params);
     }
 
     /**
@@ -61,7 +46,7 @@ class Db
      */
     public static function execute(string $sql, array $params = []): Promise
     {
-        return self::pool()->execute($sql, $params);
+        return self::connection()->execute($sql, $params);
     }
 
     /**
@@ -72,20 +57,29 @@ class Db
      * @return Promise<\Amp\Mysql\ResultSet>
      */
     public static function fetchOne($sql, array $params=[]): Promise {
-        return call(function() use ($sql, $params) {
-            $result = yield self::query($sql, $params);
+        return self::connection()->fetchOne($sql, $params);
+    }
 
-            if (yield $result->advance()) {
-                $row = $result->getCurrent();
-                //必须持续调用 nextResultSet 或 advance 直到无数据为止
-                //防止资源未释放时后面的查询建立新连接的问题
-                //如果查询出的数据行数大于一条，则仍然可能出现此问题
-                yield $result->nextResultSet();
-                return $row;
-            } else {
-                return null;
-            }
-        });
+    /**
+     * 查询出全部数据
+     *
+     * @param string $sql
+     * @param array $params
+     * @return Promise<\Amp\Mysql\ResultSet>
+     */
+    public static function fetchAll($sql, array $params=[]): Promise {
+        return self::connection()->fetchAll($sql, $params);
+    }
+
+    /**
+     * Construct a query build from table
+     *
+     * @param string $name
+     * @return QueryBuilder
+     */
+    public static function table($name)
+    {
+        return new QueryBuilder($name);
     }
 
 }

@@ -2,10 +2,9 @@
 
 namespace Framework\Base;
 
-use Workerman\Worker;
 use DI\ContainerBuilder;
+use Workerman\Worker;
 use function Amp\asyncCall;
-use function DI\create;
 
 /**
  * 应用程序

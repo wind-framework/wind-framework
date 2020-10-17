@@ -51,12 +51,8 @@ class HttpServer extends Worker
         $this->app->startComponents($worker);
 
         //初始化路由
-        $routes = $this->app->container->get(Config::class)->get('route', []);
-        $this->dispatcher = \FastRoute\simpleDispatcher(function(\FastRoute\RouteCollector $c) use ($routes) {
-            foreach ($routes as $r) {
-                $c->addRoute($r[0], $r[1], $r[2]);
-            }
-        });
+	    $route = $this->app->container->get(Config::class)->get('route');
+        $this->dispatcher = \FastRoute\simpleDispatcher($route);
 
         //初始化依赖注入 callable Invoker
         //此 Invoker 主要加入了 TypeHintResolver，可以调用方法是根据类型注入临时的 Request

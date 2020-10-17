@@ -22,10 +22,8 @@ class DbController extends Controller
         }
     }
 
-    public function soulFind($context)
+    public function soulFind($id)
     {
-        $id = $context->get('vars')['id'];
-
         $result = yield Db::query("SELECT * FROM soul WHERE `id`=?", [$id]);
 
         if (yield $result->advance()) {

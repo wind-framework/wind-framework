@@ -84,47 +84,55 @@ class HttpServer extends Worker
             case Dispatcher::FOUND:
                 list(, $handler, $vars) = $routeInfo;
 
-                if (is_string($handler) && str_contains($handler, '@')) {
-                    list($controller, $action) = explode('@', $handler);
+                if (is_array($handler)) {
+                	list($class, $action) = $handler;
+                } elseif (is_string($handler) && str_contains($handler, '::')) {
+	                list($class, $action) = explode('::', $handler);
+                } elseif (is_callable($handler)) {
+	                $callable = $handler;
                 } else {
-                    list($controller, $action) = $handler;
+	                $this->sendPageNotFound($connection);
+	                return;
                 }
 
-                if (!class_exists($controller)) {
-                    goto notfound;
+                if (isset($class)) {
+	                if (!class_exists($class)) {
+		                $this->sendPageNotFound($connection);
+		                return;
+	                }
+
+                	$reflection = new \ReflectionClass($class);
+                	$method = $reflection->getMethod($action);
+
+                	if ($method->isStatic()) {
+                		$callable = [$class, $action];
+	                } else {
+		                //实例化控制器类不在协程中，所以不能使用协程
+                		$instance = $this->app->container->make($class);
+                		$callable = [$instance, $action];
+	                }
                 }
 
-                //实例化控制器类不在协程中，所以不能使用协程
-                $controllerInstance = $this->app->container->make($controller);
-
-                //if ($controllerInstance instanceof Controller == false) {
-                //    $connection->send(new Response(500, [], "$controller is not a Controller instance."));
-                //    return;
-                //}
-
-                if (!is_callable([$controllerInstance, $action])) {
-                    goto notfound;
-                }
-
-                asyncCall(function() use ($controllerInstance, $action, $connection, $request, $vars) {
+                asyncCall(function() use ($callable, $connection, $request, $vars) {
                     try {
                         $vars[Request::class] = $request;
+
                         //init() 在此处处理协程的返回状态，所以 init 中可以使用协程，需要在控制器初始化时使用协程请在 init 中使用
-                        if (method_exists($controllerInstance, 'init')) {
-                            yield wireCall([$controllerInstance, 'init'], $vars, $this->invoker);
+                        if (is_array($callable) && is_object($callable[0]) && method_exists($callable[0], 'init')) {
+                            yield wireCall([$callable[0], 'init'], $vars, $this->invoker);
                         }
-                        $response = yield wireCall([$controllerInstance, $action], $vars, $this->invoker);
+
+                        $response = yield wireCall($callable, $vars, $this->invoker);
                         $connection->send($response);
                     } catch (ExitException $e) {
                         $connection->send('');
                     } catch (\Throwable $e) {
-                        $connection->send(new Response(500, [], $e->getMessage().'<br><pre>'.$e->getTraceAsString().'</pre>'));
+                        $connection->send(new Response(500, [], '<h1>'.$e->getMessage().'</h1><pre>'.$e->getTraceAsString().'</pre>'));
                     }
                 });
                 break;
             case Dispatcher::NOT_FOUND:
-                notfound:
-                $connection->send(new Response(404, [], "404 Not Found"));
+                $this->sendPageNotFound($connection);
                 break;
             case Dispatcher::METHOD_NOT_ALLOWED:
                 //$allowedMethods = $routeInfo[1];
@@ -132,6 +140,13 @@ class HttpServer extends Worker
                 break;
         }
 
+    }
+
+	/**
+	 * @param TcpConnection $connection
+	 */
+    public function sendPageNotFound($connection) {
+	    $connection->send(new Response(404, [], "<h1>404 Not Found</h1><p>The page you looking for is not found.</p>"));
     }
 
 }

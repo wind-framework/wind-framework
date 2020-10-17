@@ -42,7 +42,7 @@ function wireCall($callable, $args=[], $invoker=null) {
  * @throws Exception
  */
 function done($code=0) {
-    throw new Exception('', $code);
+    throw new \Framework\Base\Exception\ExitException('', $code);
 }
 
 /**

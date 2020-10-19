@@ -23,7 +23,7 @@ return [
     'AbcTestTwo' => [
         'enable' => true,
         'rule' => '*/2 * * * *',
-        'execute' => [App\Task\TestTask::class, 'abc'],
+        'execute' => [App\Task\TestTask::class, 'query'],
         'desc' => '执行ABC测试每隔2分钟'
     ]
 ];

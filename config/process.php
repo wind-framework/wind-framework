@@ -1,5 +1,6 @@
 <?php
 
 return [
-    \App\Process\MyProcess::class
+    App\Process\MyProcess::class,
+    Framework\Crontab\CrontabDispatherProcess::class
 ];

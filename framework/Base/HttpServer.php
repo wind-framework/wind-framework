@@ -3,6 +3,7 @@
 namespace Framework\Base;
 
 use FastRoute\Dispatcher;
+use Framework\Base\Exception\CallableException;
 use Framework\Base\Exception\ExitException;
 use Invoker\Invoker;
 use Invoker\ParameterResolver\AssociativeArrayResolver;
@@ -79,38 +80,15 @@ class HttpServer extends Worker
         switch ($routeInfo[0]) {
             case Dispatcher::FOUND:
                 list(, $handler, $vars) = $routeInfo;
-
-                if (is_array($handler)) {
-                	list($class, $action) = $handler;
-                } elseif (is_string($handler) && str_contains($handler, '::')) {
-	                list($class, $action) = explode('::', $handler);
-                } elseif (is_callable($handler)) {
-	                $callable = $handler;
-                } else {
-	                $this->sendPageNotFound($connection);
-	                return;
-                }
-
-                if (isset($class)) {
-	                if (!class_exists($class)) {
-		                $this->sendPageNotFound($connection);
-		                return;
-	                }
-
-                	$reflection = new \ReflectionClass($class);
-                	$method = $reflection->getMethod($action);
-
-                	if ($method->isStatic()) {
-                		$callable = [$class, $action];
-	                } else {
-		                //实例化控制器类不在协程中，所以不能使用协程
-                		$instance = $this->app->container->make($class);
-                		$callable = [$instance, $action];
-	                }
-                }
-
-                asyncCall(function() use ($callable, $connection, $request, $vars) {
+                try {
                     try {
+                        $callable = wrapCallable($handler, false);
+                    } catch (CallableException $e) {
+                        $this->sendPageNotFound($connection);
+                        return;
+                    }
+
+                    asyncCall(function() use ($callable, $connection, $request, $vars) {
                         $vars[Request::class] = $request;
 
                         //init() 在此处处理协程的返回状态，所以 init 中可以使用协程，需要在控制器初始化时使用协程请在 init 中使用
@@ -120,12 +98,12 @@ class HttpServer extends Worker
 
                         $response = yield wireCall($callable, $vars, $this->invoker);
                         $connection->send($response);
-                    } catch (ExitException $e) {
-                        $connection->send('');
-                    } catch (\Throwable $e) {
-                        $connection->send(new Response(500, [], '<h1>'.$e->getMessage().'</h1><pre>'.$e->getTraceAsString().'</pre>'));
-                    }
-                });
+                    });
+                } catch (ExitException $e) {
+                    $connection->send('');
+                } catch (\Throwable $e) {
+                    $connection->send(new Response(500, [], '<h1>'.$e->getMessage().'</h1><pre>'.$e->getTraceAsString().'</pre>'));
+                }
                 break;
             case Dispatcher::NOT_FOUND:
                 $this->sendPageNotFound($connection);

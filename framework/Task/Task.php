@@ -21,7 +21,7 @@ class Task
 	 * @param mixed ...$args
 	 * @return Promise
 	 */
-	public static function execute(callable $callable, ...$args)
+	public static function execute($callable, ...$args)
 	{
 		if ($callable instanceof \Closure) {
 			throw new \Exception('Can not run closure in Task!');

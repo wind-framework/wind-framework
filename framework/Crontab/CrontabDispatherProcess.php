@@ -62,7 +62,7 @@ class CrontabDispatherProcess extends Process
         $nextTime = $cron->getNextRunDate()->getTimestamp();
         $offset = $nextTime - $now;
         Timer::add($offset, [$this, 'check'], [$cron, true], false);
-        echo "{$cron->name} will run after $offset seconds.\n";
+        Worker::log("[Crontab] {$cron->name} will run after $offset seconds.");
     }
 
 }

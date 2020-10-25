@@ -19,4 +19,7 @@ return function(RouteCollector $r) {
 			return $req->uri();
 		});
 	});
+
+	$r->addRoute('GET', '/static/{filename:.+}', '\Framework\Base\FileServer::sendStatic');
+	$r->addRoute('GET', '/{filename:favicon\.ico}', '\Framework\Base\FileServer::sendStatic');
 };

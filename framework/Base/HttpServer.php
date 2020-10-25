@@ -113,7 +113,6 @@ class HttpServer extends Worker
                 $connection->send(new Response(405, [],"Method Not Allowed"));
                 break;
         }
-
     }
 
 	/**

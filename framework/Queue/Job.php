@@ -5,6 +5,6 @@ namespace Framework\Queue;
 abstract class Job
 {
 
-    abstract public function consume();
+    abstract public function handle();
 
 }

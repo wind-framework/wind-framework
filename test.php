@@ -23,11 +23,13 @@ $worker->onWorkerStart = function() {
         yield $client->connect();
         echo "Producer connect success.\n";
 
-        for ($i=0; $i<1000; $i++) {
-            echo "producer\n";
-            $result = yield $client->put("Hello World");
-            print_r($result);
+        for ($i=0; $i<2; $i++) {
+            echo "--producer ";
+            $id = yield $client->put("Hello World");
+            echo $id."--\n";
         }
+
+        echo "Put finished.\n";
     });
 
     asyncCall(function() {
@@ -39,7 +41,7 @@ $worker->onWorkerStart = function() {
         while ($data = yield $client->reserve()) {
             print_r($data);
             yield $client->delete($data['id']);
-            yield delay(100);
+            yield delay(10);
         }
     });
 };

@@ -54,17 +54,17 @@ class BeanstalkClient
                     yield $this->useTube($this->tubeUsed);
                 }
 
-                $ignoreDefault = true;
+                $watchDefault = false;
 
                 foreach ($this->watchTubes as $tube) {
                     if ($tube == 'default') {
-                        $watchDefault = false;
+                        $watchDefault = true;
                     } else {
                         yield $this->watch($tube);
                     }
                 }
 
-                if ($watchDefault) {
+                if (!$watchDefault) {
                     yield $this->ignore('default');
                 }
             });
@@ -399,6 +399,8 @@ class BeanstalkClient
         
         $defer = new Deferred;
 
+        //Todo: 在接收超长内容时，可能因为分包多次接收到 onMessage 内容，而导致 Promise 被多次 resolve 而报错
+        //此时接收的内容也不完整，需要通过返回包长持续读取数据，或使用 Workerman 协议处理
         $this->connection->onMessage = function($connection, $recv) use ($defer) {
             $metaEnd = strpos($recv, "\r\n");
             $meta = explode(' ', substr($recv, 0, $metaEnd));

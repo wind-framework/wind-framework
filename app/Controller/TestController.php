@@ -35,6 +35,11 @@ class TestController extends \Framework\Base\Controller
     {
         $hello = $container->get(Config::class)->get('components')[0];
         return 'Request, id='.$id.', name='.$req->get('name').(yield $cache->get('abc', 'def')).$hello;
-    }
+	}
+	
+	public function queue()
+	{
+		
+	}
 
 }

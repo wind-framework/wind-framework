@@ -144,13 +144,14 @@ class BeanstalkClient
 		}
         
         return call(function() {
-            $res = yield $this->recv();
+            $res = yield $this->recv(true, 1);
 
             if ($res['status'] == 'RESERVED') {
                 list($id, $bytes) = $res['meta'];
                 return [
                     'id' => $id,
-                    'body' => substr($res['body'], 0, $bytes)
+                    'body' => $res['body'],
+                    'bytes' => $bytes
                 ];
             } else {
                 $this->setError($res['status']);
@@ -240,13 +241,14 @@ class BeanstalkClient
 	protected function peekRead()
 	{
         return call(function() {
-            $res = yield $this->recv();
+            $res = yield $this->recv(true, 1);
 
             if ($res['status'] == 'FOUND') {
                 list($id, $bytes) = $res['meta'];
                 return [
                     'id' => $id,
-                    'body' => substr($res['body'], 0, $bytes)
+                    'body' => $res['body'],
+                    'bytes' => $bytes
                 ];
             } else {
                 $this->setError($res['status']);
@@ -324,13 +326,10 @@ class BeanstalkClient
 	protected function statsRead()
 	{
         return call(function() {
-            $res = yield $this->recv();
+            $res = yield $this->recv(true, 0);
 
             if ($res['status'] == 'OK') {
-                list($bytes) = $res['meta'];
-                $body = trim($res['body']);
-            
-                $data = array_slice(explode("\n", $body), 1);
+                $data = array_slice(explode("\n", $res['body']), 1);
                 $result = [];
     
                 foreach ($data as $row) {
@@ -391,7 +390,14 @@ class BeanstalkClient
 		return $this->connection->send($cmd);
 	}
 
-	protected function recv()
+    /**
+     * 接收数据
+     *
+     * @param bool $chunk 是否大数据分块模式
+     * @param int $bytesMetaPos 大数据分块长度数据所在位置，即状态如 "RESERVED" 后的描述，从0开始
+     * @return void
+     */
+	protected function recv($chunk=false, $bytesMetaPos=0)
 	{
 		if (!$this->connected) {
 			throw new \RuntimeException('No connection found while reading data from socket.');
@@ -399,22 +405,31 @@ class BeanstalkClient
         
         $defer = new Deferred;
 
-        //Todo: 在接收超长内容时，可能因为分包多次接收到 onMessage 内容，而导致 Promise 被多次 resolve 而报错
-        //此时接收的内容也不完整，需要通过返回包长持续读取数据，或使用 Workerman 协议处理
-        $this->connection->onMessage = function($connection, $recv) use ($defer) {
-            $metaEnd = strpos($recv, "\r\n");
-            $meta = explode(' ', substr($recv, 0, $metaEnd));
-            $status = array_shift($meta);
-    
+        $data = [
+            'status' => '',
+            'meta' => [],
+            'body' => ''
+        ];
+
+        $this->connection->onMessage = function($connection, $recv) use ($defer, $chunk, &$data, $bytesMetaPos) {
             if ($this->debug) {
                 $this->wrap($recv, false);
             }
-    
-            $defer->resolve([
-                'status' => $status,
-                'meta' => $meta,
-                'body' => substr($recv, $metaEnd+2)
-            ]);
+
+            //首次读取头部，多次则追加数据直到达到指定字节数为止
+            if ($data['status'] == '') {
+                $metaEnd = strpos($recv, "\r\n");
+                $meta = explode(' ', substr($recv, 0, $metaEnd));
+                $data['status'] = array_shift($meta);
+                $data['meta'] = $meta;
+                $data['body'] = $chunk ? substr($recv, $metaEnd+2, $meta[$bytesMetaPos]) : substr($recv, $metaEnd+2);
+            } else {
+                $data['body'] .= substr($recv, 0, $data['meta'][$bytesMetaPos]-strlen($data['body']));
+            }
+
+            if (!$chunk || strlen($data['body']) == $data['meta'][$bytesMetaPos]) {
+                $defer->resolve($data);
+            }
         };
 
         return $defer->promise();

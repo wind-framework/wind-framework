@@ -23,7 +23,7 @@ $worker->onWorkerStart = function() {
         yield $client->connect();
         echo "Producer connect success.\n";
 
-        for ($i=0; $i<2; $i++) {
+        for ($i=0; $i<1000; $i++) {
             echo "--producer ";
             $id = yield $client->put("Hello World");
             echo $id."--\n";

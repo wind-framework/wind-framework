@@ -9,6 +9,8 @@ use RuntimeException;
 use function Amp\call;
 
 use function Amp\asyncCall;
+use function Amp\delay;
+
 use Framework\Utils\ArrayUtil;
 
 use Workerman\Connection\AsyncTcpConnection;
@@ -19,13 +21,13 @@ class BeanstalkClient
 	const DEFAULT_PRI = 60;
 	const DEFAULT_TTR = 30;
 
-	private $config;
+    private $autoReconnect;
+    
 	private $connection;
     private $connected = false;
 
     private $tubeUsed = 'default';
     private $watchTubes = ['default'];
-    private $reserveCmd = '';
 
     private $onConnectCallback = null;
     private $onErrorCallback = null;
@@ -36,7 +38,16 @@ class BeanstalkClient
      *
      * @var Deferred
      */
-    public $reading = null;
+    public $pending = null;
+
+    /**
+     * 发送中的命令
+     * 
+     * 用于发送时中断后的命令恢复
+     *
+     * @var array|null
+     */
+    private $sending = null;
 
 	public $debug = false;
 
@@ -47,11 +58,12 @@ class BeanstalkClient
 	 * @param int $port
 	 * @param int $connectTimeout Connect timeout, -1 means never timeout.
 	 * @param int $timeout Read, write timeout, -1 means never timeout.
+     * @param bool $autoReconnect 是否断线自动重连，自动重连将会自动恢复以往正在发送的命令和动作
 	 */
-	public function __construct($host='127.0.0.1', $port=11300, $connectTimeout=1, $timeout=-1)
+	public function __construct($host='127.0.0.1', $port=11300, $connectTimeout=1, $timeout=-1, $autoReconnect=false)
 	{
-        $this->config = compact('host', 'port');
-        $this->connection = new AsyncTcpConnection("tcp://{$this->config['host']}:{$this->config['port']}");
+        $this->autoReconnect = $autoReconnect;
+        $this->connection = new AsyncTcpConnection("tcp://$host:$port");
 	}
 
 	public function connect()
@@ -60,39 +72,53 @@ class BeanstalkClient
 			return new Success();
         }
 
-        $this->connection->onConnect = function(...$args) {
+        $this->connection->onConnect = function() {
             $this->connected = true;
 
             //重连后恢复相应 tube 的监听和使用
-            asyncCall(function() use ($args) {
-                if ($this->tubeUsed != 'default') {
-                    yield $this->useTube($this->tubeUsed);
-                }
-
-                $watchDefault = false;
-
-                foreach ($this->watchTubes as $tube) {
-                    if ($tube == 'default') {
-                        $watchDefault = true;
-                    } else {
-                        yield $this->watch($tube);
+            if ($this->autoReconnect) {
+                asyncCall(function() {
+                    $pending = $this->pending;
+                    $sending = $this->sending;
+                    $this->pending = $this->sending = null;
+    
+                    if ($this->tubeUsed != 'default') {
+                        yield $this->useTube($this->tubeUsed);
                     }
-                }
+    
+                    $watchDefault = false;
+    
+                    foreach ($this->watchTubes as $tube) {
+                        if ($tube == 'default') {
+                            $watchDefault = true;
+                        } else {
+                            yield $this->watch($tube);
+                        }
+                    }
+    
+                    if (!$watchDefault) {
+                        yield $this->ignore('default');
+                    }
+    
+                    if (is_callable($this->onConnectCallback)) {
+                        call_user_func($this->onConnectCallback);
+                        $this->onConnectCallback = null;
+                    }
 
-                if (!$watchDefault) {
-                    yield $this->ignore('default');
-                }
-
+                    //恢复上次的命令执行
+                    if ($sending) {
+                        call_user_func_array([$this, 'send'], $sending)->onResolve(function($e, $v) use ($pending) {
+                            $e ? $pending->fail($e) : $pending->resolve($v);
+                        });
+                    }
+                });
+            } else {
                 if (is_callable($this->onConnectCallback)) {
-                    call_user_func_array($this->onConnectCallback, $args);
+                    call_user_func($this->onConnectCallback);
                     $this->onConnectCallback = null;
                 }
-
-                if ($this->reading) {
-                    $this->reading->fail(new RuntimeException('Connection closed.'));
-                    $this->reading = null;
-                }
-            });
+            }
+ 
         };
         
         $this->connection->onError = function($connection, $code, $message) {
@@ -107,9 +133,15 @@ class BeanstalkClient
             echo "Detect connection closed\n";
             $this->connected = false;
 
-            if ($this->reading) {
-                $this->reading->fail(new RuntimeException('Connection closed.'));
-                $this->reading = null;
+            if ($this->autoReconnect) {
+                //自动重连时等待并尝试重连
+                delay(2000)->onResolve(function() {
+                    $this->connect();
+                });
+            } elseif ($this->pending) {
+                //不自动重连时，断开连接之前的动作抛出异常
+                $this->pending->fail(new RuntimeException('Disconnected.'));
+                $this->pending = null;
             }
 
             if (is_callable($this->onCloseCallback)) {
@@ -186,12 +218,9 @@ class BeanstalkClient
 	public function reserve($timeout=null)
 	{
         $cmd = isset($timeout) ? sprintf('reserve-with-timeout %d', $timeout) : 'reserve';
-        $this->reserveCmd = $cmd;
         
         return call(function() use ($cmd) {
             $res = yield $this->send($cmd, null, true, 1);
-            $this->reserveCmd = '';
-
             if ($res['status'] == 'RESERVED') {
                 list($id, $bytes) = $res['meta'];
                 return [
@@ -423,8 +452,7 @@ class BeanstalkClient
             }
 
             if (!$chunk || strlen($data['body']) == $data['meta'][$bytesMetaPos]) {
-                $connection->onMessage = null;
-                $this->reading = null;
+                $connection->onMessage = $this->pending = $this->sending = null;
                 if ($status !== null) {
                     //消息状态确认
                     if ($data['status'] != $status) {
@@ -438,18 +466,20 @@ class BeanstalkClient
             }
         };
 
-        
-        //发送命令
+        //记录发送中的调用参数
+        if ($this->autoReconnect) {
+            $this->sending = func_get_args();
+        }
+
+        //发送命令 
         $cmd .= "\r\n";
-        
-        // debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 20);
 
 		if ($this->debug) {
 			$this->wrap($cmd, true);
         }
 
         $this->connection->send($cmd);
-        $this->reading = $defer;
+        $this->pending = $defer;
 
         return $defer->promise();
 	}

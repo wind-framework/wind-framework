@@ -46,7 +46,7 @@ $worker->onWorkerStart = function() {
     */
 
     asyncCall(function() {
-        $client = new BeanstalkClient('192.168.4.2');
+        $client = new BeanstalkClient('192.168.4.2', 11300, 0, 0, true);
         $client->debug = true;
 
         delay(2000)->onResolve(function() use ($client) {
@@ -56,11 +56,11 @@ $worker->onWorkerStart = function() {
                 echo "After close connection\n";
     
                 echo "Wait for reconnect\n";
-                yield delay(1500);
+                // yield delay(1500);
 
-                echo "Reconnect\n";
-                yield $client->connect();
-                echo "Reconnect success.\n";
+                // echo "Reconnect\n";
+                // yield $client->connect();
+                // echo "Reconnect success.\n";
     
                 // echo "Start watch\n";
                 // yield $client->watch('test');
@@ -68,15 +68,15 @@ $worker->onWorkerStart = function() {
                 // echo "Start ignore\n";
                 // yield $client->ignore('default');
         
-                try {
-                    while ($data = yield $client->reserve()) {
-                        print_r($data);
-                        yield $client->delete($data['id']);
-                        yield delay(10);
-                    }
-                } catch (Exception $e) {
-                    echo 'Reserve Error: '.dumpException($e);
-                }
+                // try {
+                //     while ($data = yield $client->reserve()) {
+                //         print_r($data);
+                //         yield $client->delete($data['id']);
+                //         yield delay(10);
+                //     }
+                // } catch (Exception $e) {
+                //     echo 'Reserve Error: '.dumpException($e);
+                // }
             });
         });
 

@@ -2,6 +2,7 @@
 
 namespace App\Job;
 
+use Framework\Db\Db;
 use Framework\Queue\Job;
 
 class TestJob extends Job
@@ -16,7 +17,12 @@ class TestJob extends Job
 
     public function handle()
     {
-        echo "Handle job get value: {$this->value}";
+        echo "Handle job get value: {$this->value}\n";
+
+        $row = yield Db::fetchOne("show global status like 'uptime'");
+
+        print_r($row);
+        echo "\r\n";
     }
 
 }

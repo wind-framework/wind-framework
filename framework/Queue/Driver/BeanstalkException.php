@@ -1,6 +1,6 @@
 <?php
 
-namespace Framework\Queue;
+namespace Framework\Queue\Driver;
 
 use Exception;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Framework\Queue;
+namespace Framework\Queue\Driver;
 
 use Amp\Success;
 use Amp\Deferred;
@@ -144,7 +144,7 @@ class BeanstalkClient
             } elseif ($this->pending) {
                 //不自动重连时，断开连接之前的动作抛出异常
                 $this->pending->fail(new BeanstalkException('Disconnected.'));
-                $this->pending = null;
+                $this->pending = $this->connectDefer = null;
             }
 
             if (is_callable($this->onCloseCallback)) {

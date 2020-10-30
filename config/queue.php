@@ -7,6 +7,6 @@ return [
         'port' => 11300,
         'tube' => 'workman-amp',
         'processes' => 1,
-        'concurrent' => 1
+        'concurrent' => 4
     ]
 ];

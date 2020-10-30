@@ -57,6 +57,7 @@ class QueueConsumerProcess extends Process
                         $ex = get_class($e);
                         $code = $e->getCode();
                         $msg = $e->getMessage();
+                        //Todo: 消费失败重试机制
                         Worker::log("[Queue] Consume $jobClass  error because: $ex: [$code] $msg");
                     }
                 }

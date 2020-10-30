@@ -2,19 +2,20 @@
 
 namespace Framework\Queue;
 
-use Exception;
 use Amp\Success;
 use Amp\Deferred;
-use RuntimeException;
 use function Amp\call;
 
-use function Amp\asyncCall;
 use function Amp\delay;
+use function Amp\asyncCall;
 
 use Framework\Utils\ArrayUtil;
 
 use Workerman\Connection\AsyncTcpConnection;
 
+/**
+ * 协程 Beanstalk 客户端
+ */
 class BeanstalkClient
 {
 
@@ -38,7 +39,8 @@ class BeanstalkClient
      *
      * @var Deferred
      */
-    public $pending = null;
+    private $pending = null;
+    private $connectDefer = null;
 
     /**
      * 发送中的命令
@@ -74,6 +76,7 @@ class BeanstalkClient
 
         $this->connection->onConnect = function() {
             $this->connected = true;
+            $this->connectDefer = null;
 
             //重连后恢复相应 tube 的监听和使用
             if ($this->autoReconnect) {
@@ -118,7 +121,6 @@ class BeanstalkClient
                     $this->onConnectCallback = null;
                 }
             }
- 
         };
         
         $this->connection->onError = function($connection, $code, $message) {
@@ -130,17 +132,18 @@ class BeanstalkClient
         };
 
         $this->connection->onClose = function() {
-            echo "Detect connection closed\n";
+            echo "Disconnected.\n";
             $this->connected = false;
 
             if ($this->autoReconnect) {
                 //自动重连时等待并尝试重连
+                echo "Reconnect after 2 seconds.\n";
                 delay(2000)->onResolve(function() {
                     $this->connect();
                 });
             } elseif ($this->pending) {
                 //不自动重连时，断开连接之前的动作抛出异常
-                $this->pending->fail(new RuntimeException('Disconnected.'));
+                $this->pending->fail(new BeanstalkException('Disconnected.'));
                 $this->pending = null;
             }
 
@@ -150,17 +153,20 @@ class BeanstalkClient
             }
         };
 
-        $defer = new Deferred();
+        $defer = $this->connectDefer ?? new Deferred();
         
         $this->onConnectCallback = function() use ($defer) {
             $defer->resolve();
         };
 
-        $this->onErrorCallback = function($connection, $code, $message) use ($defer) {
-            $defer->fail(new RuntimeException($code, $message));
-        };
+        if (!$this->autoReconnect) {
+            $this->onErrorCallback = function($connection, $code, $message) use ($defer) {
+                $defer->fail(new BeanstalkException($message, $code));
+            };
+        }
 
         $this->connection->connect();
+        $this->connectDefer = $defer;
 
         return $defer->promise();
     }
@@ -197,7 +203,7 @@ class BeanstalkClient
             if ($res['status'] == 'INSERTED') {
                 return $res['meta'][0];
             } else {
-                throw new Exception($res['status']);
+                throw new BeanstalkException($res['status']);
             }
         });
 	}
@@ -210,7 +216,7 @@ class BeanstalkClient
                 $this->tubeUsed = $tube;
                 return true;
             } else {
-                throw new Exception($ret['status'].": Use tube $tube failed.");
+                throw new BeanstalkException($ret['status'].": Use tube $tube failed.");
             }
         });
 	}
@@ -229,7 +235,7 @@ class BeanstalkClient
                     'bytes' => $bytes
                 ];
             } else {
-                throw new Exception($res['status']);
+                throw new BeanstalkException($res['status']);
             }
         });
 	}
@@ -265,7 +271,7 @@ class BeanstalkClient
                 }
                 return $res['meta'][0];
             } else {
-                throw new Exception($res['status']);
+                throw new BeanstalkException($res['status']);
             }
         });
 	}
@@ -279,7 +285,7 @@ class BeanstalkClient
                 ArrayUtil::removeElement($this->watchTubes, $tube);
                 return $res['meta'][0];
             } else {
-                throw new Exception($res['status']);
+                throw new BeanstalkException($res['status']);
             }
         });
 	}
@@ -317,7 +323,7 @@ class BeanstalkClient
                     'bytes' => $bytes
                 ];
             } else {
-                throw new Exception($res['status']);
+                throw new BeanstalkException($res['status']);
             }
         });
 	}
@@ -330,7 +336,7 @@ class BeanstalkClient
             if ($res['status'] == 'KICKED') {
                 return $res['meta'][0];
             } else {
-                throw new Exception($res['status']);
+                throw new BeanstalkException($res['status']);
             }
         });
 	}
@@ -367,7 +373,7 @@ class BeanstalkClient
             if ($res['status'] == 'USING') {
                 return $res['meta'][0];
             } else {
-                throw new Exception($res['status']);
+                throw new BeanstalkException($res['status']);
             }
         });
 	}
@@ -402,7 +408,7 @@ class BeanstalkClient
                 }
                 return $result;
             } else {
-                throw new Exception($res['status']);
+                throw new BeanstalkException($res['status']);
             }
         });
 	}
@@ -424,7 +430,7 @@ class BeanstalkClient
 	protected function send($cmd, $status=null, $chunk=false, $bytesMetaPos=0)
 	{
 		if (!$this->connected) {
-			throw new \RuntimeException('No connecting found while writing data to socket.');
+			throw new BeanstalkException('No connecting found while writing data to socket.');
 		}
         
         $defer = new Deferred;
@@ -456,7 +462,7 @@ class BeanstalkClient
                 if ($status !== null) {
                     //消息状态确认
                     if ($data['status'] != $status) {
-                        $defer->fail(new \Exception($data['status']));
+                        $defer->fail(new BeanstalkException($data['status']));
                     } else {
                         $defer->resolve();
                     }

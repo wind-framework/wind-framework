@@ -49,55 +49,24 @@ $worker->onWorkerStart = function() {
         $client = new BeanstalkClient('192.168.4.2', 11300, 0, 0, true);
         $client->debug = true;
 
-        delay(2000)->onResolve(function() use ($client) {
-            asyncCall(function() use ($client) {
-                echo "Before close connection\n";
-                yield $client->close();
-                echo "After close connection\n";
-    
-                echo "Wait for reconnect\n";
-                // yield delay(1500);
-
-                // echo "Reconnect\n";
-                // yield $client->connect();
-                // echo "Reconnect success.\n";
-    
-                // echo "Start watch\n";
-                // yield $client->watch('test');
-    
-                // echo "Start ignore\n";
-                // yield $client->ignore('default');
-        
-                // try {
-                //     while ($data = yield $client->reserve()) {
-                //         print_r($data);
-                //         yield $client->delete($data['id']);
-                //         yield delay(10);
-                //     }
-                // } catch (Exception $e) {
-                //     echo 'Reserve Error: '.dumpException($e);
-                // }
-            });
-        });
-
-        echo "Start connect\n";
-        yield $client->connect();
-        echo "Connect success.\n";
-
-        echo "Start watch\n";
-        yield $client->watch('test');
-
-        echo "Start ignore\n";
-        yield $client->ignore('default');
-
         try {
+            echo "Start connect\n";
+            yield $client->connect();
+            echo "Connect success.\n";
+
+            echo "Start watch\n";
+            yield $client->watch('test');
+
+            echo "Start ignore\n";
+            yield $client->ignore('default');
+
             while ($data = yield $client->reserve()) {
                 print_r($data);
                 yield $client->delete($data['id']);
                 yield delay(10);
             }
-        } catch (Exception $e) {
-            echo 'Reserve Error: '.dumpException($e);
+        } catch (\Exception $e) {
+            echo dumpException($e);
         }
     });
 };

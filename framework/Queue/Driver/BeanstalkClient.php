@@ -4,6 +4,7 @@ namespace Framework\Queue\Driver;
 
 use Amp\Success;
 use Amp\Deferred;
+use Amp\Promise;
 use function Amp\call;
 
 use function Amp\delay;
@@ -19,7 +20,7 @@ use Workerman\Connection\AsyncTcpConnection;
 class BeanstalkClient
 {
 
-	const DEFAULT_PRI = 60;
+	const DEFAULT_PRI = 1024;
 	const DEFAULT_TTR = 30;
 
     private $autoReconnect;
@@ -58,16 +59,21 @@ class BeanstalkClient
 	 *
 	 * @param string $host
 	 * @param int $port
-	 * @param int $connectTimeout Connect timeout, -1 means never timeout.
-	 * @param int $timeout Read, write timeout, -1 means never timeout.
-     * @param bool $autoReconnect 是否断线自动重连，自动重连将会自动恢复以往正在发送的命令和动作
+     * @param bool $autoReconnect 是否断线自动重连，自动重连将会自动恢复以往正在发送的命令和动作（主动调用 close 不会）
 	 */
-	public function __construct($host='127.0.0.1', $port=11300, $connectTimeout=1, $timeout=-1, $autoReconnect=false)
+	public function __construct($host='127.0.0.1', $port=11300, $autoReconnect=false)
 	{
         $this->autoReconnect = $autoReconnect;
         $this->connection = new AsyncTcpConnection("tcp://$host:$port");
 	}
 
+    /**
+     * 连接到服务器
+     * 
+     * 在使用任何命令前，需先连接到服务器
+     * 
+     * @return Promise<bool>
+     */
 	public function connect()
 	{
 		if ($this->connected) {
@@ -172,9 +178,13 @@ class BeanstalkClient
     }
     
     /**
-     * 关闭连接
+     * 主动关闭连接
+     * 
+     * 注意
+     * 主动关闭连接后再重新调用 connect() 连接成功并不会恢复之前的监控与 reserve 命令状态。
+     * 主动关闭连接后并不会触发重新连接。
      *
-     * @return \Amp\Promise
+     * @return Promise
      */
     public function close()
     {
@@ -184,15 +194,34 @@ class BeanstalkClient
 
         $defer = new Deferred();
 
-        $this->onCloseCallback = function() use ($defer) {
+        $reconnect = $this->autoReconnect;
+        $this->autoReconnect = false;
+
+        $this->onCloseCallback = function() use ($defer, $reconnect) {
+            $this->tubeUsed = 'default';
+            $this->watchTubes = ['default'];
+            $this->sending = null;
+            $this->autoReconnect = $reconnect;
             $defer->resolve();
         };
 
-        $this->connection->destroy();
+        //尽量使用 quit 命令断开连接
+        if ($this->pending || $this->connection->send("quit\r\n") === false) {
+            $this->connection->destroy();
+        }
 
         return $defer->promise();
     }
 
+    /**
+     * 向队列中存入消息
+     *
+     * @param string $data 消息内容
+     * @param int $pri 消息优先级，数字越小越优先，范围是2^32正整数（0-4,294,967,295)，默认为 1024
+     * @param int $delay 消息延迟秒数，默认0为不延迟
+     * @param int $ttr 消息处理时间，当消息被 RESERVED 后，超出此时间状态未发生变更，则重新回到 ready 队列，最小值为1
+     * @return Promise<int> 成功返回消息ID
+     */
 	public function put($data, $pri=self::DEFAULT_PRI, $delay=0, $ttr=self::DEFAULT_TTR)
 	{
         $cmd = sprintf("put %d %d %d %d\r\n%s", $pri, $delay, $ttr, strlen($data), $data);
@@ -208,6 +237,15 @@ class BeanstalkClient
         });
 	}
 
+    /**
+     * 使用指定 Tube
+     * 
+     * 用于生产者。
+     * 指定 put 命令存入消息的 tube 名称，不指定时默认为 default。
+     *
+     * @param string $tube
+     * @return Promise<bool>
+     */
 	public function useTube($tube)
 	{
         return call(function() use ($tube) {
@@ -221,6 +259,12 @@ class BeanstalkClient
         });
 	}
 
+    /**
+     * 取出（预订）消息
+     *
+     * @param int $timeout 取出消息的超时时间秒数，默认不超时，若设置了时间，当达到时间仍没有消息则返回 TIMED_OUT 异常消息
+     * @return Promise<array> 返回数组包含以下字段，id: 消息ID, body: 消息内容, bytes: 消息内容长度
+     */
 	public function reserve($timeout=null)
 	{
         $cmd = isset($timeout) ? sprintf('reserve-with-timeout %d', $timeout) : 'reserve';
@@ -240,26 +284,66 @@ class BeanstalkClient
         });
 	}
 
+    /**
+     * 删除消息
+     *
+     * @param int $id
+     * @return Promise<bool>
+     */
 	public function delete($id)
 	{
 		return $this->send(sprintf('delete %d', $id), 'DELETED');
 	}
 
+    /**
+     * 将消息重新放回 ready 队列
+     *
+     * @param int $id 消息ID
+     * @param int $pri 消息优先级，与 put 一致
+     * @param int $delay 消息延迟时间，与 put 一致
+     * @return Promise<bool>
+     */
 	public function release($id, $pri=self::DEFAULT_PRI, $delay=0)
 	{
 		return $this->send(sprintf('release %d %d %d', $id, $pri, $delay), 'RELEASED');
 	}
 
+    /**
+     * 将消息放入 Buried（失败）队列
+     *
+     * 放入 buried 队列后的消息可以由 kick 唤醒
+     * 
+     * @param int $id
+     * @return void
+     */
 	public function bury($id)
 	{
 		return $this->send(sprintf('bury %d', $id), 'BURIED');
 	}
 
+    /**
+     * 延续消息处理时间
+     * 
+     * 在处理期间的消息可以通过 touch 延迟 ttr 时间，当调用 touch 后，消息的 ttr 的时间将从头算起。
+     *
+     * @param int $id
+     * @return void
+     */
 	public function touch($id)
 	{
 		return $this->send(sprintf('touch %d', $id), 'TOUCHED');
 	}
 
+    /**
+     * 监控指定 tube 的消息
+     * 
+     * 默认监控 default 的 tube 消息，调用此方法将添加更多的 tube 到监控中。
+     * 可以使用 ignore 来取消指定 tube 的监控，如果连接断开后监控将重置为 default。
+     * 如果 autoReconnect 设为 true，则自动重连成功后会继续保持之前的监控。
+     *
+     * @param string $tube
+     * @return void
+     */
 	public function watch($tube)
 	{
         return call(function() use ($tube) {
@@ -276,6 +360,14 @@ class BeanstalkClient
         });
 	}
 
+    /**
+     * 忽略指定 Tube 的监控
+     * 
+     * 忽略后的 tube 将不再获取其消息，同 watch，当 autoReconnect 为 true 时，则自动重连后将会继续忽略之前的设定。
+     *
+     * @param string $tube
+     * @return void
+     */
 	public function ignore($tube)
 	{
         return call(function() use ($tube) {
@@ -290,26 +382,54 @@ class BeanstalkClient
         });
 	}
 
+    /**
+     * 检查指定的消息
+     * 
+     * 获取指定的消息内容，但不会改变消息状态
+     *
+     * @param int $id
+     * @return Promise<array> 返回内容与 reserve 一致
+     */
 	public function peek($id)
 	{
 		return $this->peekRead(sprintf('peek %d', $id));
 	}
 
+    /**
+     * 检查就绪队列中的下一条消息
+     *
+     * @return Promise<array>
+     */
 	public function peekReady()
 	{
 		return $this->peekRead('peek-ready');
 	}
 
+    /**
+     * 检查延迟队列中的下一条消息
+     * 
+     * @return Promise<array>
+     */
 	public function peekDelayed()
 	{
 		return $this->peekRead('peek-delayed');
 	}
 
+    /**
+     * 检查失败队列中的下一条消息
+     * 
+     * @return Promise<array>
+     */
 	public function peekBuried()
 	{
 		return $this->peekRead('peek-buried');
 	}
 
+    /**
+     * 读取 peek 相应命令的响应
+     * 
+     * @return Promise<array>
+     */
 	protected function peekRead($cmd)
 	{
         return call(function() use ($cmd) {
@@ -328,6 +448,12 @@ class BeanstalkClient
         });
 	}
 
+    /**
+     * 将失败队列中的消息重新踢致就绪或延迟队列中
+     *
+     * @param int $bound 踢出的消息数量上限
+     * @return Promise<int> 返回实际踢出的消息数量
+     */
 	public function kick($bound)
 	{
         return call(function() use ($bound) {
@@ -341,31 +467,64 @@ class BeanstalkClient
         });
 	}
 
+    /**
+     * 将指定的消息踢出到就绪或延迟队列中
+     *
+     * @param int $id
+     * @return Promise<bool>
+     */
 	public function kickJob($id)
 	{
 		return $this->send(sprintf('kick-job %d', $id), 'KICKED');
 	}
 
+    /**
+     * 统计消息相关信息
+     *
+     * @param int $id
+     * @return Promise<array>
+     */
 	public function statsJob($id)
 	{
 		return $this->statsRead(sprintf('stats-job %d', $id));
 	}
 
+    /**
+     * 统计 Tube 相关信息
+     *
+     * @param string $tube
+     * @return Promise<array>
+     */
 	public function statsTube($tube)
 	{
 		return $this->statsRead(sprintf('stats-tube %s', $tube));
 	}
 
+    /**
+     * 返回服务器相关信息
+     *
+     * @return Promise<array>
+     */
 	public function stats()
 	{
 		return $this->statsRead('stats');
 	}
 
+    /**
+     * 列出所在存在的 Tube
+     * 
+     * @return Promise<array>
+     */
 	public function listTubes()
 	{
 		return $this->statsRead('list-tubes');
 	}
 
+    /**
+     * 检查当前客户端正在使用的 tube
+     *
+     * @return Promise<string>
+     */
 	public function listTubeUsed()
 	{
         return call(function() {
@@ -378,11 +537,22 @@ class BeanstalkClient
         });
 	}
 
+    /**
+     * 列出当前监控的 tube
+     *
+     * @return Promise<array>
+     */
 	public function listTubesWatched()
 	{
 		return $this->statsRead('list-tubes-watched');
 	}
 
+    /**
+     * 读取返回的统计或列表信息
+     *
+     * @param string $cmd
+     * @return Promise<array>
+     */
 	protected function statsRead($cmd)
 	{
         return call(function() use ($cmd) {
@@ -413,6 +583,13 @@ class BeanstalkClient
         });
 	}
 
+    /**
+     * 暂停指定 Tube 的消息分发直至指定的延迟时间
+     *
+     * @param string $tube 要暂停的 Tube
+     * @param int $delay 延迟时间秒数
+     * @return Promise<bool>
+     */
 	public function pauseTube($tube, $delay)
 	{
 		return $this->send(sprintf('pause-tube %s %d', $tube, $delay), 'PAUSED');
@@ -472,7 +649,7 @@ class BeanstalkClient
             }
         };
 
-        //记录发送中的调用参数
+        //记录发送中的调用参数以供失败重连后继续处理
         if ($this->autoReconnect) {
             $this->sending = func_get_args();
         }
@@ -488,14 +665,6 @@ class BeanstalkClient
         $this->pending = $defer;
 
         return $defer->promise();
-	}
-
-	public function disconnect()
-	{
-		if ($this->connected) {
-			$this->send('quit');
-			$this->connection->close();
-		}
 	}
 
 	protected function wrap($output, $out)

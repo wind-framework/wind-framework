@@ -8,7 +8,7 @@ use function Amp\asyncCall;
 use function Amp\asyncCoroutine;
 use function Amp\coroutine;
 
-use Framework\Queue\BeanstalkClient;
+use Framework\Queue\Driver\BeanstalkClient;
 
 require __DIR__.'/vendor/autoload.php';
 
@@ -46,8 +46,13 @@ $worker->onWorkerStart = function() {
     */
 
     asyncCall(function() {
-        $client = new BeanstalkClient('192.168.4.2', 11300, 0, 0, true);
+        $client = new BeanstalkClient('192.168.4.2', 11300, true);
         $client->debug = true;
+
+        delay(2000)->onResolve(function() use ($client) {
+            echo "Close..\n";
+            $client->close();
+        });
 
         try {
             echo "Start connect\n";

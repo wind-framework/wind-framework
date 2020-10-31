@@ -5,6 +5,7 @@ namespace Framework\Queue\Driver;
 use function Amp\call;
 use Framework\Queue\Message;
 use Framework\Queue\DriverInterface;
+use Framework\Beanstalk\BeanstalkClient;
 
 class BeanstalkDriver implements DriverInterface
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Framework\Queue\Driver;
+namespace Framework\Beanstalk;
 
 use Exception;
 

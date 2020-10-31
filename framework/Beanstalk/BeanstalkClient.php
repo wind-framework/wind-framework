@@ -1,17 +1,15 @@
 <?php
 
-namespace Framework\Queue\Driver;
+namespace Framework\Beanstalk;
 
+use Amp\Promise;
 use Amp\Success;
 use Amp\Deferred;
-use Amp\Promise;
 use function Amp\call;
-
 use function Amp\delay;
 use function Amp\asyncCall;
 
 use Framework\Utils\ArrayUtil;
-
 use Workerman\Connection\AsyncTcpConnection;
 
 /**

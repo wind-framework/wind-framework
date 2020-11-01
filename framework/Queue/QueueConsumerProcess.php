@@ -45,6 +45,10 @@ class QueueConsumerProcess extends Process
 
                 Worker::log("[Queue] Reserving.."); 
                 while ($message = yield $driver->pop()) {
+                    if ($message === null) {
+                        continue;
+                    }
+
                     /** @var Message $message */
                     $job = $message->job;
                     $jobClass = get_class($job);

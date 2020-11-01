@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "86d03ecbe7dc3708b5155b45511efbd5",
+    "content-hash": "53fc605a6ef55c3f1bf680f61c1ffa0a",
     "packages": [
         {
             "name": "amphp/amp",
@@ -1978,16 +1978,16 @@
         },
         {
             "name": "workerman/redis",
-            "version": "v1.0.1",
+            "version": "v1.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/walkor/redis.git",
-                "reference": "117c4d4b8c16106a7a3963a8877038a981a77e22"
+                "reference": "922218dffddf08354e0269202ac21d2d34332850"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/walkor/redis/zipball/117c4d4b8c16106a7a3963a8877038a981a77e22",
-                "reference": "117c4d4b8c16106a7a3963a8877038a981a77e22",
+                "url": "https://api.github.com/repos/walkor/redis/zipball/922218dffddf08354e0269202ac21d2d34332850",
+                "reference": "922218dffddf08354e0269202ac21d2d34332850",
                 "shasum": ""
             },
             "require": {
@@ -2005,7 +2005,11 @@
                 "MIT"
             ],
             "homepage": "http://www.workerman.net",
-            "time": "2020-09-17T09:17:15+00:00"
+            "support": {
+                "issues": "https://github.com/walkor/redis/issues",
+                "source": "https://github.com/walkor/redis/tree/v1.0.3"
+            },
+            "time": "2020-10-29T10:22:31+00:00"
         },
         {
             "name": "workerman/workerman",
@@ -2062,5 +2066,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "plugin-api-version": "2.0.0"
 }

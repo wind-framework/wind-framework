@@ -8,7 +8,7 @@ use function Amp\asyncCall;
 use function Amp\asyncCoroutine;
 use function Amp\coroutine;
 
-use Framework\Queue\Driver\BeanstalkClient;
+use Framework\Beanstalk\BeanstalkClient;
 
 require __DIR__.'/vendor/autoload.php';
 
@@ -46,7 +46,7 @@ $worker->onWorkerStart = function() {
     */
 
     asyncCall(function() {
-        $client = new BeanstalkClient('192.168.4.2', 11300, true);
+        $client = new BeanstalkClient('192.168.4.2', 11300, true, true);
         $client->debug = true;
 
         delay(2000)->onResolve(function() use ($client) {
@@ -60,10 +60,24 @@ $worker->onWorkerStart = function() {
             echo "Connect success.\n";
 
             echo "Start watch\n";
-            yield $client->watch('test');
+            // yield $client->watch('test');
+            $client->watch('test')->onResolve(function($e, $v) {
+                if ($e) {
+                    echo "WatchError: ".$e->getMessage()."\n";
+                } else {
+                    echo "Watched\n";
+                }
+            });
 
             echo "Start ignore\n";
-            yield $client->ignore('default');
+            // yield $client->ignore('default');
+            $client->ignore('default')->onResolve(function($e, $v) {
+                if ($e) {
+                    echo "IgnoreError: ".$e->getMessage()."\n";
+                } else {
+                    echo "Ignored\n";
+                }
+            });
 
             while ($data = yield $client->reserve()) {
                 print_r($data);

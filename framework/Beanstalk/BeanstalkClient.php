@@ -21,8 +21,16 @@ class BeanstalkClient
 	const DEFAULT_PRI = 1024;
 	const DEFAULT_TTR = 30;
 
+    /**
+     * @var bool
+     */
     private $autoReconnect;
-    
+
+    /**
+     * @var bool
+     */
+    private $concurrent;
+
 	private $connection;
     private $connected = false;
 
@@ -58,10 +66,16 @@ class BeanstalkClient
 	 * @param string $host
 	 * @param int $port
      * @param bool $autoReconnect 是否断线自动重连，自动重连将会自动恢复以往正在发送的命令和动作（主动调用 close 不会）
+     * @param bool $allowConcurrent 是否允许并发执行，允许时可以同时调用多个命令，后面的命令会等待前一个命令完成后继续发送。
+     * 此选项为 false 时，若在上一个命令尚未完成时发送命令则会抛出异常。
+     * 此选项适合生产者使用，生产者可以使用单个链接并发的调用 put 进行放入消息，而不需要在并发 put 时使用多个链接。
+     * 对于消费者却不太适用，原因是消费者大部分时间会阻塞在 reserve 状态，多个消费者应该使用多个链接。
+     * 对于使用不同的 tube 和 watch tube 时，则不该依赖此选项。
 	 */
-	public function __construct($host='127.0.0.1', $port=11300, $autoReconnect=false)
+	public function __construct($host='127.0.0.1', $port=11300, $autoReconnect=false, $allowConcurrent=false)
 	{
         $this->autoReconnect = $autoReconnect;
+        $this->concurrent = $allowConcurrent;
         $this->connection = new AsyncTcpConnection("tcp://$host:$port");
 	}
 
@@ -340,7 +354,7 @@ class BeanstalkClient
      * 如果 autoReconnect 设为 true，则自动重连成功后会继续保持之前的监控。
      *
      * @param string $tube
-     * @return void
+     * @return Promise<int> 返回当前监控Tube数量
      */
 	public function watch($tube)
 	{
@@ -364,7 +378,7 @@ class BeanstalkClient
      * 忽略后的 tube 将不再获取其消息，同 watch，当 autoReconnect 为 true 时，则自动重连后将会继续忽略之前的设定。
      *
      * @param string $tube
-     * @return void
+     * @return Promise<int> 返回剩余监控 tube 数量
      */
 	public function ignore($tube)
 	{
@@ -606,7 +620,23 @@ class BeanstalkClient
 	{
 		if (!$this->connected) {
 			throw new BeanstalkException('No connecting found while writing data to socket.');
-		}
+        }
+        
+        //前一个命令尚未完成时的并发处理
+        if ($this->pending) {
+            if ($this->concurrent) {
+                $args = func_get_args();
+                $defer = new Deferred;
+                $this->pending->promise()->onResolve(function($e) use ($defer, $args) {
+                    call_user_func_array([$this, 'send'], $args)->onResolve(function($e, $v) use ($defer) {
+                        $e ? $defer->fail($e) : $defer->resolve($v);
+                    });
+                });
+                return $defer->promise();
+            } else {
+                throw new BeanstalkException('Cannot send command before previous command finished.');
+            }
+        }
         
         $defer = new Deferred;
 
@@ -667,8 +697,13 @@ class BeanstalkClient
 
 	protected function wrap($output, $out)
 	{
-		$line = $out ? '----->>' : '<<-----';
-		echo "\r\n$line\r\n$output\r\n$line\r\n";
+        $white = "\033[47;30m";
+        $end = "\033[0m";
+        if ($out) {
+            echo "\r\n{$white}send{$end}>>------\r\n$output\r\n---------->>\r\n";
+        } else {
+            echo "\r\n{$white}recv{$end}<<------\r\n$output\r\n----------<<\r\n";
+        }
 	}
 
 }

@@ -81,7 +81,7 @@ function wrapCallable($callable, $persistent=true) {
         throw new CallableException("Class '$class' not found.");
     }
 
-    if ((new \ReflectionClass($class))->getMethod($method)->isStatic()) {
+    if ((new \ReflectionMethod($class, $method))->isStatic()) {
         return $callable;
     } else {
 		//动态类型需要先实例化，这得益于依赖注入才能实现

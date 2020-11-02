@@ -8,7 +8,7 @@ use Framework\Utils\StrUtil;
 
 use function Amp\call;
 
-class RedisDriver implements DriverInterface
+class RedisDriver extends Driver
 {
 
     private $redis;
@@ -99,14 +99,14 @@ class RedisDriver implements DriverInterface
 
     public function release(Message $message, $delay)
     {
-        $raw = $message->raw;
-        return call(function() use ($raw, $delay) {
-            if (yield $this->remove($raw)) {
+        return call(function() use ($message, $delay) {
+            if (yield $this->remove($message->raw)) {
+                $message->attempts++;
+                $raw = self::serialize($message);
                 return $this->redis->zAdd($this->keyDelay, time() + $delay, $raw);
             }
             return false;
         });
-        
     }
 
     private function remove($raw)

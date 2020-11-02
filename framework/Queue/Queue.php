@@ -9,6 +9,10 @@ use Framework\Base\Config;
 class Queue
 {
 
+    /**
+     * Driver instances
+     * @var \Framework\Queue\Driver\Driver[]
+     */
     private static $queueDrivers = [];
 
     public static function put($queue, Job $job, $delay=0)

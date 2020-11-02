@@ -372,11 +372,12 @@ class BeanstalkClient
      * 放入 buried 队列后的消息可以由 kick 唤醒
      * 
      * @param int $id
+     * @param int $pri kick 出时的优先级
      * @return void
      */
-	public function bury($id)
+	public function bury($id, $pri=self::DEFAULT_PRI)
 	{
-		return $this->send(sprintf('bury %d', $id), 'BURIED');
+		return $this->send(sprintf('bury %d %d', $id, $pri), 'BURIED');
 	}
 
     /**
@@ -617,7 +618,8 @@ class BeanstalkClient
             $res = yield $this->send($cmd, null, true, 0);
 
             if ($res['status'] == 'OK') {
-                $data = array_slice(explode("\n", $res['body']), 1);
+                $body = rtrim($res['body']);
+                $data = array_slice(explode("\n", $body), 1);
                 $result = [];
     
                 foreach ($data as $row) {

@@ -6,7 +6,7 @@ use function Amp\call;
 use Framework\Queue\Message;
 use Framework\Beanstalk\BeanstalkClient;
 
-class BeanstalkDriver implements DriverInterface
+class BeanstalkDriver extends Driver
 {
 
     private $client;
@@ -18,6 +18,7 @@ class BeanstalkDriver implements DriverInterface
             'autoReconnect' => true,
             'concurrent' => true
         ]);
+        // $this->client->debug = true;
         $this->tube = $config['tube'];
     }
 
@@ -56,15 +57,20 @@ class BeanstalkDriver implements DriverInterface
 
     public function fail(Message $message)
     {
-        // return call(function() {
-
-        // });
-        return yield $this->client->bury($message->id);
+        return $this->client->bury($message->id);
     }
 
     public function release(Message $message, $delay)
     {
         return $this->client->release($message->id, BeanstalkClient::DEFAULT_PRI, $delay);
+    }
+
+    public function attempts(Message $message)
+    {
+        return call(function() use ($message) {
+            $state = yield $this->client->statsJob($message->id);
+            return $state['releases'];
+        });
     }
 
 }

@@ -2,6 +2,7 @@
 
 namespace Framework\Queue;
 
+use Amp\Promise;
 use Exception;
 use Framework\Base\Config;
 use Framework\Process\Process;
@@ -37,7 +38,7 @@ class ConsumerProcess extends Process
     {
         for ($i=0; $i<$this->concurrent; $i++) {
             asyncCall(function() {
-                /** @var DriverInterface $driver */
+                /* @var $driver Driver */
                 $driver = new $this->config['driver']($this->config);
 
                 Worker::log("[Queue] Connect.."); 
@@ -60,14 +61,20 @@ class ConsumerProcess extends Process
                         yield call([$job, 'handle']);
                         yield $driver->ack($message);
                     } catch (\Exception $e) {
-                        // if ($message->retryCount > $job->ttr) {
+                        $attempts = $driver->attempts($message);
 
-                        // }
+                        if ($attempts instanceof Promise) {
+                            $attempts = yield $attempts;
+                        }
+
+                        yield ($attempts >= $message->job->maxAttempts ? $driver->fail($message) : $driver->release($message, $attempts+1));
+
                         $ex = get_class($e);
                         $code = $e->getCode();
                         $msg = $e->getMessage();
+
                         //Todo: 消费失败重试机制
-                        Worker::log("[Queue] Consume $jobClass  error because: $ex: [$code] $msg");
+                        Worker::log("[Queue] Consume $jobClass error because: $ex: [$code] $msg");
                     }
                 }
             });

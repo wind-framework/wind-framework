@@ -13,11 +13,11 @@ abstract class Job
     public $ttr = 60;
 
     /**
-     * Mac attempts to consume job
+     * Max attempts to consume job
      *
      * @var int
      */
-    public $maxAttempts = 3;
+    public $maxAttempts = 2;
 
     abstract public function handle();
 

@@ -20,12 +20,8 @@ class TestJob extends Job
     public function handle()
     {
         echo "Handle job get value: {$this->value}\n";
-
-        $row = yield Db::fetchOne("show global status like 'uptime'");
         yield delay(2000);
-
-        print_r($row);
-        echo "\r\n";
+        echo "---END---\r\n";
     }
 
 }

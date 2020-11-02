@@ -18,7 +18,6 @@ class BeanstalkDriver implements DriverInterface
             'autoReconnect' => true,
             'concurrent' => true
         ]);
-        // $this->client->debug = true;
         $this->tube = $config['tube'];
     }
 
@@ -37,7 +36,7 @@ class BeanstalkDriver implements DriverInterface
 
     public function push(Message $message, $delay=0)
     {
-        $raw = serialize($message);
+        $raw = serialize($message->job);
         return $this->client->put($raw, BeanstalkClient::DEFAULT_PRI, $delay);
     }
 
@@ -45,9 +44,8 @@ class BeanstalkDriver implements DriverInterface
     {
         return call(function() {
             $data = yield $this->client->reserve();
-            $message = unserialize($data['body']);
-            $message->id = $data['id'];
-            return $message;
+            $job = unserialize($data['body']);
+            return new Message($job, $data['id']);
         });
     }
 
@@ -58,6 +56,9 @@ class BeanstalkDriver implements DriverInterface
 
     public function fail(Message $message)
     {
+        // return call(function() {
+
+        // });
         return yield $this->client->bury($message->id);
     }
 

@@ -7,45 +7,38 @@ class Message
 
     /**
      * 重试次数
-     *
      * @var int
      */
-    public $retryCount = 0;
+    public $attempts = 0;
 
     /**
      * 队列任务对象
-     *
      * @var Job
      */
     public $job;
 
+    /**
+     * 消息ID
+     * @var string
+     */
     public $id;
 
     /**
-     * 用于存储运行中的临时对象
-     *
-     * @var array
+     * 消息原始对象
+     * @var string|null
      */
-    private $var = [];
+    public $raw;
 
-    public function __construct(Job $job)
+    public function __construct(Job $job, $id=null, $raw=null)
     {
         $this->job = $job;
-    }
-
-    public function set($k, $v)
-    {
-        $this->var[$k] = $v;
-    }
-
-    public function get($k)
-    {
-        return $this->var[$k] ?? null;
+        $id && $this->id = $id;
+        $raw && $this->raw = $raw;
     }
 
     public function __sleep()
     {
-        return ['id', 'job', 'retryCount'];
+        return ['id', 'job', 'attempts'];
     }
 
 }

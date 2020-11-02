@@ -10,7 +10,7 @@ use Workerman\Worker;
 use function Amp\asyncCall;
 use function Amp\call;
 
-class QueueConsumerProcess extends Process
+class ConsumerProcess extends Process
 {
 
     protected $queue = 'default';
@@ -60,6 +60,9 @@ class QueueConsumerProcess extends Process
                         yield call([$job, 'handle']);
                         yield $driver->ack($message);
                     } catch (\Exception $e) {
+                        // if ($message->retryCount > $job->ttr) {
+
+                        // }
                         $ex = get_class($e);
                         $code = $e->getCode();
                         $msg = $e->getMessage();

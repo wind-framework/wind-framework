@@ -1,13 +1,13 @@
 <?php
 
-namespace Framework\Queue;
+namespace Framework\Queue\Driver;
+
+use Framework\Queue\Message;
 
 interface DriverInterface
 {
 
     public function connect();
-
-    public function close();
 
     public function push(Message $message, $delay=0);
 
@@ -17,6 +17,6 @@ interface DriverInterface
 
     public function fail(Message $message);
 
-    public function release(Message $message);
+    public function release(Message $message, $delay);
 
 }

@@ -10,7 +10,6 @@ require __DIR__.'/common.php';
 $worker = new Worker();
 $worker->reusePort = false;
 $worker->onWorkerStart = function() {
-    /*
     asyncCall(function() {
         $client = new BeanstalkClient('192.168.4.2');
         $client->debug = true;
@@ -19,7 +18,8 @@ $worker->onWorkerStart = function() {
 
         yield $client->useTube('test');
 
-        for ($i=0; $i<2; $i++) {
+        for ($i=0; $i<100; $i++) {
+            yield delay(1000);
             echo "--producer ";
             $id = yield $client->put("Hello World");
             echo $id."--\n";
@@ -27,16 +27,15 @@ $worker->onWorkerStart = function() {
 
         echo "Put finished.\n";
     });
-    */
 
     asyncCall(function() {
         $client = new BeanstalkClient('192.168.4.2', 11300, true, true);
         $client->debug = true;
 
-        delay(2000)->onResolve(function() use ($client) {
-            echo "Close..\n";
-            $client->close();
-        });
+        // delay(2000)->onResolve(function() use ($client) {
+        //     echo "Close..\n";
+        //     $client->close();
+        // });
 
         try {
             echo "Start connect\n";

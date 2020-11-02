@@ -4,7 +4,6 @@ namespace Framework\Queue\Driver;
 
 use function Amp\call;
 use Framework\Queue\Message;
-use Framework\Queue\DriverInterface;
 use Framework\Beanstalk\BeanstalkClient;
 
 class BeanstalkDriver implements DriverInterface
@@ -33,11 +32,6 @@ class BeanstalkDriver implements DriverInterface
         });
     }
 
-    public function close()
-    {
-        return $this->client->close();
-    }
-
     public function push(Message $message, $delay=0)
     {
         $raw = serialize($message);
@@ -49,24 +43,24 @@ class BeanstalkDriver implements DriverInterface
         return call(function() {
             $data = yield $this->client->reserve();
             $message = unserialize($data['body']);
-            $message->set('id', $data['id']);
+            $message->id = $data['id'];
             return $message;
         });
     }
 
     public function ack(Message $message)
     {
-        return $this->client->delete($message->get('id'));
+        return $this->client->delete($message->id);
     }
 
     public function fail(Message $message)
     {
-        return yield $this->client->bury($message->get('id'));
+        return yield $this->client->bury($message->id);
     }
 
-    public function release(Message $message)
+    public function release(Message $message, $delay)
     {
-        return $this->client->release($message->get('id'));
+        return $this->client->release($message->id, BeanstalkClient::DEFAULT_PRI, $delay);
     }
 
 }

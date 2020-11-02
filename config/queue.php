@@ -9,7 +9,7 @@ return [
         'processes' => 1,
         'concurrent' => 4
     ],
-    'qredis' => [
+    'default2' => [
         'driver' => Framework\Queue\Driver\RedisDriver::class,
         'host' => '192.168.4.2',
         'port' => 6379,

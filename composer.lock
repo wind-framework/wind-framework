@@ -1978,16 +1978,16 @@
         },
         {
             "name": "workerman/redis",
-            "version": "v1.0.3",
+            "version": "v1.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/walkor/redis.git",
-                "reference": "922218dffddf08354e0269202ac21d2d34332850"
+                "reference": "b58124bdfbbfc54c389087d82fd370882c09b4e4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/walkor/redis/zipball/922218dffddf08354e0269202ac21d2d34332850",
-                "reference": "922218dffddf08354e0269202ac21d2d34332850",
+                "url": "https://api.github.com/repos/walkor/redis/zipball/b58124bdfbbfc54c389087d82fd370882c09b4e4",
+                "reference": "b58124bdfbbfc54c389087d82fd370882c09b4e4",
                 "shasum": ""
             },
             "require": {
@@ -2007,9 +2007,9 @@
             "homepage": "http://www.workerman.net",
             "support": {
                 "issues": "https://github.com/walkor/redis/issues",
-                "source": "https://github.com/walkor/redis/tree/v1.0.3"
+                "source": "https://github.com/walkor/redis/tree/v1.0.4"
             },
-            "time": "2020-10-29T10:22:31+00:00"
+            "time": "2020-11-02T07:39:09+00:00"
         },
         {
             "name": "workerman/workerman",

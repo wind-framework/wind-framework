@@ -41,8 +41,10 @@ class TestController extends \Framework\Base\Controller
 	
 	public function queue()
 	{
-		$job = new TestJob('Hello World');
-		$ret = yield Queue::put('default', $job);
+		$job = new TestJob('Hello World '.date('Y-m-d H:i:s'));
+		$ret = [];
+		$ret[] = yield Queue::put('default', $job);
+		$ret[] = yield Queue::put('default', $job, 5);
 		return json_encode($ret);
 	}
 

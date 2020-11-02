@@ -19,6 +19,13 @@ class Message
      */
     public $job;
 
+    public $id;
+
+    /**
+     * 用于存储运行中的临时对象
+     *
+     * @var array
+     */
     private $var = [];
 
     public function __construct(Job $job)
@@ -34,6 +41,11 @@ class Message
     public function get($k)
     {
         return $this->var[$k] ?? null;
+    }
+
+    public function __sleep()
+    {
+        return ['id', 'job', 'retryCount'];
     }
 
 }

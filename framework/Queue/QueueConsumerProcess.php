@@ -44,7 +44,9 @@ class QueueConsumerProcess extends Process
                 yield $driver->connect();
 
                 Worker::log("[Queue] Reserving.."); 
-                while ($message = yield $driver->pop()) {
+                while (true) {
+                    $message = yield $driver->pop();
+                    
                     if ($message === null) {
                         continue;
                     }

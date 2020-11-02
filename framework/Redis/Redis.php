@@ -4,7 +4,9 @@ namespace Framework\Redis;
 
 use Amp\Deferred;
 use Amp\Success;
+use Amp\Promise;
 use Workerman\Redis\Client;
+use Workerman\Redis\Exception;
 
 /**
  * Redis 协程客户端
@@ -184,20 +186,19 @@ class Redis
     public function __construct($host, $port=6379)
     {
         $defer = new Deferred;
-        $this->redis = new Client("redis://$host:$port", [], function() use ($defer) {
-            $defer->resolve();
-            $this->connectPromise = null;
+        $this->redis = new Client("redis://$host:$port", [], function($status) use ($defer) {
+            if ($status) {
+                $defer->resolve();
+            } else {
+                $defer->fail(new Exception("Connected to redis server error."));
+            }
         });
         $this->connectPromise = $defer->promise();
     }
 
     public function connect()
     {
-        if ($this->connectPromise === null) {
-            return new Success();
-        } else {
-            return $this->connectPromise;
-        }
+        return $this->connectPromise;
     }
 
     public function close()

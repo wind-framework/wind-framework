@@ -11,25 +11,38 @@ $worker = new Worker();
 $worker->reusePort = false;
 $worker->onWorkerStart = function() {
     asyncCall(function() {
-        $client = new BeanstalkClient('192.168.4.2');
+        $client = new BeanstalkClient('192.168.4.2', 11300, [
+            'autoReconnect' => true,
+            'reconnectDelay' => 5,
+            'concurrent' => true
+        ]);
         $client->debug = true;
-        yield $client->connect();
-        echo "Producer connect success.\n";
 
-        yield $client->useTube('test');
+        try {
+            yield $client->connect();
+            echo "Producer connect success.\n";
 
-        for ($i=0; $i<100; $i++) {
-            yield delay(1000);
-            echo "--producer ";
-            $id = yield $client->put("Hello World");
-            echo $id."--\n";
+            yield $client->useTube('test');
+
+            for ($i=0; $i<100; $i++) {
+                yield delay(1000);
+                echo "--producer ";
+                $id = yield $client->put("Hello World");
+                echo $id."--\n";
+            }
+
+            echo "Put finished.\n";
+        } catch (\Throwable $e) {
+            echo dumpException($e);
         }
-
-        echo "Put finished.\n";
     });
 
     asyncCall(function() {
-        $client = new BeanstalkClient('192.168.4.2', 11300, true, true);
+        $client = new BeanstalkClient('192.168.4.2', 11300, [
+            'autoReconnect' => true,
+            'reconnectDelay' => 5,
+            'concurrent' => true
+        ]);
         $client->debug = true;
 
         // delay(2000)->onResolve(function() use ($client) {

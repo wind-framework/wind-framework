@@ -14,7 +14,10 @@ class BeanstalkDriver implements DriverInterface
 
     public function __construct($config)
     {
-        $this->client = new BeanstalkClient($config['host'], $config['port']);
+        $this->client = new BeanstalkClient($config['host'], $config['port'], [
+            'autoReconnect' => true,
+            'concurrent' => true
+        ]);
         // $this->client->debug = true;
         $this->tube = $config['tube'];
     }

@@ -11,6 +11,7 @@ use function Amp\asyncCall;
 
 use Framework\Utils\ArrayUtil;
 use Workerman\Connection\AsyncTcpConnection;
+use Workerman\Lib\Timer;
 
 /**
  * 协程 Beanstalk 客户端
@@ -22,14 +23,28 @@ class BeanstalkClient
 	const DEFAULT_TTR = 30;
 
     /**
+     * 是否重连
      * @var bool
      */
     private $autoReconnect;
 
     /**
+     * 重连延迟时间（秒数）
+     * @var int
+     */
+    private $reconnectDelay;
+
+    /**
+     * 并否允许并发调用
      * @var bool
      */
     private $concurrent;
+
+    /**
+     * 连接超时时间（秒数）
+     * @var int
+     */
+    private $connectTimeout;
 
 	private $connection;
     private $connected = false;
@@ -65,17 +80,23 @@ class BeanstalkClient
 	 *
 	 * @param string $host
 	 * @param int $port
-     * @param bool $autoReconnect 是否断线自动重连，自动重连将会自动恢复以往正在发送的命令和动作（主动调用 close 不会）
-     * @param bool $allowConcurrent 是否允许并发执行，允许时可以同时调用多个命令，后面的命令会等待前一个命令完成后继续发送。
+     * @param array $options 连接选项，数据键值对，支持以下选项：
+     * (bool) autoReconnect：是否断线自动重连，默认：否。
+     * 自动重连将会自动恢复以往正在发送的命令和动作（主动调用 close 不会）
+     * (int) reconnectDelay：重连间隔秒数，默认：5。
+     * (bool) concurrent：是否允许并发执行，默认：否。
+     * 允许时可以同时调用多个命令，后面的命令会等待前一个命令完成后继续发送。
      * 此选项为 false 时，若在上一个命令尚未完成时发送命令则会抛出异常。
      * 此选项适合生产者使用，生产者可以使用单个链接并发的调用 put 进行放入消息，而不需要在并发 put 时使用多个链接。
      * 对于消费者却不太适用，原因是消费者大部分时间会阻塞在 reserve 状态，多个消费者应该使用多个链接。
      * 对于使用不同的 tube 和 watch tube 时，则不该依赖此选项。
 	 */
-	public function __construct($host='127.0.0.1', $port=11300, $autoReconnect=false, $allowConcurrent=false)
+	public function __construct($host='127.0.0.1', $port=11300, $options=[])
 	{
-        $this->autoReconnect = $autoReconnect;
-        $this->concurrent = $allowConcurrent;
+        $this->autoReconnect = $options['autoReconnect'] ?? false;
+        $this->reconnectDelay = $options['reconnectDelay'] ?? 2;
+        $this->concurrent = $options['concurrent'] ?? false;
+        $this->connectTimeout = $options['connectTimeout'] ?? 5;
         $this->connection = new AsyncTcpConnection("tcp://$host:$port");
 	}
 
@@ -92,7 +113,21 @@ class BeanstalkClient
 			return new Success();
         }
 
-        $this->connection->onConnect = function() {
+        //连接超时设置
+        $connectTimer = Timer::add($this->connectTimeout, function() {
+            $this->connection->destroy();
+            if ($this->connectDefer) {
+                $this->connectDefer->fail(new BeanstalkException('Connect to beanstalkd timeout.'));
+                $this->connectDefer = null;
+            }
+        }, [], false);
+
+        $this->connection->onConnect = function() use (&$connectTimer) {
+            if ($connectTimer) {
+                Timer::del($connectTimer);
+                $connectTimer = null;
+            }
+
             $this->connected = true;
             $this->connectDefer = null;
 
@@ -141,22 +176,33 @@ class BeanstalkClient
             }
         };
         
-        $this->connection->onError = function($connection, $code, $message) {
+        $this->connection->onError = function($connection, $code, $message) use (&$connectTimer) {
+            if ($connectTimer) {
+                Timer::del($connectTimer);
+                $connectTimer = null;
+            }
+
             echo "Connection Error: [$code] $message\n";
+
             if (is_callable($this->onErrorCallback)) {
                 call_user_func($this->onErrorCallback, $connection, $code, $message);
                 $this->onErrorCallback = null;
             }
         };
 
-        $this->connection->onClose = function() {
+        $this->connection->onClose = function() use (&$connectTimer) {
+            if ($connectTimer) {
+                Timer::del($connectTimer);
+                $connectTimer = null;
+            }
+
             echo "Disconnected.\n";
             $this->connected = false;
 
             if ($this->autoReconnect) {
                 //自动重连时等待并尝试重连
-                echo "Reconnect after 2 seconds.\n";
-                delay(2000)->onResolve(function() {
+                echo "Reconnect after {$this->reconnectDelay} seconds.\n";
+                delay($this->reconnectDelay*1000)->onResolve(function() {
                     $this->connect();
                 });
             } elseif ($this->pending) {

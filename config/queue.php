@@ -11,8 +11,6 @@ return [
     ],
     'default' => [
         'driver' => Framework\Queue\Driver\RedisDriver::class,
-        'host' => '192.168.4.2',
-        'port' => 6379,
         'key' => 'rim-queue',
         'processes' => 1,
         'concurrent' => 4

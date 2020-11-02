@@ -3,6 +3,7 @@
 namespace App\Redis;
 
 use Framework\Redis\Redis;
+use Psr\Container\ContainerInterface;
 
 use function Amp\call as async;
 
@@ -11,9 +12,9 @@ class Cache
 
     private $redis;
 
-    public function __construct()
+    public function __construct(ContainerInterface $container)
     {
-        $this->redis = new Redis('192.168.4.2');
+        $this->redis = $container->get(Redis::class);
     }
 
     public function get($key, $defaultValue=null)

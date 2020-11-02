@@ -5,8 +5,11 @@ namespace Framework\Redis;
 use Amp\Deferred;
 use Amp\Success;
 use Amp\Promise;
+use Framework\Base\Config;
 use Workerman\Redis\Client;
 use Workerman\Redis\Exception;
+
+use function Amp\call;
 
 /**
  * Redis 协程客户端
@@ -152,9 +155,9 @@ use Workerman\Redis\Exception;
  * Generic methods
  * @method Promise rawCommand(...$commandAndArgs)
  * Transactions methods
- * @method \Redis multi($cb = null)
- * @method Promise exec($cb = null)
- * @method Promise discard($cb = null)
+ * @method \Redis multi()
+ * @method Promise exec()
+ * @method Promise discard()
  * @method Promise watch($keys)
  * @method Promise unwatch($keys)
  * Scripting methods
@@ -162,20 +165,20 @@ use Workerman\Redis\Exception;
  * @method Promise evalSha($sha, $args = [], $numKeys = 0)
  * @method Promise script($command, ...$scripts)
  * @method Promise client(...$args)
- * @method Promise<null|string> getLastError($cb = null)
- * @method Promise<bool> clearLastError($cb = null)
+ * @method Promise<null|string> getLastError()
+ * @method Promise<bool> clearLastError()
  * @method Promise _prefix($value)
  * @method Promise _serialize($value)
  * @method Promise _unserialize($value)
  * Introspection methods
- * @method Promise<bool> isConnected($cb = null)
- * @method Promise getHost($cb = null)
- * @method Promise getPort($cb = null)
- * @method Promise<false|int> getDbNum($cb = null)
- * @method Promise<false|double> getTimeout($cb = null)
- * @method Promise getReadTimeout($cb = null)
- * @method Promise getPersistentID($cb = null)
- * @method Promise getAuth($cb = null)
+ * @method Promise<bool> isConnected()
+ * @method Promise getHost()
+ * @method Promise getPort()
+ * @method Promise<false|int> getDbNum()
+ * @method Promise<false|double> getTimeout()
+ * @method Promise getReadTimeout()
+ * @method Promise getPersistentID()
+ * @method Promise getAuth()
  */
 class Redis
 {
@@ -183,12 +186,30 @@ class Redis
     private $redis;
     private $connectPromise;
 
-    public function __construct($host, $port=6379)
+    public function __construct(Config $config)
     {
+        $conf = $config->get('redis.default');
+
         $defer = new Deferred;
-        $this->redis = new Client("redis://$host:$port", [], function($status) use ($defer) {
+        $this->redis = new Client("redis://{$conf['host']}:{$conf['port']}", [], function($status, $redis) use ($defer, $conf) {
             if ($status) {
-                $defer->resolve();
+                if ($conf['auth'] || $conf['db']) {
+                    call(function() use ($conf) {
+                        if ($conf['auth']) {
+                            $r = yield $this->auth($conf['auth']);
+                            if (!$r) {
+                                throw new Exception("Auth failed to redis {$conf['host']}:{$conf['port']}.");
+                            }
+                        }
+                        if ($conf['db'] && $conf['db'] != 0) {
+                            yield $this->select($conf['db']);
+                        }
+                    })->onResolve(function($e) use ($defer) {
+                        $e ? $defer->fail($e) : $defer->resolve();
+                    });
+                } else {
+                    $defer->resolve();
+                }
             } else {
                 $defer->fail(new Exception("Connected to redis server error."));
             }

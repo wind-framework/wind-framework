@@ -13,7 +13,20 @@ class Queue
 
     public static function put($queue, Job $job, $delay=0)
     {
-        if (!isset(self::$queueDrivers[$queue])) {
+        return call(function() use ($queue, $job, $delay) {
+            $driver = yield self::getDriver($queue);
+            $message = new Message($job);
+            return yield $driver->push($message, $delay);
+        });
+    }
+
+    private static function getDriver($queue)
+    {
+        return call(function() use ($queue) {
+            if (isset(self::$queueDrivers[$queue])) {
+                return self::$queueDrivers[$queue];
+            }
+
             $config = di()->get(Config::class)->get("queue.$queue");
 
             if (!$config) {
@@ -22,22 +35,10 @@ class Queue
     
             /** @var DriverInterface $driver */
             $driver = self::$queueDrivers[$queue] = new $config['driver']($config);
-        }
-
-        $driver = self::$queueDrivers[$queue];
-
-        return call(function() use ($driver, $job, $delay) {
             yield $driver->connect();
 
-            $message = new Message($job);
-            return yield $driver->push($message, $delay);
-            // yield $driver->close();
+            return self::$queueDrivers[$queue] = $driver;
         });
-    }
-
-    private static function getDriver()
-    {
-
     }
 
 }

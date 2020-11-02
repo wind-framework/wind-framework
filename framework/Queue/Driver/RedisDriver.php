@@ -24,7 +24,7 @@ class RedisDriver implements DriverInterface
 
     public function __construct($config)
     {
-        $this->redis = new Redis($config['host'], $config['port']);
+        $this->redis = di()->get(Redis::class);
         $this->keyReady = $config['key'].':ready';
         $this->keyReserved = $config['key'].':reserved';
         $this->keyDelay = $config['key'].':delay';

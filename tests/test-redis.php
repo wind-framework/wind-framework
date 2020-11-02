@@ -1,5 +1,6 @@
 <?php
 
+use Framework\Base\Config;
 use Framework\Redis\Redis;
 use Workerman\Lib\Timer;
 use Workerman\Worker;
@@ -13,8 +14,7 @@ $worker->reusePort = false;
 $worker->onWorkerStart = function() {
     asyncCall(function() {
         try {
-            $redis = new Redis('192.168.4.2');
-            $redis2 = new Redis('192.168.4.2');
+            $redis = new Redis(new Config);
 
             // Timer::add(2, function() use ($redis2) {
             //     "Add element\n";

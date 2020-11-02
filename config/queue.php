@@ -1,19 +1,19 @@
 <?php
 
 return [
-    'default' => [
+    'default2' => [
         'driver' => Framework\Queue\Driver\BeanstalkDriver::class,
         'host' => '192.168.4.2',
         'port' => 11300,
-        'tube' => 'workman-amp',
+        'tube' => 'rim-queue',
         'processes' => 1,
         'concurrent' => 4
     ],
-    'default2' => [
+    'default' => [
         'driver' => Framework\Queue\Driver\RedisDriver::class,
         'host' => '192.168.4.2',
         'port' => 6379,
-        'key' => 'workman-amp',
+        'key' => 'rim-queue',
         'processes' => 1,
         'concurrent' => 4
     ]

@@ -2,7 +2,6 @@
 
 namespace Framework\Queue\Driver;
 
-use Amp\Success;
 use Framework\Redis\Redis;
 use Framework\Queue\Message;
 use Framework\Utils\StrUtil;
@@ -26,10 +25,10 @@ class RedisDriver implements DriverInterface
     public function __construct($config)
     {
         $this->redis = new Redis($config['host'], $config['port']);
-        $this->keyReady = $config['key'].'.ready';
-        $this->keyReserved = $config['key'].'reserved';
-        $this->keyDelay = $config['key'].'.delay';
-        $this->keyFail = $config['key'].'.fail';
+        $this->keyReady = $config['key'].':ready';
+        $this->keyReserved = $config['key'].':reserved';
+        $this->keyDelay = $config['key'].':delay';
+        $this->keyFail = $config['key'].':fail';
 
         //轮询需要有间隔主要作用于延迟队列的转移，在有多个并发时每个并发都有可能进行转移处理，理想情况下每秒都有协程处理到轮询。
         //所以并发多时，适当的增加轮询可间隔可以减少性能浪费

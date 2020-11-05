@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "facf066542722f23e03c0c76edf1bc53",
+    "content-hash": "53fc605a6ef55c3f1bf680f61c1ffa0a",
     "packages": [
         {
             "name": "amphp/amp",
@@ -960,6 +960,60 @@
                 "dns"
             ],
             "time": "2019-12-03T09:12:46+00:00"
+        },
+        {
+            "name": "dragonmantank/cron-expression",
+            "version": "v3.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dragonmantank/cron-expression.git",
+                "reference": "48212cdc0a79051d50d7fc2f0645c5a321caf926"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/dragonmantank/cron-expression/zipball/48212cdc0a79051d50d7fc2f0645c5a321caf926",
+                "reference": "48212cdc0a79051d50d7fc2f0645c5a321caf926",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1|^8.0"
+            },
+            "replace": {
+                "mtdowling/cron-expression": "^1.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^0.11|^0.12",
+                "phpunit/phpunit": "^7.0|^8.0|^9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Cron\\": "src/Cron/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Chris Tankersley",
+                    "email": "chris@ctankersley.com",
+                    "homepage": "https://github.com/dragonmantank"
+                }
+            ],
+            "description": "CRON for PHP: Calculate the next or previous run date and determine if a CRON expression is due",
+            "keywords": [
+                "cron",
+                "schedule"
+            ],
+            "funding": [
+                {
+                    "url": "https://github.com/dragonmantank",
+                    "type": "github"
+                }
+            ],
+            "time": "2020-10-13T01:26:01+00:00"
         },
         {
             "name": "graham-campbell/result-type",
@@ -1924,16 +1978,16 @@
         },
         {
             "name": "workerman/redis",
-            "version": "v1.0.1",
+            "version": "v1.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/walkor/redis.git",
-                "reference": "117c4d4b8c16106a7a3963a8877038a981a77e22"
+                "reference": "b58124bdfbbfc54c389087d82fd370882c09b4e4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/walkor/redis/zipball/117c4d4b8c16106a7a3963a8877038a981a77e22",
-                "reference": "117c4d4b8c16106a7a3963a8877038a981a77e22",
+                "url": "https://api.github.com/repos/walkor/redis/zipball/b58124bdfbbfc54c389087d82fd370882c09b4e4",
+                "reference": "b58124bdfbbfc54c389087d82fd370882c09b4e4",
                 "shasum": ""
             },
             "require": {
@@ -1951,7 +2005,11 @@
                 "MIT"
             ],
             "homepage": "http://www.workerman.net",
-            "time": "2020-09-17T09:17:15+00:00"
+            "support": {
+                "issues": "https://github.com/walkor/redis/issues",
+                "source": "https://github.com/walkor/redis/tree/v1.0.4"
+            },
+            "time": "2020-11-02T07:39:09+00:00"
         },
         {
             "name": "workerman/workerman",
@@ -2008,5 +2066,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "plugin-api-version": "2.0.0"
 }

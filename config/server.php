@@ -22,6 +22,10 @@ return [
 		    'type' => 'channel'
 	    ]
     ],
+    'static_file' => [
+        'document_root' => BASE_DIR.'/static',
+        'enable_negotiation_cache' => true
+    ],
     /**
      * Task Worker 配置
      */

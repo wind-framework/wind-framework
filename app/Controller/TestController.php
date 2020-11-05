@@ -4,8 +4,10 @@ namespace App\Controller;
 
 use Amp\Promise;
 use App\Helper\Invoker;
+use App\Job\TestJob;
 use App\Redis\Cache;
 use Framework\Base\Config;
+use Framework\Queue\Queue;
 use Framework\Task\Task;
 use Psr\Container\ContainerInterface;
 use Workerman\Protocols\Http\Request;
@@ -35,6 +37,15 @@ class TestController extends \Framework\Base\Controller
     {
         $hello = $container->get(Config::class)->get('components')[0];
         return 'Request, id='.$id.', name='.$req->get('name').(yield $cache->get('abc', 'def')).$hello;
-    }
+	}
+	
+	public function queue()
+	{
+		$job = new TestJob('Hello World '.date('Y-m-d H:i:s'));
+		$ret = [];
+		$ret[] = yield Queue::put('default', $job);
+		$ret[] = yield Queue::put('default', $job, 5);
+		return json_encode($ret);
+	}
 
 }

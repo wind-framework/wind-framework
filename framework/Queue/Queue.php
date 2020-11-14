@@ -9,17 +9,23 @@ use Framework\Base\Config;
 class Queue
 {
 
+    //消息基础优先级
+    const PRIORITY_HIGH = 0;
+    const PRIORITY_NORMAL = 1;
+    const PRIORITY_LOW = 2;
+
     /**
      * Driver instances
      * @var \Framework\Queue\Driver\Driver[]
      */
     private static $queueDrivers = [];
 
-    public static function put($queue, Job $job, $delay=0)
+    public static function put($queue, Job $job, $delay=0, $priority=self::PRIORITY_NORMAL)
     {
-        return call(function() use ($queue, $job, $delay) {
+        return call(function() use ($queue, $job, $delay, $priority) {
             $driver = yield self::getDriver($queue);
             $message = new Message($job);
+            $message->priority = $priority;
             return yield $driver->push($message, $delay);
         });
     }

@@ -3,12 +3,16 @@
 namespace Framework\Queue\Driver;
 
 use function Amp\call;
+use Framework\Queue\Queue;
 use Framework\Queue\Message;
 use Framework\Beanstalk\BeanstalkClient;
 
 class BeanstalkDriver extends Driver
 {
 
+    /**
+     * @var BeanstalkClient
+     */
     private $client;
     private $tube;
 
@@ -35,10 +39,11 @@ class BeanstalkDriver extends Driver
         });
     }
 
-    public function push(Message $message, $delay=0)
+    public function push(Message $message, $delay)
     {
         $raw = serialize($message->job);
-        return $this->client->put($raw, BeanstalkClient::DEFAULT_PRI, $delay);
+        $pri = $this->getPri($message->priority);
+        return $this->client->put($raw, $pri, $delay);
     }
 
     public function pop()
@@ -71,6 +76,16 @@ class BeanstalkDriver extends Driver
             $state = yield $this->client->statsJob($message->id);
             return $state['releases'];
         });
+    }
+
+    private function getPri($priority)
+    {
+        switch ($priority) {
+            case Queue::PRIORITY_NORMAL: return BeanstalkClient::DEFAULT_PRI;
+            case Queue::PRIORITY_HIGH: return 512;
+            case Queue::PRIORITY_LOW: return 2048;
+            default: return BeanstalkClient::DEFAULT_PRI;
+        }
     }
 
 }

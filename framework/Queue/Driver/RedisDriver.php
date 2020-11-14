@@ -2,15 +2,19 @@
 
 namespace Framework\Queue\Driver;
 
+use function Amp\call;
+use Framework\Queue\Queue;
 use Framework\Redis\Redis;
+
 use Framework\Queue\Message;
 use Framework\Utils\StrUtil;
-
-use function Amp\call;
 
 class RedisDriver extends Driver
 {
 
+    /**
+     * @var Redis
+     */
     private $redis;
     private $btimeout = 10;
 
@@ -48,7 +52,7 @@ class RedisDriver extends Driver
         return $this->redis->connect();
     }
 
-    public function push(Message $message, $delay=0)
+    public function push(Message $message, $delay)
     {
         if ($message->id === null) {
             $message->id = $this->uniq.'-'.(++$this->autoId);
@@ -57,7 +61,8 @@ class RedisDriver extends Driver
         $raw = self::serialize($message);
 
         if ($delay == 0) {
-            return $this->redis->rPush($this->keyReady, $raw);
+            $queue = $this->getPri($message->priority);
+            return $this->redis->rPush($queue, $raw);
         } else {
             return $this->redis->zAdd($this->keyDelay, time()+$delay, $raw);
         }
@@ -69,7 +74,7 @@ class RedisDriver extends Driver
             yield $this->ready($this->keyDelay);
             yield $this->ready($this->keyReserved);
 
-            list(, $raw) = yield $this->redis->blPop($this->keyReady, $this->btimeout);
+            list(, $raw) = yield $this->redis->blPop([$this->keyReady.':high', $this->keyReady.':normal', $this->keyReady.':low'], $this->btimeout);
             if ($raw === null) {
                 return null;
             }
@@ -131,16 +136,27 @@ class RedisDriver extends Driver
         });
     }
 
+    private function getPri($priority)
+    {
+        switch ($priority) {
+            case Queue::PRIORITY_NORMAL: return $this->keyReady.':normal';
+            case Queue::PRIORITY_HIGH: return $this->keyReady.':high';
+            case Queue::PRIORITY_LOW: return $this->keyReady.':low';
+            default: return $this->keyReady.':normal';
+        }
+    }
+
     private static function serialize(Message $message)
     {
-        return \serialize([$message->id, $message->job, $message->attempts]);
+        return \serialize([$message->id, $message->job, $message->attempts, $message->priority]);
     }
 
     private static function unserialize($raw)
     {
-        list($id, $job, $attempts) = \unserialize($raw);
+        list($id, $job, $attempts, $pri) = \unserialize($raw);
         $message = new Message($job, $id, $raw);
         $message->attempts = $attempts;
+        $message->priority = $pri;
         return $message;
     }
 

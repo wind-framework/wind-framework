@@ -29,16 +29,18 @@ class Message
      */
     public $raw;
 
+    /**
+     * 优先级
+     *
+     * @var int
+     */
+    public $priority;
+
     public function __construct(Job $job, $id=null, $raw=null)
     {
         $this->job = $job;
         $id && $this->id = $id;
         $raw && $this->raw = $raw;
-    }
-
-    public function __sleep()
-    {
-        return ['id', 'job', 'attempts'];
     }
 
 }

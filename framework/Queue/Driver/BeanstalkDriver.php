@@ -42,7 +42,14 @@ class BeanstalkDriver extends Driver
     public function push(Message $message, $delay)
     {
         $raw = serialize($message->job);
-        $pri = $this->getPri($message->priority);
+
+        switch ($message->priority) {
+            case Queue::PRI_NORMAL: $pri = BeanstalkClient::DEFAULT_PRI;
+            case Queue::PRI_HIGH: $pri = 512;
+            case Queue::PRI_LOW: $pri = 2048;
+            default: $pri = $message->priority;
+        }
+
         return $this->client->put($raw, $pri, $delay);
     }
 
@@ -67,7 +74,10 @@ class BeanstalkDriver extends Driver
 
     public function release(Message $message, $delay)
     {
-        return $this->client->release($message->id, BeanstalkClient::DEFAULT_PRI, $delay);
+        return call(function() use ($message, $delay) {
+            $state = yield $this->client->statsJob($message->id);
+            return $this->client->release($message->id, $state['pri'], $delay);
+        });
     }
 
     public function attempts(Message $message)
@@ -76,16 +86,6 @@ class BeanstalkDriver extends Driver
             $state = yield $this->client->statsJob($message->id);
             return $state['releases'];
         });
-    }
-
-    private function getPri($priority)
-    {
-        switch ($priority) {
-            case Queue::PRIORITY_NORMAL: return BeanstalkClient::DEFAULT_PRI;
-            case Queue::PRIORITY_HIGH: return 512;
-            case Queue::PRIORITY_LOW: return 2048;
-            default: return BeanstalkClient::DEFAULT_PRI;
-        }
     }
 
 }

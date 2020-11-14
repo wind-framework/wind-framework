@@ -18,7 +18,7 @@ class RedisDriver extends Driver
     private $redis;
     private $btimeout = 10;
 
-    private $keyReady;
+    private $keysReady = [];
     private $keyReserved;
     private $keyDelay;
     private $keyFail;
@@ -29,7 +29,13 @@ class RedisDriver extends Driver
     public function __construct($config)
     {
         $this->redis = di()->make(Redis::class);
-        $this->keyReady = $config['key'].':ready';
+
+        $rk = $config['key'].':ready';
+        $this->keysReady = [
+            Queue::PRI_HIGH  => $rk.':high',
+            Queue::PRI_NORMAL  => $rk.':normal',
+            Queue::PRI_LOW  => $rk.':low'
+        ];
         $this->keyReserved = $config['key'].':reserved';
         $this->keyDelay = $config['key'].':delay';
         $this->keyFail = $config['key'].':fail';
@@ -61,7 +67,7 @@ class RedisDriver extends Driver
         $raw = self::serialize($message);
 
         if ($delay == 0) {
-            $queue = $this->getPri($message->priority);
+            $queue = $this->getPriorityKey($message->priority);
             return $this->redis->rPush($queue, $raw);
         } else {
             return $this->redis->zAdd($this->keyDelay, time()+$delay, $raw);
@@ -74,7 +80,7 @@ class RedisDriver extends Driver
             yield $this->ready($this->keyDelay);
             yield $this->ready($this->keyReserved);
 
-            list(, $raw) = yield $this->redis->blPop([$this->keyReady.':high', $this->keyReady.':normal', $this->keyReady.':low'], $this->btimeout);
+            list(, $raw) = yield $this->redis->blPop($this->keysReady, $this->btimeout);
             if ($raw === null) {
                 return null;
             }
@@ -129,21 +135,18 @@ class RedisDriver extends Driver
             if ($expires = yield $this->redis->zrevrangebyscore($queue, $now, '-inf', $options)) {
                 foreach ($expires as $raw) {
                     if ((yield $this->redis->zRem($queue, $raw)) > 0) {
-                        yield $this->redis->rPush($this->keyReady, $raw);
+                        $message = self::unserialize($raw);
+                        $key = $this->getPriorityKey($message->priority);
+                        yield $this->redis->rPush($key, $raw);
                     }
                 }
             }
         });
     }
 
-    private function getPri($priority)
+    private function getPriorityKey($pri)
     {
-        switch ($priority) {
-            case Queue::PRIORITY_NORMAL: return $this->keyReady.':normal';
-            case Queue::PRIORITY_HIGH: return $this->keyReady.':high';
-            case Queue::PRIORITY_LOW: return $this->keyReady.':low';
-            default: return $this->keyReady.':normal';
-        }
+        return $this->keysReady[$pri] ?? $this->keysReady[Queue::PRI_NORMAL];
     }
 
     private static function serialize(Message $message)

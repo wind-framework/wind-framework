@@ -10,9 +10,9 @@ class Queue
 {
 
     //消息基础优先级
-    const PRIORITY_HIGH = 0;
-    const PRIORITY_NORMAL = 1;
-    const PRIORITY_LOW = 2;
+    const PRI_HIGH = 0;
+    const PRI_NORMAL = 1;
+    const PRI_LOW = 2;
 
     /**
      * Driver instances
@@ -20,7 +20,7 @@ class Queue
      */
     private static $queueDrivers = [];
 
-    public static function put($queue, Job $job, $delay=0, $priority=self::PRIORITY_NORMAL)
+    public static function put($queue, Job $job, $delay=0, $priority=self::PRI_NORMAL)
     {
         return call(function() use ($queue, $job, $delay, $priority) {
             $driver = yield self::getDriver($queue);

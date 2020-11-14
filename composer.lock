@@ -313,117 +313,34 @@
             "time": "2020-07-21T19:04:57+00:00"
         },
         {
-            "name": "amphp/file",
-            "version": "v1.0.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/amphp/file.git",
-                "reference": "54dcef2a3e38f445ae78ea44ff12c95738e46420"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/amphp/file/zipball/54dcef2a3e38f445ae78ea44ff12c95738e46420",
-                "reference": "54dcef2a3e38f445ae78ea44ff12c95738e46420",
-                "shasum": ""
-            },
-            "require": {
-                "amphp/amp": "^2.2",
-                "amphp/byte-stream": "^1.6.1",
-                "amphp/parallel": "^1.2",
-                "php": ">=7.1"
-            },
-            "require-dev": {
-                "amphp/php-cs-fixer-config": "dev-master",
-                "amphp/phpunit-util": "^1.1",
-                "ext-eio": "^2",
-                "ext-uv": "^0.3 || ^0.2",
-                "phpunit/phpunit": "^8 || ^7"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Amp\\File\\": "src"
-                },
-                "files": [
-                    "src/functions.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Daniel Lowrey",
-                    "email": "rdlowrey@php.net"
-                },
-                {
-                    "name": "Aaron Piotrowski",
-                    "email": "aaron@trowski.com"
-                },
-                {
-                    "name": "Niklas Keller",
-                    "email": "me@kelunik.com"
-                }
-            ],
-            "description": "Allows non-blocking access to the filesystem for Amp.",
-            "homepage": "https://github.com/amphp/file",
-            "keywords": [
-                "amp",
-                "amphp",
-                "async",
-                "disk",
-                "file",
-                "filesystem",
-                "io",
-                "non-blocking",
-                "static"
-            ],
-            "support": {
-                "issues": "https://github.com/amphp/file/issues",
-                "source": "https://github.com/amphp/file/tree/v1.0.2"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/amphp",
-                    "type": "github"
-                }
-            ],
-            "time": "2020-07-14T15:15:32+00:00"
-        },
-        {
             "name": "amphp/mysql",
-            "version": "v2.0.0",
+            "version": "v2.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/mysql.git",
-                "reference": "cbef7dccaf076218470267a2739aa0f3b49511f1"
+                "reference": "03c69546c07cacf4cb09790e77f0777e9d3ae7f7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/mysql/zipball/cbef7dccaf076218470267a2739aa0f3b49511f1",
-                "reference": "cbef7dccaf076218470267a2739aa0f3b49511f1",
+                "url": "https://api.github.com/repos/amphp/mysql/zipball/03c69546c07cacf4cb09790e77f0777e9d3ae7f7",
+                "reference": "03c69546c07cacf4cb09790e77f0777e9d3ae7f7",
                 "shasum": ""
             },
             "require": {
                 "amphp/amp": "^2",
-                "amphp/file": "^1 || ^0.3.5",
                 "amphp/socket": "^1",
                 "amphp/sql": "^1",
                 "amphp/sql-common": "^1",
                 "php": ">=7.1"
             },
             "require-dev": {
+                "amphp/file": "^2 || ^1 || ^0.3.5",
                 "amphp/php-cs-fixer-config": "dev-master",
                 "amphp/phpunit-util": "^1.1.2",
+                "amphp/process": "^1",
                 "ext-openssl": "*",
                 "phpbench/phpbench": "^0.13.0",
-                "phpunit/phpunit": "^8 || ^7"
+                "phpunit/phpunit": "^9 || ^8 || ^7"
             },
             "type": "library",
             "autoload": {
@@ -451,77 +368,15 @@
             "description": "Asynchronous MySQL client for PHP based on Amp.",
             "support": {
                 "issues": "https://github.com/amphp/mysql/issues",
-                "source": "https://github.com/amphp/mysql/tree/master"
+                "source": "https://github.com/amphp/mysql/tree/v2.1.0"
             },
-            "time": "2019-12-10T11:02:12+00:00"
-        },
-        {
-            "name": "amphp/parallel",
-            "version": "v1.4.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/amphp/parallel.git",
-                "reference": "2c1039bf7ca137eae4d954b14c09a7535d7d4e1c"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/amphp/parallel/zipball/2c1039bf7ca137eae4d954b14c09a7535d7d4e1c",
-                "reference": "2c1039bf7ca137eae4d954b14c09a7535d7d4e1c",
-                "shasum": ""
-            },
-            "require": {
-                "amphp/amp": "^2",
-                "amphp/byte-stream": "^1.6.1",
-                "amphp/parser": "^1",
-                "amphp/process": "^1",
-                "amphp/serialization": "^1",
-                "amphp/sync": "^1.0.1",
-                "php": ">=7.1"
-            },
-            "require-dev": {
-                "amphp/php-cs-fixer-config": "dev-master",
-                "amphp/phpunit-util": "^1.1",
-                "phpunit/phpunit": "^8 || ^7"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Amp\\Parallel\\": "lib"
-                },
-                "files": [
-                    "lib/Context/functions.php",
-                    "lib/Sync/functions.php",
-                    "lib/Worker/functions.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
+            "funding": [
                 {
-                    "name": "Aaron Piotrowski",
-                    "email": "aaron@trowski.com"
-                },
-                {
-                    "name": "Stephen Coakley",
-                    "email": "me@stephencoakley.com"
+                    "url": "https://github.com/amphp",
+                    "type": "github"
                 }
             ],
-            "description": "Parallel processing component for Amp.",
-            "homepage": "https://github.com/amphp/parallel",
-            "keywords": [
-                "async",
-                "asynchronous",
-                "concurrent",
-                "multi-processing",
-                "multi-threading"
-            ],
-            "support": {
-                "issues": "https://github.com/amphp/parallel/issues",
-                "source": "https://github.com/amphp/parallel/tree/master"
-            },
-            "time": "2020-04-27T15:12:37+00:00"
+            "time": "2020-11-10T05:46:55+00:00"
         },
         {
             "name": "amphp/parser",
@@ -824,16 +679,16 @@
         },
         {
             "name": "amphp/sql-common",
-            "version": "v1.1.1",
+            "version": "v1.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/sql-common.git",
-                "reference": "6bd462b80f440a06165b49bedeb868e549a6284a"
+                "reference": "1c3b86970373d2ae00482300cae1442d4e9bd782"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/sql-common/zipball/6bd462b80f440a06165b49bedeb868e549a6284a",
-                "reference": "6bd462b80f440a06165b49bedeb868e549a6284a",
+                "url": "https://api.github.com/repos/amphp/sql-common/zipball/1c3b86970373d2ae00482300cae1442d4e9bd782",
+                "reference": "1c3b86970373d2ae00482300cae1442d4e9bd782",
                 "shasum": ""
             },
             "require": {
@@ -867,9 +722,15 @@
             ],
             "support": {
                 "issues": "https://github.com/amphp/sql-common/issues",
-                "source": "https://github.com/amphp/sql-common/tree/master"
+                "source": "https://github.com/amphp/sql-common/tree/v1.1.2"
             },
-            "time": "2020-03-04T18:01:46+00:00"
+            "funding": [
+                {
+                    "url": "https://github.com/amphp",
+                    "type": "github"
+                }
+            ],
+            "time": "2020-11-09T23:11:50+00:00"
         },
         {
             "name": "amphp/sync",

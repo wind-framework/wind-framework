@@ -26,7 +26,7 @@ class DbController extends Controller
 
     public function soulFind($id)
     {
-        $row = yield Db::table('soul')->where('id', $id)->fetchOne();
+        $row = yield Db::table('soul')->where(['id' => $id])->fetchOne();
 
         if ($row) {
             return print_r($row, true);

@@ -18,5 +18,10 @@ return function(RouteCollector $r) {
 		$r->addRoute(['GET', 'POST'], 'closure', function(\Workerman\Protocols\Http\Request $req) {
 			return $req->uri();
 		});
+		
+		$r->addRoute('GET', 'queue', 'App\Controller\TestController::queue');
 	});
+
+	$r->addRoute('GET', '/static/{filename:.+}', '\Framework\Base\FileServer::sendStatic');
+	$r->addRoute('GET', '/{filename:favicon\.ico}', '\Framework\Base\FileServer::sendStatic');
 };

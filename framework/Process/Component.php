@@ -17,12 +17,12 @@ class Component implements \Framework\Base\Component
         if ($processes) {
             foreach ($processes as $class) {
                 /* @var $process Process */
-                $process = new $class;
+                $process = $app->container->make($class);
                 $worker = new Worker();
                 $worker->name = $process->name ?: $class;
                 $worker->count = $process->count;
                 $worker->onWorkerStart = static function ($worker) use ($process, $class, $app) {
-                    Worker::log("Process $class starting..");
+                    Worker::log("Process $class started.");
                     $app->startComponents($worker);
                     Loop::defer([$process, 'run']);
                 };

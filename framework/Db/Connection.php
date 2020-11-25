@@ -16,13 +16,21 @@ use function Amp\Mysql\pool;
 class Connection
 {
 
-
 	/**
 	 * @var \Amp\Mysql\Pool
 	 */
 	private $pool;
 
 	private $name;
+
+	private $prefix = '';
+
+    /**
+     * Set fetchAll() return array index is used by special result key
+     *
+     * @var string
+     */
+    protected $indexBy;
 
 	public function __construct($name) {
 		$databases = di()->get(Config::class)->get('database');
@@ -31,17 +39,34 @@ class Connection
 			throw new \Exception("Unable to find database config '{$name}'.");
 		}
 
-		$conn = $databases[$name];
+		$config = $databases[$name];
 
 		//初始化数据库连接池
-		$config = ConnectionConfig::fromString("host={$conn['host']};user={$conn['username']};password={$conn['password']};db={$conn['database']}");
+		$conf = ConnectionConfig::fromString("host={$config['host']};user={$config['username']};password={$config['password']};db={$config['database']}");
 
 		$maxConnection = $connection['pool']['max_connections'] ?? ConnectionPool::DEFAULT_MAX_CONNECTIONS;
 		$maxIdleTime = $connection['pool']['max_idle_time'] ?? ConnectionPool::DEFAULT_IDLE_TIMEOUT;
 
-		$this->pool = pool($config, $maxConnection, $maxIdleTime);
+		$this->pool = pool($conf, $maxConnection, $maxIdleTime);
 		$this->name = $name;
+		$this->prefix = $config['prefix'];
 	}
+
+	public function prefix($table='')
+    {
+        return $table ? $this->prefix.$table : $this->prefix;
+    }
+
+    /**
+     * Construct a query build from table
+     *
+     * @param string $name
+     * @return QueryBuilder
+     */
+    public function table($name)
+    {
+        return (new QueryBuilder($this))->from($name);
+    }
 
 	/**
 	 * @param string $sql
@@ -111,12 +136,62 @@ class Connection
 
 			$rows = [];
 
-			if (yield $result->advance()) {
-				$rows[] = $result->getCurrent();
+			while (yield $result->advance()) {
+				$row = $result->getCurrent();
+				if (!$this->indexBy) {
+                    $rows[] = $row;
+                } else {
+                    if (!isset($row[$this->indexBy])) {
+                        throw new DbException("Undefined indexBy key '{$this->indexBy}'.");
+                    }
+                    $rows[$row[$this->indexBy]] = $row;
+                }
 			}
+
+            $this->indexBy = null;
 
 			return $rows;
 		});
 	}
+
+    /**
+     * Set key for fetchAll() return array
+     *
+     * @param string $key
+     * @return $this
+     */
+    public function indexBy($key)
+    {
+        $this->indexBy = $key;
+        return $this;
+    }
+
+    /**
+     * Fetch column from all rows
+     *
+     * @param $sql
+     * @param array $params
+     * @param int $col
+     * @return Promise
+     */
+    public function fetchColumn($sql, array $params=[], $col=0): Promise {
+        return call(function() use ($sql, $params, $col) {
+            $cols = [];
+            $result = yield $this->query($sql, $params);
+
+            while (yield $result->advance()) {
+                $row = $result->getCurrent();
+                if ($this->indexBy) {
+                    $cols[$row[$this->indexBy]] = $row[$col];
+                } else {
+                    $cols[] = $row[$col];
+                }
+            }
+
+            $this->indexBy = null;
+
+            return $cols;
+        });
+    }
 
 }

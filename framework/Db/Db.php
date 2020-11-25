@@ -79,7 +79,7 @@ class Db
      */
     public static function table($name)
     {
-        return new QueryBuilder($name);
+        return (new QueryBuilder(self::connection()))->from($name);
     }
 
 }

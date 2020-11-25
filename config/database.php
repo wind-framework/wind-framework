@@ -8,6 +8,7 @@ return [
         'database' => env('DB_DATABASE', 'test'),
         'username' => env('DB_USER', 'root'),
         'password' => env('DB_PASS', ''),
+        'prefix' => env('DB_PREFIX', ''),
         'pool' => [
             'max_connection' => 100,
             'max_idle_time' => 60

@@ -9,15 +9,17 @@
 namespace Framework\Db;
 
 use Amp\Promise;
+use function Amp\call;
 
 class QueryBuilder {
 
+    protected $connection;
 	protected $builder = [];
 	protected $table;
 
-	public function __construct($table)
+	public function __construct(Connection $connection)
 	{
-		$this->table = $this->quoteTable($table);
+	    $this->connection = $connection;
 	}
 
 	public function select($fields, $quote=true)
@@ -27,23 +29,29 @@ class QueryBuilder {
 		return $this;
 	}
 
+    public function from($table, $alias=null)
+    {
+        $this->table = $this->quoteTable($table);
+        return $alias ? $this->alias($alias) : $this;
+    }
+
 	public function alias($alias)
 	{
 		$this->builder['alias'] = $alias;
 		return $this;
 	}
 
-	public function join($table, $compopr, $type='')
+	public function join($table, $compose, $type='')
 	{
 		$type = strtoupper($type);
-		$this->builder['join'][] = compact('type', 'table', 'compopr');
+		$this->builder['join'][] = compact('type', 'table', 'compose');
 		return $this;
 	}
 
-	public function leftJoin($table, $compopr) { return $this->join($table, $compopr, 'left'); }
-	public function rightJoin($table, $compopr) { return $this->join($table, $compopr, 'right'); }
-	public function innerJoin($table, $compopr) { return $this->join($table, $compopr, 'inner'); }
-	public function outerJoin($table, $compopr) { return $this->join($table, $compopr, 'outer'); }
+	public function leftJoin($table, $compose) { return $this->join($table, $compose, 'left'); }
+	public function rightJoin($table, $compose) { return $this->join($table, $compose, 'right'); }
+	public function innerJoin($table, $compose) { return $this->join($table, $compose, 'inner'); }
+	public function outerJoin($table, $compose) { return $this->join($table, $compose, 'outer'); }
 
 	public function union($all=false)
 	{
@@ -140,13 +148,14 @@ class QueryBuilder {
 		return $this;
 	}
 
-	/**
-	 * Insert data
-	 *
-	 * @param array $data
-	 * @param bool $replace Use REPLACE INTO
-	 * @return Promise<int>
-	 */
+    /**
+     * Insert data
+     *
+     * @param array $data
+     * @param bool $replace Use REPLACE INTO
+     * @return Promise<int>
+     * @throws
+     */
 	public function insert(array $data, $replace=false): Promise
 	{
 		$keys = $this->quoteKeys(array_keys($data));
@@ -154,8 +163,7 @@ class QueryBuilder {
 
 		$sql = ($replace ? 'REPLACE' : 'INSERT')." INTO {$this->table}($keys) VALUES($values)";
 
-		//use exec instead query for better
-		return Db::execute($sql);
+		return $this->connection->execute($sql);
 	}
 
 	/**
@@ -168,7 +176,7 @@ class QueryBuilder {
 		$sql = 'DELETE'.$this->buildFrom().$this->buildWhere().$this->buildOrderBy()
 			.$this->buildLimit().$this->buildOffset();
 		$this->builder = [];
-		return Db::execute($sql);
+		return $this->connection->execute($sql);
 	}
 
 	/**
@@ -196,14 +204,14 @@ class QueryBuilder {
 
 		$this->builder = [];
 
-		return Db::execute($sql);
+		return $this->connection->execute($sql);
 	}
 
 	/**
 	 * Build sql from query builder
 	 *
 	 * @param bool $clean Clean conditions after build
-	 * @return string
+	 * @return string SQL String
 	 */
 	public function buildSelect($clean=true)
 	{
@@ -241,39 +249,36 @@ class QueryBuilder {
 	}
 
 	/**
-	 * Fetch row from query result
-	 *
-	 * @inheritdoc
-	 */
-	public function fetch($fetchType=Db::FETCH_ASSOC)
-	{
-		$this->prepareQuery();
-		return parent::fetch($fetchType);
-	}
-
-	/**
 	 * Fetch first row from query result
-	 *
-	 * @inheritdoc
+     * @return Promise<array>|Promise<null>
 	 */
-	public function get($fetchType=Db::FETCH_ASSOC)
+	public function get()
 	{
-		$this->prepareQuery();
-		return parent::get($fetchType);
+	    return $this->connection->fetchOne($this->buildSelect());
 	}
 
-	//Fetch all rows from query result
-	public function fetchAll($fetchType=Db::FETCH_ASSOC)
+    /**
+     * Fetch first row from query result
+     * @return Promise<array>|Promise<null>
+     */
+    public function fetchOne()
+    {
+        return $this->connection->fetchOne($this->buildSelect());
+    }
+
+    /**
+     * Fetch all rows from query result
+     * @return Promise<array>|Promise<null>
+     */
+	public function fetchAll()
 	{
-		$this->prepareQuery();
-		return parent::fetchAll($fetchType);
+	    return $this->connection->fetchAll($this->buildSelect());
 	}
 
 	//Fetch column from all rows
 	public function fetchColumn($col=0)
 	{
-		$this->prepareQuery();
-		return parent::fetchColumn($col);
+	    return $this->connection->fetchColumn($this->buildSelect(), [], $col);
 	}
 
 	//public function distinct($field)
@@ -294,16 +299,23 @@ class QueryBuilder {
 		return $this->scalar();
 	}
 
-	/**
-	 * Build and do query for fetch result
-	 * @throws
-	 */
-	protected function prepareQuery()
-	{
-		if ($this->builder || $this->table) {
-			$this->query($this->buildSelect());
-		}
-	}
+    /**
+     * Return first column value in row
+     *
+     * @param int|string $col
+     * @return mixed
+     * @throws
+     */
+    public function scalar($col=0)
+    {
+        return call(function() use ($col) {
+            $row = yield $this->connection->fetchOne($this->buildSelect());
+            if (is_int($col)) {
+                $row = array_values($row);
+            }
+            return $row ? $row[$col] : null;
+        });
+    }
 
 	/**
 	 * Build from query
@@ -487,7 +499,7 @@ class QueryBuilder {
 			return join(', ', $qk);
 		}
 
-		if (!$single && strpos($keys, ',') !== false) {
+		if (!$single && str_contains($keys, ',')) {
 			//split with comma[,] except in brackets[()] and single quots['']
 			$xkeys = preg_split('/,(?![^(\']*[\)\'])/', $keys);
 
@@ -523,7 +535,7 @@ class QueryBuilder {
 		}
 
 		//has prefix
-		if (strpos($col, '.') !== false) {
+		if (str_contains($col, '.')) {
 			list($pre, $col) = explode('.', $col);
 			$pre = trim($pre, ' `');
 		}
@@ -554,7 +566,7 @@ class QueryBuilder {
 			return $str;
 		}
 
-		if (strpos($table, ',') !== false) {
+		if (str_contains($table, ',')) {
 			return $this->quoteTable(explode(',', $table));
 		}
 
@@ -569,13 +581,14 @@ class QueryBuilder {
 		//remove space char, because may have " db .  table" situation
 		$table = str_replace(' ', '', $table);
 
-		if (strpos($table, '.') !== false) {
+		if (str_contains($table, '.')) {
 			list($db, $table) = explode('.', $table);
 		}
 
-		if (!$this->hasPrefix($table)) {
-			$table = $this->tableName($table);
-		}
+		$prefix = $this->connection->prefix();
+		if ($prefix && substr($table, 0, strlen($prefix)) === $prefix) {
+            $table = $prefix.$table;
+        }
 
 		$str = '';
 

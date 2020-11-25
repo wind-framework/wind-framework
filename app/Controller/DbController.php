@@ -12,11 +12,12 @@ class DbController extends Controller
 
     public function soul(ViewInterface $view)
     {
-    	//$row = yield Db::table('soul')->orderBy('RAND()')->limit(1)->get();
-        $row = yield Db::fetchOne("SELECT * FROM soul ORDER BY RAND() LIMIT 1");
+        $count = yield Db::table('soul')->count();
+        $offset = mt_rand(0, $count-1);
+        $row = yield Db::table('soul')->limit(1, $offset)->fetchOne();
 
         if ($row) {
-            Db::execute("UPDATE soul SET hits=hits+1 WHERE `id`=?", [$row['id']]);
+            Db::table('soul')->where('id', $row['id'])->update(['hits'=>'^hits+1']);
             return $view->render('soul.twig', ['title'=>$row['title']]);
         } else {
             return "今天不丧。";
@@ -25,10 +26,9 @@ class DbController extends Controller
 
     public function soulFind($id)
     {
-        $result = yield Db::query("SELECT * FROM soul WHERE `id`=?", [$id]);
+        $row = yield Db::table('soul')->where('id', $id)->fetchOne();
 
-        if (yield $result->advance()) {
-            $row = $result->getCurrent();
+        if ($row) {
             return print_r($row, true);
         } else {
             return "无该丧。";

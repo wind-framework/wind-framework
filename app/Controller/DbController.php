@@ -12,6 +12,7 @@ class DbController extends Controller
 
     public function soul(ViewInterface $view)
     {
+    	//$row = yield Db::table('soul')->orderBy('RAND()')->limit(1)->get();
         $row = yield Db::fetchOne("SELECT * FROM soul ORDER BY RAND() LIMIT 1");
 
         if ($row) {

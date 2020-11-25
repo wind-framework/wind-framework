@@ -44,9 +44,9 @@ class BeanstalkDriver extends Driver
         $raw = serialize($message->job);
 
         switch ($message->priority) {
-            case Queue::PRI_NORMAL: $pri = BeanstalkClient::DEFAULT_PRI;
-            case Queue::PRI_HIGH: $pri = 512;
-            case Queue::PRI_LOW: $pri = 2048;
+            case Queue::PRI_NORMAL: $pri = BeanstalkClient::DEFAULT_PRI; break;
+            case Queue::PRI_HIGH: $pri = 512; break;
+            case Queue::PRI_LOW: $pri = 2048; break;
             default: $pri = $message->priority;
         }
 

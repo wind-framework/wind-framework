@@ -15,140 +15,149 @@ use function Amp\call;
  * Redis 协程客户端
  * 
  * Strings methods
- * @method Promise<int> append($key, $value)
- * @method Promise<int> bitCount($key)
- * @method Promise<int> decrBy($key, $value)
- * @method Promise<string|bool> get($key)
- * @method Promise<int> getBit($key, $offset)
- * @method Promise<string> getRange($key, $start, $end)
- * @method Promise<string> getSet($key, $value)
- * @method Promise<int> incrBy($key, $value)
- * @method Promise<float> incrByFloat($key, $value)
- * @method Promise<array> mGet(array $keys)
- * @method Promise<array> getMultiple(array $keys)
- * @method Promise<bool> setBit($key, $offset, $value)
- * @method Promise<bool> setEx($key, $ttl, $value)
- * @method Promise<bool> pSetEx($key, $ttl, $value)
- * @method Promise<bool> setNx($key, $value)
- * @method Promise<string> setRange($key, $offset, $value)
- * @method Promise<int> strLen($key)
+ * @method Promise append($key, $value) int
+ * @method Promise bitCount($key) int
+ * @method Promise decrBy($key, $value) int
+ * @method Promise get($key) string|bool
+ * @method Promise getBit($key, $offset) int
+ * @method Promise getRange($key, $start, $end) string
+ * @method Promise getSet($key, $value) string
+ * @method Promise incrBy($key, $value) int
+ * @method Promise incrByFloat($key, $value) float
+ * @method Promise mGet(array $keys) array
+ * @method Promise mSet(array $keys)
+ * @method Promise mSetNx(array $keys)
+ * @method Promise getMultiple(array $keys) array
+ * @method Promise set($key, $value) bool
+ * @method Promise setBit($key, $offset, $value) bool
+ * @method Promise setEx($key, $ttl, $value) bool
+ * @method Promise pSetEx($key, $ttl, $value) bool
+ * @method Promise setNx($key, $value) bool
+ * @method Promise setRange($key, $offset, $value) string
+ * @method Promise strLen($key) int
+ * @method Promise incr($key) int
+ * @method Promise decr($key) int
  * Keys methods
- * @method Promise<int> del(...$keys)
- * @method Promise<int> unlink(...$keys)
- * @method Promise<false|string> dump($key)
- * @method Promise<int> exists(...$keys)
- * @method Promise<bool> expire($key, $ttl)
- * @method Promise<bool> pexpire($key, $ttl)
- * @method Promise<bool> expireAt($key, $timestamp)
- * @method Promise<bool> pexpireAt($key, $timestamp)
- * @method Promise<array> keys($pattern)
- * @method Promise<bool|array> scan($it)
- * @method Promise<void> migrate($host, $port, $keys, $dbIndex, $timeout, $copy = false, $replace = false)
- * @method Promise<bool> move($key, $dbIndex)
- * @method Promise<string|int|bool> object($information, $key)
- * @method Promise<bool> persist($key)
- * @method Promise<string> randomKey()
- * @method Promise<bool> rename($srcKey, $dstKey)
- * @method Promise<bool> renameNx($srcKey, $dstKey)
- * @method Promise<string> type($key)
- * @method Promise<int> ttl($key)
- * @method Promise<int> pttl($key)
- * @method Promise<void> restore($key, $ttl, $value)
+ * @method Promise del(...$keys) int
+ * @method Promise unlink(...$keys) int
+ * @method Promise dump($key) false|string
+ * @method Promise exists(...$keys) int
+ * @method Promise expire($key, $ttl) bool
+ * @method Promise pexpire($key, $ttl) bool
+ * @method Promise expireAt($key, $timestamp) bool
+ * @method Promise pexpireAt($key, $timestamp) bool
+ * @method Promise keys($pattern) array
+ * @method Promise scan($it) bool|array
+ * @method Promise migrate($host, $port, $keys, $dbIndex, $timeout, $copy = false, $replace = false) void
+ * @method Promise move($key, $dbIndex) bool
+ * @method Promise object($information, $key) string|int|bool
+ * @method Promise persist($key) bool
+ * @method Promise randomKey() string
+ * @method Promise rename($srcKey, $dstKey) bool
+ * @method Promise renameNx($srcKey, $dstKey) bool
+ * @method Promise type($key) string
+ * @method Promise ttl($key) int
+ * @method Promise pttl($key) int
+ * @method Promise restore($key, $ttl, $value) void
  * Hashes methods
- * @method Promise<false|int> hSet($key, $hashKey, $value)
- * @method Promise<bool> hSetNx($key, $hashKey, $value)
- * @method Promise<false|string> hGet($key, $hashKey)
- * @method Promise<false|int> hLen($key)
- * @method Promise<false|int> hDel($key, ...$hashKeys)
- * @method Promise<array> hKeys($key)
- * @method Promise<array> hVals($key)
- * @method Promise<bool> hExists($key, $hashKey)
- * @method Promise<int> hIncrBy($key, $hashKey, $value)
- * @method Promise<float> hIncrByFloat($key, $hashKey, $value)
- * @method Promise<array> hScan($key, $iterator, $pattern = '', $count = 0)
- * @method Promise<int> hStrLen($key, $hashKey)
+ * @method Promise hSet($key, $hashKey, $value) false|int
+ * @method Promise hSetNx($key, $hashKey, $value) bool
+ * @method Promise hGet($key, $hashKey) false|string
+ * @method Promise hMSet($key, array $array) array
+ * @method Promise hMGet($key, array $array) array
+ * @method Promise hGetAll($key) array
+ * @method Promise hLen($key) false|int
+ * @method Promise hDel($key, ...$hashKeys) false|int
+ * @method Promise hKeys($key) array
+ * @method Promise hVals($key) array
+ * @method Promise hExists($key, $hashKey) bool
+ * @method Promise hIncrBy($key, $hashKey, $value) int
+ * @method Promise hIncrByFloat($key, $hashKey, $value) float
+ * @method Promise hScan($key, $iterator, $pattern = '', $count = 0) array
+ * @method Promise hStrLen($key, $hashKey) int
  * Lists methods
- * @method Promise<array> blPop($keys, $timeout)
- * @method Promise<array> brPop($keys, $timeout)
- * @method Promise<false|string> bRPopLPush($srcKey, $dstKey, $timeout)
- * @method Promise<false|string> lIndex($key, $index)
- * @method Promise<int> lInsert($key, $position, $pivot, $value)
- * @method Promise<false|string> lPop($key)
- * @method Promise<false|int> lPush($key, ...$entries)
- * @method Promise<false|int> lPushx($key, $value)
- * @method Promise<array> lRange($key, $start, $end)
- * @method Promise<false|int> lRem($key, $value, $count)
- * @method Promise<bool> lSet($key, $index, $value)
- * @method Promise<false|array> lTrim($key, $start, $end)
- * @method Promise<false|string> rPop($key)
- * @method Promise<false|string> rPopLPush($srcKey, $dstKey)
- * @method Promise<false|int> rPush($key, ...$entries)
- * @method Promise<false|int> rPushX($key, $value)
- * @method Promise<false|int> lLen($key)
+ * @method Promise blPop($keys, $timeout) array
+ * @method Promise brPop($keys, $timeout) array
+ * @method Promise bRPopLPush($srcKey, $dstKey, $timeout) false|string
+ * @method Promise lIndex($key, $index) false|string
+ * @method Promise lInsert($key, $position, $pivot, $value) int
+ * @method Promise lPop($key) false|string
+ * @method Promise lPush($key, ...$entries) false|int
+ * @method Promise lPushx($key, $value) false|int
+ * @method Promise lRange($key, $start, $end) array
+ * @method Promise lRem($key, $value, $count) false|int
+ * @method Promise lSet($key, $index, $value) bool
+ * @method Promise lTrim($key, $start, $end) false|array
+ * @method Promise rPop($key) false|string
+ * @method Promise rPopLPush($srcKey, $dstKey) false|string
+ * @method Promise rPush($key, ...$entries) false|int
+ * @method Promise rPushX($key, $value) false|int
+ * @method Promise lLen($key) false|int
  * Sets methods
- * @method Promise<int> sAdd($key, $value)
- * @method Promise<int> sCard($key)
- * @method Promise<array> sDiff($keys)
- * @method Promise<false|int> sDiffStore($dst, $keys)
- * @method Promise<false|array> sInter($keys)
- * @method Promise<false|int> sInterStore($dst, $keys)
- * @method Promise<bool> sIsMember($key, $member)
- * @method Promise<array> sMembers($key)
- * @method Promise<bool> sMove($src, $dst, $member)
- * @method Promise<false|string|array> sPop($key, $count = 0)
- * @method Promise<false|string|array> sRandMember($key, $count = 0)
- * @method Promise<int> sRem($key, ...$members)
- * @method Promise<array> sUnion(...$keys)
- * @method Promise<false|int> sUnionStore($dst, ...$keys)
- * @method Promise<false|array> sScan($key, $iterator, $pattern = '', $count = 0)
+ * @method Promise sAdd($key, $value) int
+ * @method Promise sCard($key) int
+ * @method Promise sDiff($keys) array
+ * @method Promise sDiffStore($dst, $keys) false|int
+ * @method Promise sInter($keys) false|array
+ * @method Promise sInterStore($dst, $keys) false|int
+ * @method Promise sIsMember($key, $member) bool
+ * @method Promise sMembers($key) array
+ * @method Promise sMove($src, $dst, $member) bool
+ * @method Promise sPop($key, $count = 0) false|string|array
+ * @method Promise sRandMember($key, $count = 0) false|string|array
+ * @method Promise sRem($key, ...$members) int
+ * @method Promise sUnion(...$keys) array
+ * @method Promise sUnionStore($dst, ...$keys) false|int
+ * @method Promise sScan($key, $iterator, $pattern = '', $count = 0) false|array
  * Sorted sets methods
- * @method Promise<array> bzPopMin($keys, $timeout)
- * @method Promise<array> bzPopMax($keys, $timeout)
- * @method Promise<int> zAdd($key, $score, $value)
- * @method Promise<int> zCard($key)
- * @method Promise<int> zCount($key, $start, $end)
- * @method Promise<double> zIncrBy($key, $value, $member)
- * @method Promise<int> zinterstore($keyOutput, $arrayZSetKeys, $arrayWeights = [], $aggregateFunction = '')
- * @method Promise<array> zPopMin($key, $count)
- * @method Promise<array> zPopMax($key, $count)
- * @method Promise<array> zRange($key, $start, $end, $withScores = false)
- * @method Promise<array> zRangeByScore($key, $start, $end, $options = [])
- * @method Promise<array> zRevRangeByScore($key, $start, $end, $options = [])
- * @method Promise<array> zRangeByLex($key, $min, $max, $offset = 0, $limit = 0)
- * @method Promise<int> zRank($key, $member)
- * @method Promise<int> zRevRank($key, $member)
- * @method Promise<int> zRem($key, ...$members)
- * @method Promise<int> zRemRangeByRank($key, $start, $end)
- * @method Promise<int> zRemRangeByScore($key, $start, $end)
- * @method Promise<array> zRevRange($key, $start, $end, $withScores = false)
- * @method Promise<double> zScore($key, $member)
- * @method Promise<int> zunionstore($keyOutput, $arrayZSetKeys, $arrayWeights = [], $aggregateFunction = '')
- * @method Promise<false|array> zScan($key, $iterator, $pattern = '', $count = 0)
+ * @method Promise bzPopMin($keys, $timeout) array
+ * @method Promise bzPopMax($keys, $timeout) array
+ * @method Promise zAdd($key, $score, $value) int
+ * @method Promise zCard($key) int
+ * @method Promise zCount($key, $start, $end) int
+ * @method Promise zIncrBy($key, $value, $member) double
+ * @method Promise zinterstore($keyOutput, $arrayZSetKeys, $arrayWeights = [], $aggregateFunction = '') int
+ * @method Promise zPopMin($key, $count) array
+ * @method Promise zPopMax($key, $count) array
+ * @method Promise zRange($key, $start, $end, $withScores = false) array
+ * @method Promise zRangeByScore($key, $start, $end, $options = []) array
+ * @method Promise zRevRangeByScore($key, $start, $end, $options = []) array
+ * @method Promise zRangeByLex($key, $min, $max, $offset = 0, $limit = 0) array
+ * @method Promise zRank($key, $member) int
+ * @method Promise zRevRank($key, $member) int
+ * @method Promise zRem($key, ...$members) int
+ * @method Promise zRemRangeByRank($key, $start, $end) int
+ * @method Promise zRemRangeByScore($key, $start, $end) int
+ * @method Promise zRevRange($key, $start, $end, $withScores = false) array
+ * @method Promise zScore($key, $member) double
+ * @method Promise zunionstore($keyOutput, $arrayZSetKeys, $arrayWeights = [], $aggregateFunction = '') int
+ * @method Promise zScan($key, $iterator, $pattern = '', $count = 0) false|array
+ * @method Promise sort($key, $options) Promise
  * HyperLogLogs methods
- * @method Promise<int> pfAdd($key, $values)
- * @method Promise<int> pfCount($keys)
- * @method Promise<bool> pfMerge($dstKey, $srcKeys)
+ * @method Promise pfAdd($key, $values) int
+ * @method Promise pfCount($keys) int
+ * @method Promise pfMerge($dstKey, $srcKeys) bool
  * Geocoding methods
- * @method Promise<int> geoAdd($key, $longitude, $latitude, $member, ...$items)
- * @method Promise<array> geoHash($key, ...$members)
- * @method Promise<array> geoPos($key, ...$members)
- * @method Promise<double> geoDist($key, $members, $unit = '')
- * @method Promise<int|array> geoRadius($key, $longitude, $latitude, $radius, $unit, $options = [])
- * @method Promise<array> geoRadiusByMember($key, $member, $radius, $units, $options = [])
+ * @method Promise geoAdd($key, $longitude, $latitude, $member, ...$items) int
+ * @method Promise geoHash($key, ...$members) array
+ * @method Promise geoPos($key, ...$members) array
+ * @method Promise geoDist($key, $members, $unit = '') double
+ * @method Promise geoRadius($key, $longitude, $latitude, $radius, $unit, $options = []) int|array
+ * @method Promise geoRadiusByMember($key, $member, $radius, $units, $options = []) array
  * Streams methods
- * @method Promise<int> xAck($stream, $group, $arrMessages)
- * @method Promise<string> xAdd($strKey, $strId, $arrMessage, $iMaxLen = 0, $booApproximate = false)
- * @method Promise<array> xClaim($strKey, $strGroup, $strConsumer, $minIdleTime, $arrIds, $arrOptions = [])
- * @method Promise<int> xDel($strKey, $arrIds)
+ * @method Promise xAck($stream, $group, $arrMessages) int
+ * @method Promise xAdd($strKey, $strId, $arrMessage, $iMaxLen = 0, $booApproximate = false) string
+ * @method Promise xClaim($strKey, $strGroup, $strConsumer, $minIdleTime, $arrIds, $arrOptions = []) array
+ * @method Promise xDel($strKey, $arrIds) int
  * @method Promise xGroup($command, $strKey, $strGroup, $strMsgId, $booMKStream = null)
  * @method Promise xInfo($command, $strStream, $strGroup = null)
- * @method Promise<int> xLen($stream)
- * @method Promise<array> xPending($strStream, $strGroup, $strStart = 0, $strEnd = 0, $iCount = 0, $strConsumer = null)
- * @method Promise<array> xRange($strStream, $strStart, $strEnd, $iCount = 0)
- * @method Promise<array> xRead($arrStreams, $iCount = 0, $iBlock = null)
- * @method Promise<array> xReadGroup($strGroup, $strConsumer, $arrStreams, $iCount = 0, $iBlock = null)
- * @method Promise<array> xRevRange($strStream, $strEnd, $strStart, $iCount = 0)
- * @method Promise<int> xTrim($strStream, $iMaxLen, $booApproximate = null)
+ * @method Promise xLen($stream) int
+ * @method Promise xPending($strStream, $strGroup, $strStart = 0, $strEnd = 0, $iCount = 0, $strConsumer = null) array
+ * @method Promise xRange($strStream, $strStart, $strEnd, $iCount = 0) array
+ * @method Promise xRead($arrStreams, $iCount = 0, $iBlock = null) array
+ * @method Promise xReadGroup($strGroup, $strConsumer, $arrStreams, $iCount = 0, $iBlock = null) array
+ * @method Promise xRevRange($strStream, $strEnd, $strStart, $iCount = 0) array
+ * @method Promise xTrim($strStream, $iMaxLen, $booApproximate = null) int
  * Pub/sub methods
  * @method Promise publish($channel, $message)
  * @method Promise pubSub($keyword, $argument = null)
@@ -165,20 +174,21 @@ use function Amp\call;
  * @method Promise evalSha($sha, $args = [], $numKeys = 0)
  * @method Promise script($command, ...$scripts)
  * @method Promise client(...$args)
- * @method Promise<null|string> getLastError()
- * @method Promise<bool> clearLastError()
+ * @method Promise getLastError() null|string
+ * @method Promise clearLastError() bool
  * @method Promise _prefix($value)
  * @method Promise _serialize($value)
  * @method Promise _unserialize($value)
  * Introspection methods
- * @method Promise<bool> isConnected()
+ * @method Promise isConnected() bool
  * @method Promise getHost()
  * @method Promise getPort()
- * @method Promise<false|int> getDbNum()
- * @method Promise<false|double> getTimeout()
+ * @method Promise getDbNum() false|int
+ * @method Promise getTimeout() false|double
  * @method Promise getReadTimeout()
  * @method Promise getPersistentID()
  * @method Promise getAuth()
+ * @method Promise select($db)
  */
 class Redis
 {

@@ -4,11 +4,11 @@ namespace App\Controller;
 
 use App\Collect\GcRecycle;
 use App\Collect\GcStatusCollect;
-use App\Redis\Cache;
 use Framework\Base\Controller;
 use Framework\Collector\Collector;
 use Framework\Utils\FileUtil;
 use Framework\View\ViewInterface;
+use Psr\SimpleCache\CacheInterface;
 use Workerman\Protocols\Http\Response;
 use function Amp\delay;
 
@@ -20,10 +20,15 @@ class IndexController extends Controller
         return 'Hello World'.\env('APP');
     }
 
-    public function cache(Cache $cache)
+    public function cache(CacheInterface $cache)
     {
-        //$cache = di()->get(Cache::class);
         $ret = yield $cache->get("lastvisit", "None");
+
+        yield $cache->setMultiple(['a'=>111, 'b'=>222, 'c'=>333]);
+        $b = yield $cache->getMultiple(['a', 'b', 'c', 'd']);
+
+        return json_encode($b);
+
         yield $cache->set("lastvisit", ["last"=>date('Y-m-d H:i:s'), "timestamp"=>time()], 86400);
         return "get: ".print_r($ret, true);
     }

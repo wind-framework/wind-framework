@@ -2,14 +2,14 @@
 
 namespace App\Helper;
 
-use App\Redis\Cache;
+use Psr\SimpleCache\CacheInterface;
 
 class Invoker
 {
 
 	public $cache;
 
-	public function __construct(Cache $cache) {
+	public function __construct(CacheInterface $cache) {
 		$this->cache = $cache;
 	}
 

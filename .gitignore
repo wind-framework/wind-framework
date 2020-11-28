@@ -1,12 +1,4 @@
-# ---> JetBrains
 .idea/
-
-# mpeltonen/sbt-idea plugin
-.idea_modules/
-
-# ---> Composer
-composer.phar
-/vendor/
-
-runtime/*
+src/vendor/
+src/runtime/*
 

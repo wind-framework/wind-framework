@@ -20,6 +20,7 @@ return function(RouteCollector $r) {
 		});
 		
 		$r->addRoute('GET', 'queue', 'App\Controller\TestController::queue');
+		$r->addRoute('GET', 'http', 'App\Controller\TestController::http');
 	});
 
 	$r->addRoute('GET', '/static/{filename:.+}', '\Framework\Base\FileServer::sendStatic');

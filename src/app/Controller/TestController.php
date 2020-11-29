@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use Amp\Http\Client\HttpClientBuilder;
+use Amp\Http\Client\Request as HttpRequest;
 use Amp\Promise;
 use App\Helper\Invoker;
 use App\Job\TestJob;
@@ -54,5 +56,25 @@ class TestController extends \Framework\Base\Controller
 		
 		return json_encode($ret);
 	}
+
+	public function http()
+    {
+        $client = HttpClientBuilder::buildDefault();
+
+        $response = yield $client->request(new HttpRequest('http://pv.sohu.com/cityjson?ie=utf-8'));
+
+
+        $status = $response->getStatus();
+        //print_r($response->getHeaders());
+        $buffer = yield $response->getBody()->buffer();
+
+        if ($status == 200) {
+            $json = substr($buffer, 19, -1);
+            $data = json_decode($json, true);
+            return "<p>IP：{$data['cip']}</p><p>Location：{$data['cname']}</p>";
+        } else {
+            return 'Request '.$status.' Error!';
+        }
+    }
 
 }

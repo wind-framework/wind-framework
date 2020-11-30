@@ -80,7 +80,7 @@ class TestController extends \Framework\Base\Controller
 
     public function log(LogFactory $logFactory)
     {
-        $log = $logFactory->getLogger();
+        $log = $logFactory->get();
 
         $e = new \ErrorException('This is a error!');
 

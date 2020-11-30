@@ -7,6 +7,13 @@ use Framework\Task\Task;
 class AsyncHandler extends \Monolog\Handler\AbstractProcessingHandler
 {
 
+    protected $group;
+
+    public function setGroup($group)
+    {
+        $this->group = $group;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -35,6 +42,7 @@ class AsyncHandler extends \Monolog\Handler\AbstractProcessingHandler
         Task::execute(
             [self::class, 'recordLog'],
             $record['channel'],
+            $this->group,
             $record['level'],
             $record['message'],
             $record['context']
@@ -48,15 +56,16 @@ class AsyncHandler extends \Monolog\Handler\AbstractProcessingHandler
     /**
      * 供 TaskWorker 调用并使用原配置 Handler 继续处理
      *
-     * @param string $channel
+     * @param string $name
+     * @param string $group
      * @param int $level
      * @param string $message
      * @param array $context
      */
-    public static function recordLog($channel, $level, $message, $context)
+    public static function recordLog($name, $group, $level, $message, $context)
     {
         $factory = di()->get(LogFactory::class);
-        $log = $factory->getLogger($channel);
+        $log = $factory->get($name, $group);
         $log->log($level, $message, $context);
     }
 

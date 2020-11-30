@@ -10,25 +10,27 @@ class LogFactory
 
     private $loggers = [];
 
-    public function getLogger($name='app')
+    public function get($name='app', $group='default')
     {
-        if (isset($this->loggers[$name])) {
-            return $this->loggers[$name];
+        $key = $name.':'.$group;
+
+        if (isset($this->loggers[$key])) {
+            return $this->loggers[$key];
         }
 
         $config = di()->get(Config::class);
 
-        $setting = $config->get('log.'.$name);
+        $setting = $config->get('log.'.$group);
 
         if (empty($setting)) {
-            throw new \Exception("No logger '$name' config found!");
+            throw new \Exception("Logger group '$group' not found in config.");
         }
 
         // create a log channel
         $log = new Logger($name);
 
         if (!isset($setting['handler'])) {
-            throw new \Exception("No handler config for logger '$name'!");
+            throw new \Exception("No handler config for logger group '$group'!");
         }
 
         if (empty($setting['async']) || defined('TASK_WORKER')) {
@@ -51,12 +53,15 @@ class LogFactory
 
             $handler = $ref->newInstanceArgs($constructArgs);
         } else {
-            $handler = new AsyncHandler();
+            $level = $setting['handler']['args']['level'] ?? Logger::DEBUG;
+            $bubble = $setting['handler']['args']['bubble'] ?? true;
+            $handler = new AsyncHandler($level, $bubble);
+            $handler->setGroup($group);
         }
 
         $log->pushHandler($handler);
 
-        return $this->loggers[$name] = $log;
+        return $this->loggers[$key] = $log;
     }
 
 }

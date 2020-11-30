@@ -3,7 +3,7 @@
 use Monolog\Logger;
 
 return [
-    'app' => [
+    'default' => [
         'handler' => [
             'class' => \Monolog\Handler\RotatingFileHandler::class,
             'args' => [

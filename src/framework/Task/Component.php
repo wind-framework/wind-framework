@@ -34,6 +34,9 @@ class Component implements \Framework\Base\Component
 		$worker->onWorkerStart = static function($worker) use ($app) {
 			$app->startComponents($worker);
 
+			//在 TASK_WORKER 进程内有此常量
+			define('TASK_WORKER', true);
+
 			Loop::defer(static function() use ($worker, $app) {
 				self::connect();
 				Client::watch(Task::class, static function($data) use ($worker, $app) {

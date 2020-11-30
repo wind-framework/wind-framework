@@ -4,5 +4,6 @@
 return [
     \Framework\Process\Component::class,
     \Framework\Collector\Component::class,
-	\Framework\Task\Component::class
+	\Framework\Task\Component::class,
+    \Framework\Log\Component::class
 ];

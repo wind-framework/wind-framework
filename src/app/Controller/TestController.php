@@ -8,6 +8,7 @@ use Amp\Promise;
 use App\Helper\Invoker;
 use App\Job\TestJob;
 use Framework\Base\Config;
+use framework\Log\LogFactory;
 use Framework\Queue\Queue;
 use Framework\Task\Task;
 use Psr\Container\ContainerInterface;
@@ -75,6 +76,17 @@ class TestController extends \Framework\Base\Controller
         } else {
             return 'Request '.$status.' Error!';
         }
+    }
+
+    public function log(LogFactory $logFactory)
+    {
+        $log = $logFactory->getLogger();
+
+        $e = new \ErrorException('This is a error!');
+
+        // add records to the log
+        $log->warning('Foo', [$e]);
+        $log->error('Bar');
     }
 
 }

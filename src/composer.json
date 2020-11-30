@@ -11,7 +11,8 @@
         "dragonmantank/cron-expression": "^3.0",
         "workerman/redis": "^1.0",
         "psr/simple-cache": "^1.0",
-        "amphp/http-client": "^4.5"
+        "amphp/http-client": "^4.5",
+        "monolog/monolog": "^2.1"
     },
     "autoload": {
         "psr-4": {

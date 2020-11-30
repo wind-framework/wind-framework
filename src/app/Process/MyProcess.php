@@ -3,6 +3,7 @@
 namespace App\Process;
 
 
+use Framework\Log\LogFactory;
 use function Amp\delay;
 
 class MyProcess extends \Framework\Process\Process
@@ -12,9 +13,12 @@ class MyProcess extends \Framework\Process\Process
 
     public function run()
     {
+        $loggerFactory = di()->get(LogFactory::class);
+        $logger = $loggerFactory->get($this->name);
+
         while (1) {
             yield delay(60000);
-            echo "Hello this is MyProcess\n";
+            $logger->info('Hello this is MyProcess');
         }
     }
 

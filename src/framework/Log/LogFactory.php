@@ -29,37 +29,29 @@ class LogFactory
         // create a log channel
         $log = new Logger($name);
 
-        if (!isset($setting['handler'])) {
-            throw new \Exception("No handler config for logger group '$group'!");
+        if (empty($setting['handlers'])) {
+            throw new \Exception("No handlers config for logger group '$group'!");
         }
 
-        if (empty($setting['async']) || defined('TASK_WORKER')) {
-            //对应 Handler 构造函数的参数
-            $ref = new \ReflectionClass($setting['handler']['class']);
-            $constructor = $ref->getConstructor();
-            $params = $constructor->getParameters();
-
-            $constructArgs = [];
-
-            foreach ($params as $param) {
-                if (isset($setting['handler']['args'][$param->name])) {
-                    $constructArgs[] = $setting['handler']['args'][$param->name];
-                } elseif ($param->isDefaultValueAvailable()) {
-                    break;
-                } else {
-                    throw new \InvalidArgumentException("Can not constructor handler '{$setting['handler']['class']}': No construct value for argument '{$param->name}'.");
-                }
+        foreach ($setting['handlers'] as $h) {
+            if (!empty($h['async']) && defined('TASK_WORKER')) {
+                $level = $h['args']['level'] ?? Logger::DEBUG;
+                $bubble = $h['args']['bubble'] ?? true;
+                $handler = new AsyncHandler($level, $bubble);
+                $handler->setGroup($group);
+            } else {
+                $args = $h['args'] ?? [];
+                $handler = instanceWithNamedArguments($h['class'], $args);
             }
 
-            $handler = $ref->newInstanceArgs($constructArgs);
-        } else {
-            $level = $setting['handler']['args']['level'] ?? Logger::DEBUG;
-            $bubble = $setting['handler']['args']['bubble'] ?? true;
-            $handler = new AsyncHandler($level, $bubble);
-            $handler->setGroup($group);
-        }
+            if (isset($h['formatter'])) {
+                $args = $h['formatter']['args'] ?? [];
+                $formatter = instanceWithNamedArguments($h['formatter']['class'], $args);
+                $handler->setFormatter($formatter);
+            }
 
-        $log->pushHandler($handler);
+            $log->pushHandler($handler);
+        }
 
         return $this->loggers[$key] = $log;
     }

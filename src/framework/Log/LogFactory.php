@@ -34,7 +34,7 @@ class LogFactory
         }
 
         foreach ($setting['handlers'] as $h) {
-            if (!empty($h['async']) && defined('TASK_WORKER')) {
+            if (!empty($h['async']) && !defined('TASK_WORKER')) {
                 $level = $h['args']['level'] ?? Logger::DEBUG;
                 $bubble = $h['args']['bubble'] ?? true;
                 $handler = new AsyncHandler($level, $bubble);

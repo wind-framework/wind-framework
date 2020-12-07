@@ -71,22 +71,22 @@ class QueryBuilder {
 	 * `id`=100
 	 *
 	 * First element is 'AND', 'OR' mean condition connect method:
-	 * ['name'=>'hello', 'nick'=>'world'] >> `name`='hello' AND `nick`='world'
-	 * ['OR', 'name'=>'hello', 'nick'=>'world'] >> `name`='hello' OR `nick`='world'
+	 * ['name'=>'hello', 'nick'=>'world'] -> `name`='hello' AND `nick`='world'
+	 * ['OR', 'name'=>'hello', 'nick'=>'world'] -> `name`='hello' OR `nick`='world'
 	 *
 	 * AND, OR support multiple nested:
-	 * ['name'=>'hello', ['OR', 'c'=>1, 'd'=>2]] >> `name`='hello' AND (`c`=1 OR `d`=2)
+	 * ['name'=>'hello', ['OR', 'c'=>1, 'd'=>2]] -> `name`='hello' AND (`c`=1 OR `d`=2)
 	 *
 	 * IN, NOT IN:
-	 * ['name'=>['a', 'b', 'c']] >> `name` IN('a', 'b', 'c') AND
-	 * ['name !'=>['a', 'b']] >> `name` NOT IN('a', 'b')
+	 * ['name'=>['a', 'b', 'c']] -> `name` IN('a', 'b', 'c') AND
+	 * ['name !'=>['a', 'b']] -> `name` NOT IN('a', 'b')
 	 *
 	 * BETWEEN:
-	 * ['id BETWEEN'=>[100, 999]] >> `id` BETWEEN 100 AND 999
+	 * ['id BETWEEN'=>[100, 999]] -> `id` BETWEEN 100 AND 999
 	 *
 	 * Other symbols:
 	 * =, !=, >, >=, <, <=, EXISTS, NOT EXISTS and others
-	 * ['id >='=>100, 'live EXISTS'=>'system'] >> `id`>=100 AND `live` EXISTS ('system')
+	 * ['id >='=>100, 'live EXISTS'=>'system'] -> `id`>=100 AND `live` EXISTS ('system')
 	 *
 	 * @param null $params Unsupported yet!
 	 * @return $this
@@ -586,7 +586,7 @@ class QueryBuilder {
 		}
 
 		$prefix = $this->connection->prefix();
-		if ($prefix && substr($table, 0, strlen($prefix)) === $prefix) {
+		if ($prefix && substr($table, 0, strlen($prefix)) != $prefix) {
             $table = $prefix.$table;
         }
 

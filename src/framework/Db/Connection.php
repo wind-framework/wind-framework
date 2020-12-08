@@ -43,12 +43,22 @@ class Connection
 		$config = $databases[$name];
 
 		//初始化数据库连接池
-		$conf = ConnectionConfig::fromString("host={$config['host']};user={$config['username']};password={$config['password']};db={$config['database']}");
+        $conn = new ConnectionConfig(
+            $config['host'],
+            $config['port'],
+            $config['username'],
+            $config['password'],
+            $config['database']
+        );
+
+		if (isset($config['charset'])) {
+            isset($config['collation']) ? $conn->withCharset($config['charset'], $config['collation']) : $conn->withCharset($config['charset']);
+        }
 
 		$maxConnection = $connection['pool']['max_connections'] ?? ConnectionPool::DEFAULT_MAX_CONNECTIONS;
 		$maxIdleTime = $connection['pool']['max_idle_time'] ?? ConnectionPool::DEFAULT_IDLE_TIMEOUT;
 
-		$this->pool = pool($conf, $maxConnection, $maxIdleTime);
+		$this->pool = pool($conn, $maxConnection, $maxIdleTime);
 		$this->name = $name;
 		$this->prefix = $config['prefix'];
 	}

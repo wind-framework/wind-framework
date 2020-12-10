@@ -52,7 +52,7 @@ class Connection
         );
 
 		if (isset($config['charset'])) {
-            isset($config['collation']) ? $conn->withCharset($config['charset'], $config['collation']) : $conn->withCharset($config['charset']);
+            $conn->withCharset($config['charset'], $config['collation']);
         }
 
 		$maxConnection = $connection['pool']['max_connections'] ?? ConnectionPool::DEFAULT_MAX_CONNECTIONS;

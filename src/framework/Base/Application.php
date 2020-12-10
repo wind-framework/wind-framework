@@ -14,6 +14,8 @@ use function Amp\asyncCall;
  * @package Framework\Base
  * 
  * @property \DI\Container $container
+ * @property Config $config
+ * @property Worker[] $workers
  */
 class Application
 {
@@ -28,6 +30,11 @@ class Application
      * @var \DI\Container
      */
     private $container;
+
+    /**
+     * @var Config
+     */
+    private $config;
 
     /**
      * @var Application
@@ -49,25 +56,35 @@ class Application
         Worker::$eventLoopClass = Amp::class;
 
         self::$instance = new Application();
+        self::$instance->initEnv();
         self::$instance->runServers();
+        self::$instance->setComponents();
     }
 
     public function __construct()
     {
-        $config = new Config();
+        //Config
+        $this->config = new Config();
 
+        //Container
         $builder = new ContainerBuilder();
-        $builder->addDefinitions($config->get('definitions'));
+        $builder->addDefinitions($this->config->get('definitions'));
         $container = $builder->build();
-        $container->set(Config::class, $config);
-
+        $container->set(Config::class, $this->config);
         $this->container = $container;
+    }
+
+    private function initEnv()
+    {
+        $timezone = $this->config->get('default_timezone');
+        if ($timezone) {
+            date_default_timezone_set($timezone);
+        }
     }
 
     private function runServers()
     {
-        $config = $this->container->get(Config::class);
-        $server = $config->get('server');
+        $server = $this->config->get('server');
 
         foreach ($server['servers'] as $srv) {
         	if (isset($srv['enable']) && $srv['enable'] === false) {
@@ -87,10 +104,11 @@ class Application
 	            	break;
             }
         }
+    }
 
-        //Add Components
-        $components = $config->get('components');
-
+    private function setComponents()
+    {
+        $components = $this->config->get('components');
         foreach ($components as $component) {
             $this->addComponent($component);
         }
@@ -99,11 +117,6 @@ class Application
     public function addWorker(Worker $worker)
     {
         $this->workers[] = $worker;
-    }
-
-    public function getWorkers()
-    {
-        return $this->workers;
     }
 
     /**
@@ -145,10 +158,10 @@ class Application
     public function __get($name)
     {
         switch ($name) {
-            case 'container':
-                return $this->container;
-            default:
-                throw new \Error("Try to get undefined property '$name' of Application.");
+            case 'container': return $this->container;
+            case 'config': return $this->config;
+            case 'workers': return $this->workers;
+            default: throw new \Error("Try to get undefined property '$name' of Application.");
         }
     }
 

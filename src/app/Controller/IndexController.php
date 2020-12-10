@@ -52,6 +52,14 @@ class IndexController extends Controller
 
     public function gcStatus(ViewInterface $view)
     {
+        //运行时间
+        $runSeconds = time() - getApp()->startTimestamp;
+        $running = \floor($runSeconds / 86400) . ' 天 '
+            . \floor(($runSeconds % 86400) / 3600) . ' 小时 '
+            . \floor(($runSeconds % 3600) / 60) . ' 分 '
+            . \floor($runSeconds % 60) . ' 秒';
+
+        //内存回收统计
         /* @var $info GcStatusCollect[] */
         $info = yield Collector::get(GcStatusCollect::class);
 
@@ -65,7 +73,7 @@ class IndexController extends Controller
             $r->memoryUsagePeak = FileUtil::formatSize($r->memoryUsagePeak);
         }
 
-        return $view->render('gc-status.twig', ['info'=>$info]);
+        return $view->render('gc-status.twig', compact('info', 'running'));
     }
 
     public function gcRecycle()

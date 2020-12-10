@@ -16,6 +16,7 @@ use function Amp\asyncCall;
  * @property \DI\Container $container
  * @property Config $config
  * @property Worker[] $workers
+ * @property int startTimestamp
  */
 class Application
 {
@@ -35,6 +36,13 @@ class Application
      * @var Config
      */
     private $config;
+
+    /**
+     * The Framework Start Timestamp
+     *
+     * @var int
+     */
+    private $startTimestamp;
 
     /**
      * @var Application
@@ -80,6 +88,8 @@ class Application
         if ($timezone) {
             date_default_timezone_set($timezone);
         }
+
+        $this->startTimestamp = time();
     }
 
     private function runServers()
@@ -158,9 +168,11 @@ class Application
     public function __get($name)
     {
         switch ($name) {
-            case 'container': return $this->container;
-            case 'config': return $this->config;
-            case 'workers': return $this->workers;
+            case 'container':
+            case 'config':
+            case 'workers':
+            case 'startTimestamp':
+                return $this->{$name};
             default: throw new \Error("Try to get undefined property '$name' of Application.");
         }
     }

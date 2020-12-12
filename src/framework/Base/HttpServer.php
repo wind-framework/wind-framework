@@ -101,7 +101,7 @@ class HttpServer extends Worker
                     });
                 } catch (ExitException $e) {
                     $connection->send('');
-                } catch (\Throwable $e) {
+                } catch (\Exception $e) {
                     $connection->send(new Response(500, [], '<h1>'.$e->getMessage().'</h1><pre>'.$e->getTraceAsString().'</pre>'));
                 }
                 break;

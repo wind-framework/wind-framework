@@ -149,65 +149,6 @@ class QueryBuilder {
 		return $this;
 	}
 
-    /**
-     * Insert data
-     *
-     * @param array $data
-     * @param bool $replace Use REPLACE INTO
-     * @return Promise<int>
-     * @throws
-     */
-	public function insert(array $data, $replace=false): Promise
-	{
-		$keys = $this->quoteKeys(array_keys($data));
-		$values = $this->quoteValues($data);
-
-		$sql = ($replace ? 'REPLACE' : 'INSERT')." INTO {$this->table}($keys) VALUES($values)";
-
-		return $this->connection->execute($sql);
-	}
-
-	/**
-	 * Delete data
-	 *
-	 * @return Promise<CommandResult> Affected rows number
-	 */
-	public function delete(): Promise
-	{
-		$sql = 'DELETE'.$this->buildFrom().$this->buildWhere().$this->buildOrderBy()
-			.$this->buildLimit().$this->buildOffset();
-		$this->builder = [];
-		return $this->connection->execute($sql);
-	}
-
-	/**
-	 * Update data
-	 *
-	 * @param array $data
-	 * @return Promise<int> Affected rows number
-	 */
-	public function update(array $data): Promise
-	{
-		$sql = 'UPDATE '.$this->table.' SET ';
-		$sets = [];
-
-		foreach($data as $key => $val) {
-			if(substr($key, 0, 1) == '^') {
-				$key = $this->quoteKeys(substr($key,1));
-				$sets[] = "$key=$val";
-			} else {
-				$sets[] = $this->quoteKeys($key).'='.$this->quote($val);
-			}
-		}
-
-		$sql .= join(',', $sets).$this->buildWhere().$this->buildOrderBy() .$this->buildLimit()
-			.$this->buildOffset();
-
-		$this->builder = [];
-
-		return $this->connection->execute($sql);
-	}
-
 	/**
 	 * Build sql from query builder
 	 *
@@ -248,75 +189,6 @@ class QueryBuilder {
 
 		return $sql;
 	}
-
-	/**
-	 * Fetch first row from query result
-     * @return Promise<array>|Promise<null>
-	 */
-	public function get()
-	{
-	    return $this->connection->fetchOne($this->buildSelect());
-	}
-
-    /**
-     * Fetch first row from query result
-     * @return Promise<array>|Promise<null>
-     */
-    public function fetchOne()
-    {
-        return $this->connection->fetchOne($this->buildSelect());
-    }
-
-    /**
-     * Fetch all rows from query result
-     * @return Promise<array>|Promise<null>
-     */
-	public function fetchAll()
-	{
-	    return $this->connection->fetchAll($this->buildSelect());
-	}
-
-	//Fetch column from all rows
-	public function fetchColumn($col=0)
-	{
-	    return $this->connection->fetchColumn($this->buildSelect(), [], $col);
-	}
-
-	//public function distinct($field)
-	//{
-	//	$this->builder['select'] = "distinct($field)";
-	//	return $this;
-	//}
-
-	/**
-	 * Count rows
-	 *
-	 * @param string $field
-	 * @return int|null
-	 */
-	public function count($field='*')
-	{
-		$this->select("COUNT($field)", false);
-		return $this->scalar();
-	}
-
-    /**
-     * Return first column value in row
-     *
-     * @param int|string $col
-     * @return mixed
-     * @throws
-     */
-    public function scalar($col=0)
-    {
-        return call(function() use ($col) {
-            $row = yield $this->connection->fetchOne($this->buildSelect());
-            if (is_int($col)) {
-                $row = array_values($row);
-            }
-            return $row ? $row[$col] : null;
-        });
-    }
 
 	/**
 	 * Build from query
@@ -749,6 +621,134 @@ class QueryBuilder {
 	protected function trim($str)
 	{
 		return preg_replace('/\s+/', ' ', trim($str, ' `'));
+	}
+
+	/**
+	 * Insert data
+	 *
+	 * @param array $data
+	 * @param bool $replace Use REPLACE INTO
+	 * @return Promise<int> Last insert id
+	 * @throws
+	 */
+	public function insert(array $data, $replace=false): Promise
+	{
+		$keys = $this->quoteKeys(array_keys($data));
+		$values = $this->quoteValues($data);
+
+		$sql = ($replace ? 'REPLACE' : 'INSERT')." INTO {$this->table}($keys) VALUES($values)";
+
+		return call(function() use ($sql) {
+			$result = yield $this->connection->execute($sql);
+			return $result->getLastInsertId();
+		});
+	}
+
+	/**
+	 * Delete data
+	 *
+	 * @return Promise<int> Affected row count
+	 */
+	public function delete(): Promise
+	{
+		return call(function() {
+			$sql = 'DELETE'.$this->buildFrom().$this->buildWhere().$this->buildOrderBy()
+				.$this->buildLimit().$this->buildOffset();
+			$this->builder = [];
+			$result = yield $this->connection->execute($sql);
+			return $result->getAffectedRowCount();
+		});
+	}
+
+	/**
+	 * Update data
+	 *
+	 * @param array $data
+	 * @return Promise<int> Affected row count
+	 */
+	public function update(array $data): Promise
+	{
+		$sql = 'UPDATE '.$this->table.' SET ';
+		$sets = [];
+
+		foreach($data as $key => $val) {
+			if(substr($key, 0, 1) == '^') {
+				$key = $this->quoteKeys(substr($key,1));
+				$sets[] = "$key=$val";
+			} else {
+				$sets[] = $this->quoteKeys($key).'='.$this->quote($val);
+			}
+		}
+
+		$sql .= join(',', $sets).$this->buildWhere().$this->buildOrderBy() .$this->buildLimit()
+			.$this->buildOffset();
+
+		$this->builder = [];
+
+		return call(function() use ($sql) {
+			$result = yield $this->connection->execute($sql);
+			return $result->getAffectedRowCount();
+		});
+	}
+
+	/**
+	 * Fetch first row from query result
+	 * @return Promise<array>|Promise<null>
+	 */
+	public function fetchOne()
+	{
+		return $this->connection->fetchOne($this->buildSelect());
+	}
+
+	/**
+	 * Fetch all rows from query result
+	 * @return Promise<array>|Promise<null>
+	 */
+	public function fetchAll()
+	{
+		return $this->connection->fetchAll($this->buildSelect());
+	}
+
+	//Fetch column from all rows
+	public function fetchColumn($col=0)
+	{
+		return $this->connection->fetchColumn($this->buildSelect(), [], $col);
+	}
+
+	//public function distinct($field)
+	//{
+	//	$this->builder['select'] = "distinct($field)";
+	//	return $this;
+	//}
+
+	/**
+	 * Count rows
+	 *
+	 * @param string $field
+	 * @return int|null
+	 */
+	public function count($field='*')
+	{
+		$this->select("COUNT($field)", false);
+		return $this->scalar();
+	}
+
+	/**
+	 * Return first column value in row
+	 *
+	 * @param int|string $col
+	 * @return mixed
+	 * @throws
+	 */
+	public function scalar($col=0)
+	{
+		return call(function() use ($col) {
+			$row = yield $this->connection->fetchOne($this->buildSelect());
+			if (is_int($col)) {
+				$row = array_values($row);
+			}
+			return $row ? $row[$col] : null;
+		});
 	}
 
 }

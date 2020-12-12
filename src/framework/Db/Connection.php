@@ -2,6 +2,7 @@
 
 namespace Framework\Db;
 
+use Amp\Mysql\CommandResult;
 use Amp\Mysql\ConnectionConfig;
 use Amp\Promise;
 use Amp\Sql\Common\ConnectionPool;
@@ -82,7 +83,7 @@ class Connection
 	/**
 	 * @param string $sql
 	 * @param array $params
-	 * @return Promise
+	 * @return Promise<\Amp\Mysql\ResultSet>
 	 * @throws \Amp\Sql\ConnectionException
 	 * @throws \Amp\Sql\FailureException
 	 */
@@ -102,7 +103,7 @@ class Connection
 	/**
 	 * @param string $sql
 	 * @param array $params
-	 * @return Promise
+	 * @return Promise<CommandResult>
 	 * @throws \Amp\Sql\ConnectionException
 	 * @throws \Amp\Sql\FailureException
 	 */
@@ -117,7 +118,7 @@ class Connection
 	 *
 	 * @param string $sql
 	 * @param array $params
-	 * @return Promise<\Amp\Mysql\ResultSet>
+	 * @return Promise<array>
 	 */
 	public function fetchOne($sql, array $params=[]): Promise {
 		return call(function() use ($sql, $params) {
@@ -141,7 +142,7 @@ class Connection
 	 *
 	 * @param string $sql
 	 * @param array $params
-	 * @return Promise<\Amp\Mysql\ResultSet>
+	 * @return Promise<array>
 	 */
 	public function fetchAll($sql, array $params=[]): Promise {
 		return call(function() use ($sql, $params) {

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use Amp\Loop;
 use App\Collect\GcRecycle;
 use App\Collect\GcStatusCollect;
 use Framework\Base\Controller;
@@ -59,6 +60,9 @@ class IndexController extends Controller
             . \floor(($runSeconds % 3600) / 60) . ' 分 '
             . \floor($runSeconds % 60) . ' 秒';
 
+        $driver = Loop::get();
+        $event = substr(explode('\\', get_class($driver))[2], 0, -6);
+
         //内存回收统计
         /* @var $info GcStatusCollect[] */
         $info = yield Collector::get(GcStatusCollect::class);
@@ -73,7 +77,7 @@ class IndexController extends Controller
             $r->memoryUsagePeak = FileUtil::formatSize($r->memoryUsagePeak);
         }
 
-        return $view->render('gc-status.twig', compact('info', 'running'));
+        return $view->render('gc-status.twig', compact('info', 'running', 'event'));
     }
 
     public function gcRecycle()

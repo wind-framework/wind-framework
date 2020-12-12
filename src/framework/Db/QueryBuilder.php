@@ -8,6 +8,7 @@
 
 namespace Framework\Db;
 
+use Amp\Mysql\CommandResult;
 use Amp\Promise;
 use function Amp\call;
 
@@ -169,7 +170,7 @@ class QueryBuilder {
 	/**
 	 * Delete data
 	 *
-	 * @return Promise<int> Affected rows number
+	 * @return Promise<CommandResult> Affected rows number
 	 */
 	public function delete(): Promise
 	{

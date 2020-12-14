@@ -1,5 +1,6 @@
 <?php
 
+use Monolog\Formatter\LineFormatter;
 use Monolog\Logger;
 
 return [
@@ -19,9 +20,21 @@ return [
                 'args' => [
                     'level' => Logger::INFO
                 ],
+                //为 handler 设置独立的 formatter
                 'formatter' => [
-                    'class' => \Monolog\Formatter\LineFormatter::class
+                    'class' => LineFormatter::class,
+                    'args' => [
+                        'dateFormat' => 'Y-m-d H:i:s'
+                    ]
                 ]
+            ]
+        ],
+        //整个组默认的 formatter
+        'formatter' => [
+            'class' => LineFormatter::class,
+            'args' => [
+                'format' => null,
+                'dateFormat' => 'Y-m-d H:i:s v'
             ]
         ]
     ]

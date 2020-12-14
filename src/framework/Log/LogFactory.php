@@ -29,6 +29,15 @@ class LogFactory
         // create a log channel
         $log = new Logger($name);
 
+        //支持多 Handlers 或单 Handler 配置
+        if (!isset($setting['handlers'])) {
+            $setting['handlers'] = [];
+        }
+
+        if (isset($setting['handler'])) {
+            $setting['handlers'][] = $setting['handler'];
+        }
+
         if (empty($setting['handlers'])) {
             throw new \Exception("No handlers config for logger group '$group'!");
         }
@@ -41,12 +50,15 @@ class LogFactory
                 $handler->setGroup($group);
             } else {
                 $args = $h['args'] ?? [];
-                $handler = instanceWithNamedArguments($h['class'], $args);
+                $handler = di()->make($h['class'], $args);
             }
 
-            if (isset($h['formatter'])) {
-                $args = $h['formatter']['args'] ?? [];
-                $formatter = instanceWithNamedArguments($h['formatter']['class'], $args);
+            $fmt = $h['formatter'] ?? $setting['formatter'] ?? false;
+
+            print_r($fmt);
+
+            if ($fmt) {
+                $formatter = di()->make($fmt['class'], $fmt['args'] ?? []);
                 $handler->setFormatter($formatter);
             }
 

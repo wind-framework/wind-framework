@@ -1,18 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hans">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
 <title>垃圾回收状态</title>
 <style type="text/css">
-html, body {margin:0;}
-th {background-color: #F0F0F0;}
+html, body {margin:0; font-size:1rem;}
+th {background-color: #F0F0F0; border-bottom:1px solid #e4e3e3;}
 td {text-align: center;}
 th.l, td.l {text-align: left;}
+table {border-spacing:1px;}
 tbody tr:nth-child(even) td {background-color:#F7F5F5;}
-.desc {display: flex; flex-wrap: wrap; justify-content: center;}
+.desc {display:flex; flex-wrap: nowrap; justify-content: flex-start;}
+.desc p {margin: 0 0 3px;}
 .desc div {flex: 0 0 auto; margin: 10px;}
-p {margin:0 0 8px;}
+ul {margin:2px 0 5px; padding: 0 0 0 15px;}
+a {text-decoration:none; display:inline-block; background-color:#efefef; border-radius:3px; color:#767f90;
+    padding:0 2px; margin:0 2px;}
+a:hover {background-color:#e6e6f7; color:#5869e6;}
+a:active {background-color:#8686ff; color:#FFF;}
 </style>
 </head>
 <body>
@@ -51,8 +57,11 @@ p {margin:0 0 8px;}
 <div class="desc">
     <div><img src="/static/workerman_logo.png" /></div>
     <div style="flex:1 1 auto;">
-        <p>已经运行 {{running}}。<br>当“当前根数量”达到“回收根阈值”时，PHP 会做一次垃圾的分析和回收。</p>
-        <button type="button" onclick="location.href='/gc-recycle';">立即回收</button>
+        <ul>
+            <li>事件循环：{{event}}</li>
+            <li>已经运行：{{running}}。</li>
+            <li>当“当前根数量”达到“回收根阈值”时，PHP 会做一次垃圾的分析和回收，您也可以<a href="/gc-recycle">点此立即进行一次回收</a>。</li>
+        </ul>
     </div>
 </div>
 </body>

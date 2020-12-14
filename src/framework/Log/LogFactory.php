@@ -54,9 +54,6 @@ class LogFactory
             }
 
             $fmt = $h['formatter'] ?? $setting['formatter'] ?? false;
-
-            print_r($fmt);
-
             if ($fmt) {
                 $formatter = di()->make($fmt['class'], $fmt['args'] ?? []);
                 $handler->setFormatter($formatter);

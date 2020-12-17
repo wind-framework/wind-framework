@@ -42,17 +42,17 @@ class QueryBuilder {
 		return $this;
 	}
 
-	public function join($table, $compose, $type='')
+	public function join($table, $compopr, $type='')
 	{
 		$type = strtoupper($type);
-		$this->builder['join'][] = compact('type', 'table', 'compose');
+		$this->builder['join'][] = compact('type', 'table', 'compopr');
 		return $this;
 	}
 
-	public function leftJoin($table, $compose) { return $this->join($table, $compose, 'left'); }
-	public function rightJoin($table, $compose) { return $this->join($table, $compose, 'right'); }
-	public function innerJoin($table, $compose) { return $this->join($table, $compose, 'inner'); }
-	public function outerJoin($table, $compose) { return $this->join($table, $compose, 'outer'); }
+	public function leftJoin($table, $compopr) { return $this->join($table, $compopr, 'left'); }
+	public function rightJoin($table, $compopr) { return $this->join($table, $compopr, 'right'); }
+	public function innerJoin($table, $compopr) { return $this->join($table, $compopr, 'inner'); }
+	public function outerJoin($table, $compopr) { return $this->join($table, $compopr, 'outer'); }
 
 	public function union($all=false)
 	{
@@ -152,10 +152,9 @@ class QueryBuilder {
 	/**
 	 * Build sql from query builder
 	 *
-	 * @param bool $clean Clean conditions after build
 	 * @return string SQL String
 	 */
-	public function buildSelect($clean=true)
+	public function buildSelect()
 	{
 		//if (!$this->table) {
 		//	throw new DatabaseException('Query build error, No table were selected!', $this->di);
@@ -181,11 +180,6 @@ class QueryBuilder {
 		//FROM
 		$sql .= $this->buildFrom().$this->buildJoin().$this->buildWhere().$this->buildGroupBy().$this->buildHaving()
 			.$this->buildOrderBy().$this->buildLimit().$this->buildOffset();
-
-		if ($clean) {
-			$this->builder = [];
-			$this->table = null;
-		}
 
 		return $sql;
 	}
@@ -486,7 +480,9 @@ class QueryBuilder {
 				$vals[] = $this->quoteValues($val);
 			}
 			return join(',', $vals);
-		} else {
+		} elseif ($values === null) {
+            return 'NULL';
+        } else {
 			return $this->quote($values);
 		}
 	}
@@ -525,15 +521,19 @@ class QueryBuilder {
 					$sql = $this->parseWhere($key, $val);
 				}
 
+                if ($sql == '') {
+                    continue;
+                }
+
 				$sqlWhere[] = $poly ? '('.$sql.')' : $sql;
 			}
 
 			return join(" $join ", $sqlWhere);
 		}
 
-		if ($value === null) {
-			return $where;
-		}
+        if ($value === null) {
+            return '';
+        }
 
 		$where = $this->trim($where);
 
@@ -592,6 +592,13 @@ class QueryBuilder {
 	public function quote($string) {
 		return '\''.addslashes($string).'\'';
 	}
+
+    /**
+     * Clear condition in builder
+     */
+    public function clear() {
+        $this->builder = [];
+    }
 
 	/**
 	 * Split the table/field alias string
@@ -729,8 +736,15 @@ class QueryBuilder {
 	 */
 	public function count($field='*')
 	{
-		$this->select("COUNT($field)", false);
-		return $this->scalar();
+        //Count is just temporary select, need to resume select
+        $builder = $this->popTempBuilder();
+
+        $this->select("COUNT($field)", false);
+        $count = $this->scalar();
+
+        $this->resumeTempBuilder($builder);;
+
+        return $count;
 	}
 
 	/**
@@ -742,8 +756,9 @@ class QueryBuilder {
 	 */
 	public function scalar($col=0)
 	{
-		return call(function() use ($col) {
-			$row = yield $this->connection->fetchOne($this->buildSelect());
+	    $sql = $this->buildSelect();
+		return call(function() use ($sql, $col) {
+			$row = yield $this->connection->fetchOne($sql);
 			if (is_int($col)) {
 				$row = array_values($row);
 			}
@@ -751,4 +766,26 @@ class QueryBuilder {
 		});
 	}
 
+    private function popTempBuilder()
+    {
+        $builder = [];
+        foreach (['select', 'select_quote', 'limit', 'offset'] as $key) {
+            if (isset($this->builder[$key])) {
+                $builder[$key] = $this->builder[$key];
+                unset($this->builder[$key]);
+            }
+        }
+        return $builder;
+    }
+
+    private function resumeTempBuilder($builder)
+    {
+        foreach (['select', 'select_quote', 'limit', 'offset'] as $key) {
+            if (isset($builder[$key])) {
+                $this->builder[$key] = $builder[$key];
+            } else {
+                unset($this->builder[$key]);
+            }
+        }
+    }
 }

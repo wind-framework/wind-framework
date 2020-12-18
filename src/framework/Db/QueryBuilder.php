@@ -759,10 +759,16 @@ class QueryBuilder {
 	    $sql = $this->buildSelect();
 		return call(function() use ($sql, $col) {
 			$row = yield $this->connection->fetchOne($sql);
-			if (is_int($col)) {
-				$row = array_values($row);
-			}
-			return $row ? $row[$col] : null;
+
+			if ($row === null) {
+			    return null;
+            }
+
+            if (is_int($col)) {
+                $row = array_values($row);
+            }
+
+            return $row[$col] ?? null;
 		});
 	}
 

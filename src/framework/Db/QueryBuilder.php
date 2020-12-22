@@ -8,6 +8,7 @@
 
 namespace Framework\Db;
 
+use Amp\Mysql\CommandResult;
 use Amp\Promise;
 use function Amp\call;
 
@@ -41,17 +42,17 @@ class QueryBuilder {
 		return $this;
 	}
 
-	public function join($table, $compose, $type='')
+	public function join($table, $compopr, $type='')
 	{
 		$type = strtoupper($type);
-		$this->builder['join'][] = compact('type', 'table', 'compose');
+		$this->builder['join'][] = compact('type', 'table', 'compopr');
 		return $this;
 	}
 
-	public function leftJoin($table, $compose) { return $this->join($table, $compose, 'left'); }
-	public function rightJoin($table, $compose) { return $this->join($table, $compose, 'right'); }
-	public function innerJoin($table, $compose) { return $this->join($table, $compose, 'inner'); }
-	public function outerJoin($table, $compose) { return $this->join($table, $compose, 'outer'); }
+	public function leftJoin($table, $compopr) { return $this->join($table, $compopr, 'left'); }
+	public function rightJoin($table, $compopr) { return $this->join($table, $compopr, 'right'); }
+	public function innerJoin($table, $compopr) { return $this->join($table, $compopr, 'inner'); }
+	public function outerJoin($table, $compopr) { return $this->join($table, $compopr, 'outer'); }
 
 	public function union($all=false)
 	{
@@ -71,22 +72,22 @@ class QueryBuilder {
 	 * `id`=100
 	 *
 	 * First element is 'AND', 'OR' mean condition connect method:
-	 * ['name'=>'hello', 'nick'=>'world'] >> `name`='hello' AND `nick`='world'
-	 * ['OR', 'name'=>'hello', 'nick'=>'world'] >> `name`='hello' OR `nick`='world'
+	 * ['name'=>'hello', 'nick'=>'world'] -> `name`='hello' AND `nick`='world'
+	 * ['OR', 'name'=>'hello', 'nick'=>'world'] -> `name`='hello' OR `nick`='world'
 	 *
 	 * AND, OR support multiple nested:
-	 * ['name'=>'hello', ['OR', 'c'=>1, 'd'=>2]] >> `name`='hello' AND (`c`=1 OR `d`=2)
+	 * ['name'=>'hello', ['OR', 'c'=>1, 'd'=>2]] -> `name`='hello' AND (`c`=1 OR `d`=2)
 	 *
 	 * IN, NOT IN:
-	 * ['name'=>['a', 'b', 'c']] >> `name` IN('a', 'b', 'c') AND
-	 * ['name !'=>['a', 'b']] >> `name` NOT IN('a', 'b')
+	 * ['name'=>['a', 'b', 'c']] -> `name` IN('a', 'b', 'c') AND
+	 * ['name !'=>['a', 'b']] -> `name` NOT IN('a', 'b')
 	 *
 	 * BETWEEN:
-	 * ['id BETWEEN'=>[100, 999]] >> `id` BETWEEN 100 AND 999
+	 * ['id BETWEEN'=>[100, 999]] -> `id` BETWEEN 100 AND 999
 	 *
 	 * Other symbols:
 	 * =, !=, >, >=, <, <=, EXISTS, NOT EXISTS and others
-	 * ['id >='=>100, 'live EXISTS'=>'system'] >> `id`>=100 AND `live` EXISTS ('system')
+	 * ['id >='=>100, 'live EXISTS'=>'system'] -> `id`>=100 AND `live` EXISTS ('system')
 	 *
 	 * @param null $params Unsupported yet!
 	 * @return $this
@@ -148,72 +149,12 @@ class QueryBuilder {
 		return $this;
 	}
 
-    /**
-     * Insert data
-     *
-     * @param array $data
-     * @param bool $replace Use REPLACE INTO
-     * @return Promise<int>
-     * @throws
-     */
-	public function insert(array $data, $replace=false): Promise
-	{
-		$keys = $this->quoteKeys(array_keys($data));
-		$values = $this->quoteValues($data);
-
-		$sql = ($replace ? 'REPLACE' : 'INSERT')." INTO {$this->table}($keys) VALUES($values)";
-
-		return $this->connection->execute($sql);
-	}
-
-	/**
-	 * Delete data
-	 *
-	 * @return Promise<int> Affected rows number
-	 */
-	public function delete(): Promise
-	{
-		$sql = 'DELETE'.$this->buildFrom().$this->buildWhere().$this->buildOrderBy()
-			.$this->buildLimit().$this->buildOffset();
-		$this->builder = [];
-		return $this->connection->execute($sql);
-	}
-
-	/**
-	 * Update data
-	 *
-	 * @param array $data
-	 * @return Promise<int> Affected rows number
-	 */
-	public function update(array $data): Promise
-	{
-		$sql = 'UPDATE '.$this->table.' SET ';
-		$sets = [];
-
-		foreach($data as $key => $val) {
-			if(substr($key, 0, 1) == '^') {
-				$key = $this->quoteKeys(substr($key,1));
-				$sets[] = "$key=$val";
-			} else {
-				$sets[] = $this->quoteKeys($key).'='.$this->quote($val);
-			}
-		}
-
-		$sql .= join(',', $sets).$this->buildWhere().$this->buildOrderBy() .$this->buildLimit()
-			.$this->buildOffset();
-
-		$this->builder = [];
-
-		return $this->connection->execute($sql);
-	}
-
 	/**
 	 * Build sql from query builder
 	 *
-	 * @param bool $clean Clean conditions after build
 	 * @return string SQL String
 	 */
-	public function buildSelect($clean=true)
+	public function buildSelect()
 	{
 		//if (!$this->table) {
 		//	throw new DatabaseException('Query build error, No table were selected!', $this->di);
@@ -240,82 +181,8 @@ class QueryBuilder {
 		$sql .= $this->buildFrom().$this->buildJoin().$this->buildWhere().$this->buildGroupBy().$this->buildHaving()
 			.$this->buildOrderBy().$this->buildLimit().$this->buildOffset();
 
-		if ($clean) {
-			$this->builder = [];
-			$this->table = null;
-		}
-
 		return $sql;
 	}
-
-	/**
-	 * Fetch first row from query result
-     * @return Promise<array>|Promise<null>
-	 */
-	public function get()
-	{
-	    return $this->connection->fetchOne($this->buildSelect());
-	}
-
-    /**
-     * Fetch first row from query result
-     * @return Promise<array>|Promise<null>
-     */
-    public function fetchOne()
-    {
-        return $this->connection->fetchOne($this->buildSelect());
-    }
-
-    /**
-     * Fetch all rows from query result
-     * @return Promise<array>|Promise<null>
-     */
-	public function fetchAll()
-	{
-	    return $this->connection->fetchAll($this->buildSelect());
-	}
-
-	//Fetch column from all rows
-	public function fetchColumn($col=0)
-	{
-	    return $this->connection->fetchColumn($this->buildSelect(), [], $col);
-	}
-
-	//public function distinct($field)
-	//{
-	//	$this->builder['select'] = "distinct($field)";
-	//	return $this;
-	//}
-
-	/**
-	 * Count rows
-	 *
-	 * @param string $field
-	 * @return int|null
-	 */
-	public function count($field='*')
-	{
-		$this->select("COUNT($field)", false);
-		return $this->scalar();
-	}
-
-    /**
-     * Return first column value in row
-     *
-     * @param int|string $col
-     * @return mixed
-     * @throws
-     */
-    public function scalar($col=0)
-    {
-        return call(function() use ($col) {
-            $row = yield $this->connection->fetchOne($this->buildSelect());
-            if (is_int($col)) {
-                $row = array_values($row);
-            }
-            return $row ? $row[$col] : null;
-        });
-    }
 
 	/**
 	 * Build from query
@@ -586,7 +453,7 @@ class QueryBuilder {
 		}
 
 		$prefix = $this->connection->prefix();
-		if ($prefix && substr($table, 0, strlen($prefix)) === $prefix) {
+		if ($prefix && substr($table, 0, strlen($prefix)) != $prefix) {
             $table = $prefix.$table;
         }
 
@@ -613,7 +480,9 @@ class QueryBuilder {
 				$vals[] = $this->quoteValues($val);
 			}
 			return join(',', $vals);
-		} else {
+		} elseif ($values === null) {
+            return 'NULL';
+        } else {
 			return $this->quote($values);
 		}
 	}
@@ -652,15 +521,19 @@ class QueryBuilder {
 					$sql = $this->parseWhere($key, $val);
 				}
 
+                if ($sql == '') {
+                    continue;
+                }
+
 				$sqlWhere[] = $poly ? '('.$sql.')' : $sql;
 			}
 
 			return join(" $join ", $sqlWhere);
 		}
 
-		if ($value === null) {
-			return $where;
-		}
+        if ($value === null) {
+            return '';
+        }
 
 		$where = $this->trim($where);
 
@@ -720,6 +593,13 @@ class QueryBuilder {
 		return '\''.addslashes($string).'\'';
 	}
 
+    /**
+     * Clear condition in builder
+     */
+    public function clear() {
+        $this->builder = [];
+    }
+
 	/**
 	 * Split the table/field alias string
 	 *
@@ -750,4 +630,168 @@ class QueryBuilder {
 		return preg_replace('/\s+/', ' ', trim($str, ' `'));
 	}
 
+	/**
+	 * Insert data
+	 *
+	 * @param array $data
+	 * @param bool $replace Use REPLACE INTO
+	 * @return Promise<int> Last insert id
+	 * @throws
+	 */
+	public function insert(array $data, $replace=false): Promise
+	{
+		$keys = $this->quoteKeys(array_keys($data));
+		$values = $this->quoteValues($data);
+
+		$sql = ($replace ? 'REPLACE' : 'INSERT')." INTO {$this->table}($keys) VALUES($values)";
+
+		return call(function() use ($sql) {
+			$result = yield $this->connection->execute($sql);
+			return $result->getLastInsertId();
+		});
+	}
+
+	/**
+	 * Delete data
+	 *
+	 * @return Promise<int> Affected row count
+	 */
+	public function delete(): Promise
+	{
+		return call(function() {
+			$sql = 'DELETE'.$this->buildFrom().$this->buildWhere().$this->buildOrderBy()
+				.$this->buildLimit().$this->buildOffset();
+			$this->builder = [];
+			$result = yield $this->connection->execute($sql);
+			return $result->getAffectedRowCount();
+		});
+	}
+
+	/**
+	 * Update data
+	 *
+	 * @param array $data
+	 * @return Promise<int> Affected row count
+	 */
+	public function update(array $data): Promise
+	{
+		$sql = 'UPDATE '.$this->table.' SET ';
+		$sets = [];
+
+		foreach($data as $key => $val) {
+			if(substr($key, 0, 1) == '^') {
+				$key = $this->quoteKeys(substr($key,1));
+				$sets[] = "$key=$val";
+			} else {
+				$sets[] = $this->quoteKeys($key).'='.$this->quote($val);
+			}
+		}
+
+		$sql .= join(',', $sets).$this->buildWhere().$this->buildOrderBy() .$this->buildLimit()
+			.$this->buildOffset();
+
+		$this->builder = [];
+
+		return call(function() use ($sql) {
+			$result = yield $this->connection->execute($sql);
+			return $result->getAffectedRowCount();
+		});
+	}
+
+	/**
+	 * Fetch first row from query result
+	 * @return Promise<array>|Promise<null>
+	 */
+	public function fetchOne()
+	{
+		return $this->connection->fetchOne($this->buildSelect());
+	}
+
+	/**
+	 * Fetch all rows from query result
+	 * @return Promise<array>|Promise<null>
+	 */
+	public function fetchAll()
+	{
+		return $this->connection->fetchAll($this->buildSelect());
+	}
+
+	//Fetch column from all rows
+	public function fetchColumn($col=0)
+	{
+		return $this->connection->fetchColumn($this->buildSelect(), [], $col);
+	}
+
+	//public function distinct($field)
+	//{
+	//	$this->builder['select'] = "distinct($field)";
+	//	return $this;
+	//}
+
+	/**
+	 * Count rows
+	 *
+	 * @param string $field
+	 * @return int|null
+	 */
+	public function count($field='*')
+	{
+        //Count is just temporary select, need to resume select
+        $builder = $this->popTempBuilder();
+
+        $this->select("COUNT($field)", false);
+        $count = $this->scalar();
+
+        $this->resumeTempBuilder($builder);;
+
+        return $count;
+	}
+
+	/**
+	 * Return first column value in row
+	 *
+	 * @param int|string $col
+	 * @return mixed
+	 * @throws
+	 */
+	public function scalar($col=0)
+	{
+	    $sql = $this->buildSelect();
+		return call(function() use ($sql, $col) {
+			$row = yield $this->connection->fetchOne($sql);
+
+			if ($row === null) {
+			    return null;
+            }
+
+            if (is_int($col)) {
+                $row = array_values($row);
+            }
+
+            return $row[$col] ?? null;
+		});
+	}
+
+    private function popTempBuilder()
+    {
+        $builder = [];
+        foreach (['select', 'select_quote', 'limit', 'offset'] as $key) {
+            if (isset($this->builder[$key])) {
+                $builder[$key] = $this->builder[$key];
+                unset($this->builder[$key]);
+            }
+        }
+        return $builder;
+    }
+
+    private function resumeTempBuilder($builder)
+    {
+        foreach (['select', 'select_quote', 'limit', 'offset'] as $key) {
+            if (isset($builder[$key])) {
+                $this->builder[$key] = $builder[$key];
+            } else {
+                unset($this->builder[$key]);
+            }
+        }
+    }
 }

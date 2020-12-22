@@ -62,7 +62,7 @@ function env($key, $defaultValue=null) {
  * 
  * 内部自动判断目标方法或函数是否动态或静态，如果是动态则通过容器创建该类并支持依赖注入
  *
- * @param string $callable 因为可能传入的方法是动态方法，这时不是一个合法的 callable，所以不能限定类型为 callable
+ * @param string|array $callable 因为可能传入的方法是动态方法，这时不是一个合法的 callable，所以不能限定类型为 callable
  * @param bool $persistent 是否持久化到容器中，是则使用窗口的 get 方法创建单例，否则使用 make 创建临时对象
  * @return callable 返回可任意调用的 callable
  */
@@ -89,41 +89,4 @@ function wrapCallable($callable, $persistent=true) {
 		$instance = $persistent ? di()->get($class) : di()->make($class);
 		return [$instance, $method];
     }
-}
-
-/**
- * 通过命名的参数实例化指定类
- *
- * @param string $class
- * @param array $args 与构造函数名称对应的键值对
- * @return object
- * @throws ReflectionException
- */
-function instanceWithNamedArguments(string $class, array $args=[]) {
-    $ref = new \ReflectionClass($class);
-    $constructor = $ref->getConstructor();
-
-    if ($constructor === null || count($args) == 0) {
-        return $ref->newInstance();
-    }
-
-    $params = $constructor->getParameters();
-
-    if (count($params) == 0) {
-        return $ref->newInstance();
-    }
-
-    $constructArgs = [];
-
-    foreach ($params as $param) {
-        if (isset($args[$param->name])) {
-            $constructArgs[] = $args[$param->name];
-        } elseif ($param->isDefaultValueAvailable()) {
-            break;
-        } else {
-            throw new \InvalidArgumentException("Can not instance '{$class}': No construct value for argument '{$param->name}'.");
-        }
-    }
-
-    return $ref->newInstanceArgs($constructArgs);
 }

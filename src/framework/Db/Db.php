@@ -16,7 +16,7 @@ class Db
      * @param string $name
      * @return Connection
      */
-    protected static function connection($name='default')
+    public static function connection($name='default')
     {
     	if (isset(self::$connections[$name])) {
     		return self::$connections[$name];

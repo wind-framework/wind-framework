@@ -2,6 +2,7 @@
 
 namespace Framework\Db;
 
+use Amp\Mysql\CommandResult;
 use Amp\Mysql\ConnectionConfig;
 use Amp\Promise;
 use Amp\Sql\Common\ConnectionPool;
@@ -43,12 +44,22 @@ class Connection
 		$config = $databases[$name];
 
 		//初始化数据库连接池
-		$conf = ConnectionConfig::fromString("host={$config['host']};user={$config['username']};password={$config['password']};db={$config['database']}");
+        $conn = new ConnectionConfig(
+            $config['host'],
+            $config['port'],
+            $config['username'],
+            $config['password'],
+            $config['database']
+        );
+
+		if (isset($config['charset'])) {
+            $conn->withCharset($config['charset'], $config['collation']);
+        }
 
 		$maxConnection = $connection['pool']['max_connections'] ?? ConnectionPool::DEFAULT_MAX_CONNECTIONS;
 		$maxIdleTime = $connection['pool']['max_idle_time'] ?? ConnectionPool::DEFAULT_IDLE_TIMEOUT;
 
-		$this->pool = pool($conf, $maxConnection, $maxIdleTime);
+		$this->pool = pool($conn, $maxConnection, $maxIdleTime);
 		$this->name = $name;
 		$this->prefix = $config['prefix'];
 	}
@@ -72,7 +83,7 @@ class Connection
 	/**
 	 * @param string $sql
 	 * @param array $params
-	 * @return Promise
+	 * @return Promise<\Amp\Mysql\ResultSet>
 	 * @throws \Amp\Sql\ConnectionException
 	 * @throws \Amp\Sql\FailureException
 	 */
@@ -92,7 +103,7 @@ class Connection
 	/**
 	 * @param string $sql
 	 * @param array $params
-	 * @return Promise
+	 * @return Promise<CommandResult>
 	 * @throws \Amp\Sql\ConnectionException
 	 * @throws \Amp\Sql\FailureException
 	 */
@@ -107,7 +118,7 @@ class Connection
 	 *
 	 * @param string $sql
 	 * @param array $params
-	 * @return Promise<\Amp\Mysql\ResultSet>
+	 * @return Promise<array>
 	 */
 	public function fetchOne($sql, array $params=[]): Promise {
 		return call(function() use ($sql, $params) {
@@ -131,7 +142,7 @@ class Connection
 	 *
 	 * @param string $sql
 	 * @param array $params
-	 * @return Promise<\Amp\Mysql\ResultSet>
+	 * @return Promise<array>
 	 */
 	public function fetchAll($sql, array $params=[]): Promise {
 		return call(function() use ($sql, $params) {

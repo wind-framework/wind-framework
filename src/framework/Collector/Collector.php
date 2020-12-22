@@ -36,9 +36,8 @@ abstract class Collector
 
             $id = StrUtil::randomString(16);
 
-            $workers = getApp()->getWorkers();
             $countDown = 0;
-            foreach ($workers as $worker) {
+            foreach (getApp()->workers as $worker) {
                 $countDown += $worker->count;
             }
 

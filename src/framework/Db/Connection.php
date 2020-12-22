@@ -7,6 +7,7 @@ use Amp\Mysql\ConnectionConfig;
 use Amp\Promise;
 use Amp\Sql\Common\ConnectionPool;
 use Framework\Base\Config;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
 use function Amp\call;
 use function Amp\Mysql\pool;
@@ -89,7 +90,7 @@ class Connection
 	 */
 	public function query(string $sql, array $params=[]): Promise
 	{
-        Worker::log($sql);
+        di()->get(EventDispatcherInterface::class)->dispatch(new QueryEvent($sql, 'Query'));
 		if ($params) {
 			return call(function() use ($sql, $params) {
 				$statement = yield $this->pool->prepare($sql);
@@ -109,7 +110,7 @@ class Connection
 	 */
 	public function execute(string $sql, array $params = []): Promise
 	{
-	    Worker::log($sql);
+	    di()->get(EventDispatcherInterface::class)->dispatch(new QueryEvent($sql, 'Execute'));
 		return $this->pool->execute($sql, $params);
 	}
 

@@ -4,6 +4,7 @@ namespace Framework\Collector;
 
 use Amp\Deferred;
 use Framework\Base\Config;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Timer;
 use Workerman\Worker;
 use function Amp\call;
@@ -57,20 +58,20 @@ abstract class Collector
 
             //监听回应消息
             Client::on($event, function($result) use (&$countDown, &$response, $id, $defer, $event, $worker, $timerId) {
-                Worker::log("[Collector] Worker {$worker->name}[{$worker->id}] received $event response");
+                $eventDispatcher = di()->get(EventDispatcherInterface::class);
+                $eventDispatcher->dispatch(new CollectorEvent($worker->id, $worker->name, $event, 'response'));
 
                 $response[] = $result;
-                $countDown--;
 
-                if ($countDown == 0) {
+                if (--$countDown == 0) {
                     Timer::del($timerId);
                     Client::unsubscribe($event);
                     $defer->resolve($response);
-                    Worker::log("[Collector] ===== $event Finished =====");
+                    $eventDispatcher->dispatch(new CollectorEvent($worker->id, $worker->name, $event, 'finished'));
                 }
             });
 
-            Worker::log("[Collector] Worker {$worker->name}[{$worker->id}] request $event");
+            di()->get(EventDispatcherInterface::class)->dispatch(new CollectorEvent($worker->id, $worker->name, $event, 'request'));
             Client::publish(self::class, $event);
 
             return $defer->promise();

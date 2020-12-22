@@ -5,6 +5,7 @@ namespace Framework\Collector;
 use Framework\Base\Config;
 use Framework\Channel\Client;
 use Framework\Channel\Server;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
 use function Amp\delay;
 
@@ -63,7 +64,7 @@ class Component implements \Framework\Base\Component
             list($collector) = explode('@', $event);
             $worker = self::getCurrentWorker();
 
-            Worker::log("[Collector] Worker {$worker->name}[{$worker->id}] received $event request");
+            di()->get(EventDispatcherInterface::class)->dispatch(new CollectorEvent($worker->id, $worker->name, $event, 'collect'));
 
             /* @var $res Collector */
             $res = new $collector;

@@ -4,7 +4,9 @@ namespace Framework\Task;
 
 use Amp\Loop;
 use Framework\Base\Config;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
+use function Amp\asyncCall;
 use function Amp\call;
 use function Amp\delay;
 use Framework\Channel\Client;
@@ -31,34 +33,39 @@ class Component implements \Framework\Base\Component
 		$worker = new Worker();
 		$worker->name = 'TaskWorker';
 		$worker->count = $count;
+
 		$worker->onWorkerStart = static function($worker) use ($app) {
+            //在 TASK_WORKER 进程内有此常量
+            define('TASK_WORKER', true);
+
 			$app->startComponents($worker);
 
-			//在 TASK_WORKER 进程内有此常量
-			define('TASK_WORKER', true);
+			asyncCall(static function() use ($worker, $app) {
+                self::connect();
+                yield delay(2500);
+                Client::watch(Task::class, static function($data) use ($worker, $app) {
+                    $callable = wrapCallable($data['callable']);
+                    $callableName = is_array($data['callable']) ? join('::', $data['callable']) : $data['callable'];
 
-			Loop::defer(static function() use ($worker, $app) {
-				self::connect();
-				Client::watch(Task::class, static function($data) use ($worker, $app) {
-					$callable = wrapCallable($data['callable']);
-					$callableName = is_array($data['callable']) ? join('::', $data['callable']) : $data['callable'];
-					Worker::log("TaskWorker {$worker->id} call $callableName().");
+                    $eventDispatcher = $app->container->get(EventDispatcherInterface::class);
+                    $eventDispatcher->dispatch(new TaskCallEvent($worker->id, $callableName));
 
-					call($callable, ...$data['args'])->onResolve(function($e, $result) use ($data) {
-						if ($e === null) {
-							Client::publish(Task::class.'@'.$data['id'], [true, $result]);
-						} else {
-							Client::publish(Task::class.'@'.$data['id'], [false, [
-								'exception' => get_class($e),
-								'message' => $e->getMessage(),
-								'code' => $e->getCode(),
-								'trace' => $e->getTraceAsString()
-							]]);
-						}
-					});
-				});
-			});
+                    call($callable, ...$data['args'])->onResolve(function($e, $result) use ($data) {
+                        if ($e === null) {
+                            Client::publish(Task::class.'@'.$data['id'], [true, $result]);
+                        } else {
+                            Client::publish(Task::class.'@'.$data['id'], [false, [
+                                'exception' => get_class($e),
+                                'message' => $e->getMessage(),
+                                'code' => $e->getCode(),
+                                'trace' => $e->getTraceAsString()
+                            ]]);
+                        }
+                    });
+                });
+            });
 		};
+
 		$app->addWorker($worker);
 	}
 

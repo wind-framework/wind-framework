@@ -43,14 +43,22 @@ class LogFactory
         }
 
         foreach ($setting['handlers'] as $h) {
-            if (!empty($h['async']) && !defined('TASK_WORKER')) {
+            $sync = empty($h['async']);
+            $task = defined('TASK_WORKER');
+
+            if ($sync && $task) {
+                continue;
+            }
+
+            //Todo: 全同步写的情况下，TaskWorker 本身的日志无法记录，如 TaskWorker 触发的 Event 中写日志的情况下
+            if ($sync || $task) {
+                $args = $h['args'] ?? [];
+                $handler = di()->make($h['class'], $args);
+            } else {
                 $level = $h['args']['level'] ?? Logger::DEBUG;
                 $bubble = $h['args']['bubble'] ?? true;
                 $handler = new AsyncHandler($level, $bubble);
                 $handler->setGroup($group);
-            } else {
-                $args = $h['args'] ?? [];
-                $handler = di()->make($h['class'], $args);
             }
 
             $fmt = $h['formatter'] ?? $setting['formatter'] ?? false;

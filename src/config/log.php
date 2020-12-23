@@ -13,7 +13,7 @@ return [
                     'maxFiles' => 15,
                     'level' => Logger::INFO
                 ],
-                'async' => true //启用 TaskWorker 模式异步写入
+                //'async' => true //启用 TaskWorker 模式异步写入
             ],
             [
                 'class' => \Framework\Log\StdoutHandler::class,

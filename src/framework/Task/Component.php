@@ -2,14 +2,12 @@
 
 namespace Framework\Task;
 
-use Amp\Loop;
+use Framework\Base\Channel;
 use Framework\Base\Config;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
 use function Amp\asyncCall;
 use function Amp\call;
-use function Amp\delay;
-use Framework\Channel\Client;
 
 class Component implements \Framework\Base\Component
 {
@@ -41,20 +39,20 @@ class Component implements \Framework\Base\Component
 			$app->startComponents($worker);
 
 			asyncCall(static function() use ($worker, $app) {
-                self::connect();
-                yield delay(2500);
-                Client::watch(Task::class, static function($data) use ($worker, $app) {
+                $channel = $app->container->get(Channel::class);
+
+                $channel->watch(Task::class, static function($data) use ($worker, $app, $channel) {
                     $callable = wrapCallable($data['callable']);
                     $callableName = is_array($data['callable']) ? join('::', $data['callable']) : $data['callable'];
 
                     $eventDispatcher = $app->container->get(EventDispatcherInterface::class);
                     $eventDispatcher->dispatch(new TaskExecuteEvent($worker->id, $callableName));
 
-                    call($callable, ...$data['args'])->onResolve(function($e, $result) use ($data) {
+                    call($callable, ...$data['args'])->onResolve(function($e, $result) use ($data, $channel) {
                         if ($e === null) {
-                            Client::publish(Task::class.'@'.$data['id'], [true, $result]);
+                            $channel->publish(Task::class.'@'.$data['id'], [true, $result]);
                         } else {
-                            Client::publish(Task::class.'@'.$data['id'], [false, [
+                            $channel->publish(Task::class.'@'.$data['id'], [false, [
                                 'exception' => get_class($e),
                                 'message' => $e->getMessage(),
                                 'code' => $e->getCode(),
@@ -73,17 +71,7 @@ class Component implements \Framework\Base\Component
 	 * @inheritDoc
 	 */
 	public static function start($worker) {
-	    if (self::$enable) {
-            yield delay(1000);
-            self::connect();
-        }
 	}
 
-	private static function connect()
-	{
-        $config = di()->get(Config::class);
-        list($host, $port) = explode(':', $config->get('server.task_worker.channel_server', '127.0.0.1:2206'));
-		Client::connect($host, $port);
-	}
 
 }

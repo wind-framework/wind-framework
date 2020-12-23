@@ -8,7 +8,6 @@ use Amp\Promise;
 use Amp\Sql\Common\ConnectionPool;
 use Framework\Base\Config;
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Workerman\Worker;
 use function Amp\call;
 use function Amp\Mysql\pool;
 

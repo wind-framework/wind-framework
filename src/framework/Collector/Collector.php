@@ -3,13 +3,12 @@
 namespace Framework\Collector;
 
 use Amp\Deferred;
+use Framework\Base\Channel;
 use Framework\Base\Config;
+use Framework\Utils\StrUtil;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Timer;
-use Workerman\Worker;
 use function Amp\call;
-use Framework\Utils\StrUtil;
-use Framework\Channel\Client;
 
 abstract class Collector
 {
@@ -45,19 +44,21 @@ abstract class Collector
             $worker = Component::getCurrentWorker();
             $event = $collector.'@'.$id;
 
+            $channel = di()->get(Channel::class);
+
             $defer = new Deferred();
             $response = [];
 
             //超时设置
-            $timerId = Timer::add($config['timeout'], function() use (&$countDown, $event, $defer, &$response) {
+            $timerId = Timer::add($config['timeout'], function() use (&$countDown, $event, $defer, &$response, $channel) {
                 if ($countDown > 0) {
-                    Client::unsubscribe($event);
+                    $channel->unsubscribe($event);
                     $defer->resolve($response);
                 }
             }, [], false);
 
             //监听回应消息
-            Client::on($event, function($result) use (&$countDown, &$response, $id, $defer, $event, $worker, $timerId) {
+            $channel->on($event, function($result) use (&$countDown, &$response, $id, $defer, $event, $worker, $timerId, $channel) {
                 $eventDispatcher = di()->get(EventDispatcherInterface::class);
                 $eventDispatcher->dispatch(new CollectorEvent($worker->id, $worker->name, $event, 'response'));
 
@@ -65,14 +66,14 @@ abstract class Collector
 
                 if (--$countDown == 0) {
                     Timer::del($timerId);
-                    Client::unsubscribe($event);
+                    $channel->unsubscribe($event);
                     $defer->resolve($response);
                     $eventDispatcher->dispatch(new CollectorEvent($worker->id, $worker->name, $event, 'finished'));
                 }
             });
 
             di()->get(EventDispatcherInterface::class)->dispatch(new CollectorEvent($worker->id, $worker->name, $event, 'request'));
-            Client::publish(self::class, $event);
+            $channel->publish(self::class, $event);
 
             return $defer->promise();
         });

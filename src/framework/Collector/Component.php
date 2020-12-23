@@ -2,18 +2,12 @@
 
 namespace Framework\Collector;
 
-use Framework\Base\Config;
-use Framework\Channel\Client;
-use Framework\Channel\Server;
+use Framework\Base\Channel;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
-use function Amp\delay;
 
 class Component implements \Framework\Base\Component
 {
-
-    private static $ip;
-    private static $port;
 
     /**
      * @var Worker
@@ -22,49 +16,21 @@ class Component implements \Framework\Base\Component
 
     public static function provide($app)
     {
-        $config = $app->container->get(Config::class)->get('collector');
-
-        if (!$config['enable']) {
-            return;
-        }
-
-        //不指定 channel 时将启动自己的 channel
-        if ($config['channel_server'] === null) {
-	        $ip = '127.0.0.1';
-	        $port = 2206;
-	        new Server($ip, $port);
-        } else {
-            list($ip, $port) = explode(':', $config['channel_server']);
-        }
-
-        self::$ip = $ip;
-        self::$port = $port;
-    }
-
-    public static function isEnable()
-    {
-        return !empty(self::$ip);
     }
 
     public static function start($worker)
     {
-        if (!self::isEnable()) {
-            return;
-        }
-
         self::$currentWorker = $worker;
 
-        //延迟启动，减少启动时 Server 未启动而重连的现象
-	    yield delay(1000);
-
-        Client::connect(self::$ip, self::$port);
+        $channel = di()->get(Channel::class);
 
         //收到请求后运行，并通过事件反馈请求
-        Client::on(Collector::class, function($event) {
+        $channel->on(Collector::class, function($event) use ($channel) {
             list($collector) = explode('@', $event);
             $worker = self::getCurrentWorker();
 
-            di()->get(EventDispatcherInterface::class)->dispatch(new CollectorEvent($worker->id, $worker->name, $event, 'collect'));
+            di()->get(EventDispatcherInterface::class)
+                ->dispatch(new CollectorEvent($worker->id, $worker->name, $event, 'collect'));
 
             /* @var $res Collector */
             $res = new $collector;
@@ -73,7 +39,7 @@ class Component implements \Framework\Base\Component
             $res->workerId = $worker->id;
             $res->workerName = $worker->name;
 
-            Client::publish($event, $res);
+            $channel->publish($event, $res);
         });
     }
 

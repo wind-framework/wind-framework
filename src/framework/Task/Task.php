@@ -2,11 +2,11 @@
 
 namespace Framework\Task;
 
-use Amp\Promise;
 use Amp\Deferred;
-use function Amp\call;
+use Amp\Promise;
+use Framework\Base\Channel;
 use Framework\Utils\StrUtil;
-use Framework\Channel\Client;
+use function Amp\call;
 
 class Task
 {
@@ -17,7 +17,7 @@ class Task
 	/**
 	 * Execute and get return in TaskWorker
 	 * 
-	 * @param callable $callable Executor callable, allow coroutinue
+	 * @param callable $callable Executor callable, allow coroutine
 	 * @param mixed ...$args
 	 * @return Promise
 	 */
@@ -36,8 +36,10 @@ class Task
 			$defer = new Deferred();
 			$returnEvent = Task::class.'@'.$id;
 
-			Client::on($returnEvent, static function($data) use ($defer, $returnEvent) {
-				Client::unsubscribe($returnEvent);
+			$channel = di()->get(Channel::class);
+
+            $channel->on($returnEvent, static function($data) use ($defer, $returnEvent, $channel) {
+                $channel->unsubscribe($returnEvent);
 				list($state, $return) = $data;
 				if ($state) {
 					$defer->resolve($return);
@@ -50,7 +52,7 @@ class Task
 				}
 			});
 
-			Client::enqueue(Task::class, ['id'=>$id, 'callable'=>$callable, 'args'=>$args]);
+            $channel->enqueue(Task::class, ['id'=>$id, 'callable'=>$callable, 'args'=>$args]);
 
 			return $defer->promise();
 		});

@@ -7,12 +7,13 @@
  */
 namespace Framework\Crontab;
 
-use Workerman\Worker;
 use Cron\CronExpression;
-use Framework\Task\Task;
-use Workerman\Lib\Timer;
+use Cron\FieldFactory;
 use Framework\Base\Config;
 use Framework\Process\Process;
+use Framework\Task\Task;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Workerman\Lib\Timer;
 
 class CrontabDispatherProcess extends Process
 {
@@ -24,50 +25,56 @@ class CrontabDispatherProcess extends Process
      */
     private $crons = [];
 
+    /**
+     * @var EventDispatcherInterface
+     */
+    private $eventDispatcher;
+
     public function run()
     {
+        $this->eventDispatcher = di()->get(EventDispatcherInterface::class);
         $tabs = di()->get(Config::class)->get('crontab', []);
+        $fieldFactory = new FieldFactory();
 
         foreach ($tabs as $k => $set) {
             if (!$set['enable']) {
                 continue;
             }
 
-            $cron = CronExpression::factory($set['rule']);
-            $cron->execute = $set['execute'];
-            $cron->name = $k;
-            $this->crons[] = $cron;
+            $cron = new CronExpression($set['rule'], $fieldFactory);
+            $this->crons[] = [$cron, $set['execute'], $k];
         }
 
         foreach ($this->crons as $i => $cron) {
-            $this->check($cron);
+            $this->check($i);
         }
     }
 
     /**
      *
-     * @param CronExpression $cron
-     * @param boolean $nextRun
+     * @param int $index
+     * @param boolean $run
      * @return void
      */
-    public function check($cron, $run=false)
+    public function check($index, $run=false)
     {
+        /* @var $cron CronExpression */
+        list($cron, $callable, $name) = $this->crons[$index];
+
         if ($run) {
-            Task::execute($cron->execute)->onResolve(function($e, $result) use ($cron) {
+            $this->eventDispatcher->dispatch(new CrontabEvent($name, CrontabEvent::TYPE_EXECUTE));
+            Task::execute($callable)->onResolve(function($e, $result) use ($name) {
                 /* @var \Exception $e */
-                if ($e) {
-                    Worker::log("[Crontab] {$cron->name} has ".get_class($e).': '.$e->getMessage()."\n".$e->getTraceAsString());
-                } else {
-                    Worker::log("[Crontab] {$cron->name} run successfuly!");
-                }
+                $event = new CrontabEvent($name, CrontabEvent::TYPE_RESULT, 0, $e ?: $result);
+                $this->eventDispatcher->dispatch($event);
             });
         }
 
-        $now = time();
-        $nextTime = $cron->getNextRunDate()->getTimestamp();
-        $offset = $nextTime - $now;
-        Timer::add($offset, [$this, 'check'], [$cron, true], false);
-        Worker::log("[Crontab] {$cron->name} will run after $offset seconds.");
+        //计算和安排下一次运行的时间
+        $interval = $cron->getNextRunDate()->getTimestamp() - time();
+        Timer::add($interval, [$this, 'check'], [$index, true], false);
+
+        $this->eventDispatcher->dispatch(new CrontabEvent($name, CrontabEvent::TYPE_SCHED, $interval));
     }
 
 }

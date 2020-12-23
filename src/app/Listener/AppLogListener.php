@@ -3,6 +3,7 @@
 namespace App\Listener;
 
 use Framework\Collector\CollectorEvent;
+use Framework\Crontab\CrontabEvent;
 use Framework\Db\QueryEvent;
 use Framework\Event\Event;
 use Framework\Log\LogFactory;
@@ -23,7 +24,8 @@ class AppLogListener extends \Framework\Event\Listener
         return [
             QueryEvent::class,
             //TaskExecuteEvent::class,
-            CollectorEvent::class
+            CollectorEvent::class,
+            CrontabEvent::class
         ];
     }
 

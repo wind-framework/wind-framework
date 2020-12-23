@@ -108,11 +108,12 @@ class Application
                     $worker->reusePort = false;
                     $this->addWorker($worker);
                     break;
-	            case 'channel':
-	            	list($ip, $port) = explode(':', $srv['listen']);
-		            new \Framework\Channel\Server($ip, $port);
-	            	break;
             }
+        }
+
+        //Channel Server
+        if ($server['channel']['enable']) {
+            new \Framework\Channel\Server('127.0.0.1', $server['channel']['port']);
         }
     }
 

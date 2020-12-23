@@ -100,13 +100,13 @@ class Client
             // For workerman environment.
             if (self::$_isWorkermanEnv) {
                 self::$_remoteConnection = new AsyncTcpConnection('frame://' . self::$_remoteIp . ':' . self::$_remotePort);
-                self::$_remoteConnection->onClose = 'Framework\Channel\Client::onRemoteClose';
-                self::$_remoteConnection->onConnect = 'Framework\Channel\Client::onRemoteConnect';
-                self::$_remoteConnection->onMessage = 'Framework\Channel\Client::onRemoteMessage';
+                self::$_remoteConnection->onClose = [self::class, 'onRemoteClose'];
+                self::$_remoteConnection->onConnect = [self::class, 'onRemoteConnect'];
+                self::$_remoteConnection->onMessage = [self::class, 'onRemoteMessage'];
                 self::$_remoteConnection->connect();
 
                 if (empty(self::$_pingTimer)) {
-                    self::$_pingTimer = Timer::add(self::$pingInterval, 'Channel\Client::ping');
+                    self::$_pingTimer = Timer::add(self::$pingInterval, [self::class, 'ping']);
                 }
                 // Not workerman environment.
             } else {
@@ -171,7 +171,7 @@ class Client
         echo "Waring channel connection closed and try to reconnect\n";
         self::$_remoteConnection = null;
         self::clearTimer();
-        self::$_reconnectTimer = Timer::add(1, 'Channel\Client::connect', array(self::$_remoteIp, self::$_remotePort));
+        self::$_reconnectTimer = Timer::add(1, [self::class, 'connect'], array(self::$_remoteIp, self::$_remotePort));
         if (self::$onClose) {
             call_user_func(Client::$onClose);
         }

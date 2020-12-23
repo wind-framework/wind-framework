@@ -5,6 +5,7 @@ namespace Framework\Base;
 use Amp\Deferred;
 use Framework\Base\Exception\RequireChannelException;
 use Framework\Channel\Client;
+use Workerman\Timer;
 
 /**
  * Class Channel
@@ -26,6 +27,9 @@ class Channel
      * @var Deferred
      */
     private $connectDefer;
+
+    private $connected = false;
+
     private $config;
 
     public function __construct(Config $config)
@@ -43,22 +47,28 @@ class Channel
             return $this->connectDefer->promise();
         }
 
-        $defer = new Deferred();
+        $this->connectDefer = new Deferred();
 
-        Client::$onConnect = function() use ($defer) {
-            $defer->resolve();
+        Client::$onConnect = function()  {
+            $this->connected = true;
+            $this->connectDefer->resolve();
         };
 
-        Client::$onClose = function() use ($defer) {
-            $this->connectDefer = null;
-            //Wait for reconnected
+        Client::$onClose = function()  {
+            //断线后将 Promise 置于 pending 状态等待重连更新
+            //已连接状态代表之前的 connectDefer 已经是 resolved 状态，此时需刷新 connectDefer 来让后面的发送等待
+            //否则继续延用之前的 pending 状态的 connectDefer
+            if ($this->connected) {
+                $this->connectDefer = new Deferred();
+            }
+            $this->connected = false;
         };
 
-        Client::connect('127.0.0.1', $this->config['port']);
+        Timer::add(0.5, function() {
+            Client::connect('127.0.0.1', $this->config['port']);
+        }, [], false);
 
-        $this->connectDefer = $defer;
-
-        return $defer = $defer->promise();
+        return $this->connectDefer->promise();
     }
 
     public function __call($name, $arguments)

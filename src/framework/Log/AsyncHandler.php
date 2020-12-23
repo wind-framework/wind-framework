@@ -66,7 +66,7 @@ class AsyncHandler extends \Monolog\Handler\AbstractProcessingHandler
     {
         $factory = di()->get(LogFactory::class);
         $log = $factory->get($name, $group);
-        //增加异步写标记，异步写标记在 SyncWrapHandler 中作为同步写排除判断
+        //增加异步写标记，异步写标记在 TaskWrapHandler 中作为同步写排除判断
         $context['__WAF_ASYNC'] = true;
         $log->addRecord($level, $message, $context);
     }

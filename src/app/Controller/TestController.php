@@ -87,6 +87,14 @@ class TestController extends \Framework\Base\Controller
         // add records to the log
         $log->warning('Foo', [$e]);
         $log->error('Bar');
+
+        yield Task::execute([self::class, 'taskLog']);
+        return 'Ok';
+    }
+
+    public static function taskLog()
+    {
+        di()->get(LogFactory::class)->get()->info("Log in task");
     }
 
 }

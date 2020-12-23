@@ -42,16 +42,17 @@ class LogFactory
             throw new \Exception("No handlers config for logger group '$group'!");
         }
 
+        $task = defined('TASK_WORKER');
+
         foreach ($setting['handlers'] as $h) {
             $sync = empty($h['async']);
-            $task = defined('TASK_WORKER');
 
             if ($sync || $task) {
                 $args = $h['args'] ?? [];
                 $handler = di()->make($h['class'], $args);
-                //在 Task 中同步模式要放入 SyncWrapHandler
+                //在 Task 中同步模式要放入 TaskWrapHandler
                 //这里的主要作用是区分 Task 本身的业务写同步日志还是异步的调用，如果是异步调用则不写
-                $sync && $task && $handler = (new SyncWrapHandler())->setHandler($handler);
+                $task && $handler = (new TaskWrapHandler())->setHandler($handler, $sync);
             } else {
                 $level = $h['args']['level'] ?? Logger::DEBUG;
                 $bubble = $h['args']['bubble'] ?? true;

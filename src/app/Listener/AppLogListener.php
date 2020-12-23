@@ -22,7 +22,7 @@ class AppLogListener extends \Framework\Event\Listener
     {
         return [
             QueryEvent::class,
-            TaskExecuteEvent::class,
+            //TaskExecuteEvent::class,
             CollectorEvent::class
         ];
     }

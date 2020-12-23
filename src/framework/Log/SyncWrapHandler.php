@@ -12,17 +12,10 @@ class SyncWrapHandler extends \Monolog\Handler\AbstractHandler
 
     use FormattableHandlerTrait;
 
-    protected $group;
-
     /**
      * @var AbstractProcessingHandler
      */
     protected $handler;
-
-    public function setGroup($group)
-    {
-        $this->group = $group;
-    }
 
     public function setHandler($handler)
     {
@@ -48,6 +41,7 @@ class SyncWrapHandler extends \Monolog\Handler\AbstractHandler
             return false;
         }
 
+        //来自异步的调用，此处不参与写入，而是交给 \Framework\Log\AsyncHandler::log() 处理
         if (isset($record['context']['__WAF_ASYNC'])) {
             unset($record['context']['__WAF_ASYNC']);
             return false;

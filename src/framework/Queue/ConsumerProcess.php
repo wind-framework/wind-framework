@@ -6,8 +6,8 @@ use Amp\Promise;
 use Exception;
 use Framework\Base\Config;
 use Framework\Process\Process;
-use Workerman\Worker;
-
+use Framework\Queue\Driver\Driver;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use function Amp\asyncCall;
 use function Amp\call;
 
@@ -19,19 +19,26 @@ class ConsumerProcess extends Process
     private $config;
     private $concurrent = 1;
 
-    public function __construct(Config $config)
+    /**
+     * @var EventDispatcherInterface
+     */
+    private $eventDispatcher;
+
+    public function __construct(Config $config, EventDispatcherInterface $eventDispatcher)
     {
         $this->name = 'QueueConsumer.'.$this->queue;
 
-        $qconfig = $config->get('queue.'.$this->queue);
+        $queueConfig = $config->get('queue.'.$this->queue);
 
-        if (!$qconfig) {
+        if (!$queueConfig) {
             throw new Exception("Unable to find queue '{$this->queue}' config.");
         }
 
-        $this->count = $qconfig['processes'] ?? 1;
-        $this->concurrent = $qconfig['concurrent'] ?? 1;
-        $this->config = $qconfig;
+        $this->count = $queueConfig['processes'] ?? 1;
+        $this->concurrent = $queueConfig['concurrent'] ?? 1;
+        $this->config = $queueConfig;
+
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     public function run()
@@ -40,11 +47,8 @@ class ConsumerProcess extends Process
             asyncCall(function() {
                 /* @var $driver Driver */
                 $driver = new $this->config['driver']($this->config);
-
-                Worker::log("[Queue] Connect.."); 
                 yield $driver->connect();
 
-                Worker::log("[Queue] Reserving.."); 
                 while (true) {
                     $message = yield $driver->pop();
                     
@@ -57,9 +61,10 @@ class ConsumerProcess extends Process
                     $jobClass = get_class($job);
 
                     try {
-                        Worker::log("[Queue] Get job: $jobClass.");
+                        $this->eventDispatcher->dispatch(new QueueJobEvent(QueueJobEvent::STATE_GET, $jobClass, $message->id));
                         yield call([$job, 'handle']);
                         yield $driver->ack($message);
+                        $this->eventDispatcher->dispatch(new QueueJobEvent(QueueJobEvent::STATE_SUCCEED, $jobClass, $message->id));
                     } catch (\Exception $e) {
                         $attempts = $driver->attempts($message);
 
@@ -67,14 +72,13 @@ class ConsumerProcess extends Process
                             $attempts = yield $attempts;
                         }
 
-                        yield ($attempts >= $message->job->maxAttempts ? $driver->fail($message) : $driver->release($message, $attempts+1));
-
-                        $ex = get_class($e);
-                        $code = $e->getCode();
-                        $msg = $e->getMessage();
-
-                        //Todo: 消费失败重试机制
-                        Worker::log("[Queue] Consume $jobClass error because: $ex: [$code] $msg");
+                        if ($attempts < $message->job->maxAttempts) {
+                            $this->eventDispatcher->dispatch(new QueueJobEvent(QueueJobEvent::STATE_ERROR, $jobClass, $message->id, $e));
+                            yield $driver->release($message, $attempts+1);
+                        } else {
+                            $this->eventDispatcher->dispatch(new QueueJobEvent(QueueJobEvent::STATE_FAILED, $jobClass, $message->id, $e));
+                            yield $driver->fail($message);
+                        }
                     }
                 }
             });

@@ -7,6 +7,7 @@ use Framework\Crontab\CrontabEvent;
 use Framework\Db\QueryEvent;
 use Framework\Event\Event;
 use Framework\Log\LogFactory;
+use Framework\Queue\QueueJobEvent;
 use Framework\Task\TaskExecuteEvent;
 
 class AppLogListener extends \Framework\Event\Listener
@@ -25,7 +26,8 @@ class AppLogListener extends \Framework\Event\Listener
             QueryEvent::class,
             //TaskExecuteEvent::class,
             CollectorEvent::class,
-            CrontabEvent::class
+            CrontabEvent::class,
+            QueueJobEvent::class
         ];
     }
 

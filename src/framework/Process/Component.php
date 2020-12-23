@@ -22,7 +22,6 @@ class Component implements \Framework\Base\Component
                 $worker->name = $process->name ?: $class;
                 $worker->count = $process->count;
                 $worker->onWorkerStart = static function ($worker) use ($process, $class, $app) {
-                    Worker::log("Process $class started.");
                     $app->startComponents($worker);
                     Loop::defer([$process, 'run']);
                 };

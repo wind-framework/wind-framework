@@ -2,7 +2,7 @@
 
 namespace Framework\Task;
 
-class TaskCallEvent extends \Framework\Event\Event
+class TaskExecuteEvent extends \Framework\Event\Event
 {
 
     public $workerId;

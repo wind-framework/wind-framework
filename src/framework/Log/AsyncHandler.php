@@ -40,7 +40,7 @@ class AsyncHandler extends \Monolog\Handler\AbstractProcessingHandler
     protected function write(array $record): void
     {
         Task::execute(
-            [self::class, 'recordLog'],
+            [self::class, 'log'],
             $record['channel'],
             $this->group,
             $record['level'],
@@ -62,11 +62,13 @@ class AsyncHandler extends \Monolog\Handler\AbstractProcessingHandler
      * @param string $message
      * @param array $context
      */
-    public static function recordLog($name, $group, $level, $message, $context)
+    public static function log($name, $group, $level, $message, $context=[])
     {
         $factory = di()->get(LogFactory::class);
         $log = $factory->get($name, $group);
-        $log->log($level, $message, $context);
+        //增加异步写标记，异步写标记在 SyncWrapHandler 中作为同步写排除判断
+        $context['__WAF_ASYNC'] = true;
+        $log->addRecord($level, $message, $context);
     }
 
 }

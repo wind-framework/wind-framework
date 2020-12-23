@@ -46,14 +46,12 @@ class LogFactory
             $sync = empty($h['async']);
             $task = defined('TASK_WORKER');
 
-            if ($sync && $task) {
-                continue;
-            }
-
-            //Todo: 全同步写的情况下，TaskWorker 本身的日志无法记录，如 TaskWorker 触发的 Event 中写日志的情况下
             if ($sync || $task) {
                 $args = $h['args'] ?? [];
                 $handler = di()->make($h['class'], $args);
+                //在 Task 中同步模式要放入 SyncWrapHandler
+                //这里的主要作用是区分 Task 本身的业务写同步日志还是异步的调用，如果是异步调用则不写
+                $sync && $task && $handler = (new SyncWrapHandler())->setHandler($handler);
             } else {
                 $level = $h['args']['level'] ?? Logger::DEBUG;
                 $bubble = $h['args']['bubble'] ?? true;

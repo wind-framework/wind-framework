@@ -6,7 +6,7 @@ use Framework\Collector\CollectorEvent;
 use Framework\Db\QueryEvent;
 use Framework\Event\Event;
 use Framework\Log\LogFactory;
-use Framework\Task\TaskCallEvent;
+use Framework\Task\TaskExecuteEvent;
 
 class AppLogListener extends \Framework\Event\Listener
 {
@@ -22,7 +22,7 @@ class AppLogListener extends \Framework\Event\Listener
     {
         return [
             QueryEvent::class,
-            TaskCallEvent::class,
+            TaskExecuteEvent::class,
             CollectorEvent::class
         ];
     }

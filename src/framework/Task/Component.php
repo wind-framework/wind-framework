@@ -48,7 +48,7 @@ class Component implements \Framework\Base\Component
                     $callableName = is_array($data['callable']) ? join('::', $data['callable']) : $data['callable'];
 
                     $eventDispatcher = $app->container->get(EventDispatcherInterface::class);
-                    $eventDispatcher->dispatch(new TaskCallEvent($worker->id, $callableName));
+                    $eventDispatcher->dispatch(new TaskExecuteEvent($worker->id, $callableName));
 
                     call($callable, ...$data['args'])->onResolve(function($e, $result) use ($data) {
                         if ($e === null) {

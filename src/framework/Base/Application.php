@@ -96,6 +96,11 @@ class Application
     {
         $server = $this->config->get('server');
 
+        //Channel Server
+        if ($server['channel']['enable']) {
+            new \Framework\Channel\Server('127.0.0.1', $server['channel']['port']);
+        }
+
         foreach ($server['servers'] as $srv) {
         	if (isset($srv['enable']) && $srv['enable'] === false) {
         		break;
@@ -109,11 +114,6 @@ class Application
                     $this->addWorker($worker);
                     break;
             }
-        }
-
-        //Channel Server
-        if ($server['channel']['enable']) {
-            new \Framework\Channel\Server('127.0.0.1', $server['channel']['port']);
         }
     }
 

@@ -35,13 +35,11 @@ class Connection
     protected $indexBy;
 
 	public function __construct($name) {
-		$databases = di()->get(Config::class)->get('database');
+        $config = di()->get(Config::class)->get('database.'.$name);
 
-		if (!isset($databases[$name])) {
+		if (!$config) {
 			throw new \Exception("Unable to find database config '{$name}'.");
 		}
-
-		$config = $databases[$name];
 
 		//初始化数据库连接池
         $conn = new ConnectionConfig(
@@ -56,8 +54,8 @@ class Connection
             $conn->withCharset($config['charset'], $config['collation']);
         }
 
-		$maxConnection = $connection['pool']['max_connections'] ?? ConnectionPool::DEFAULT_MAX_CONNECTIONS;
-		$maxIdleTime = $connection['pool']['max_idle_time'] ?? ConnectionPool::DEFAULT_IDLE_TIMEOUT;
+		$maxConnection = $config['pool']['max_connections'] ?? ConnectionPool::DEFAULT_MAX_CONNECTIONS;
+		$maxIdleTime = $config['pool']['max_idle_time'] ?? ConnectionPool::DEFAULT_IDLE_TIMEOUT;
 
 		$this->pool = pool($conn, $maxConnection, $maxIdleTime);
 		$this->name = $name;

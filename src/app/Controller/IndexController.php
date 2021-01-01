@@ -86,4 +86,19 @@ class IndexController extends Controller
     	return new Response(302, ['Location'=>'/gc-status']);
     }
 
+    public function phpinfo()
+    {
+        ob_start();
+        phpinfo();
+        $buf = ob_get_contents();
+        ob_end_clean();
+
+        list($php, $configuration) = explode('_______________________________________________________________________', $buf);
+        list($configuration, $license) = explode("\nPHP License\n", $configuration);
+
+        list($version, $system, $zend, $stream, $engine) = explode("\n\n", $php);
+
+        return '<pre>'.$version.'<hr>'.$system.'<hr>'.$zend.'<hr>'.$stream.'<hr>'.$engine.'<hr>'.$configuration.'<h2>PHP License</h2>'.$license.'</pre>';
+    }
+
 }

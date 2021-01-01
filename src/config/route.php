@@ -11,6 +11,7 @@ return function(RouteCollector $r) {
 	$r->addRoute('GET', '/exception', 'App\Controller\IndexController::exception');
 	$r->addRoute('GET', '/gc-status', 'App\Controller\IndexController::gcStatus');
 	$r->addRoute('GET', '/gc-recycle', 'App\Controller\IndexController::gcRecycle');
+	$r->addRoute('GET', '/phpinfo', 'App\Controller\IndexController::phpinfo');
 
 	$r->addGroup('/test/', function(RouteCollector $r) {
 		$r->addRoute('GET', 'task', 'App\Controller\TestController::taskCall');

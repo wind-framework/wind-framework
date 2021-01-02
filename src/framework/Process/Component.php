@@ -2,9 +2,11 @@
 
 namespace Framework\Process;
 
-use Amp\Loop;
 use Framework\Base\Config;
+use Framework\Base\Event\SystemError;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
+use function Amp\call;
 
 class Component implements \Framework\Base\Component
 {
@@ -23,7 +25,11 @@ class Component implements \Framework\Base\Component
                 $worker->count = $process->count;
                 $worker->onWorkerStart = static function ($worker) use ($process, $class, $app) {
                     $app->startComponents($worker);
-                    Loop::defer([$process, 'run']);
+                    call([$process, 'run'])->onResolve(function($e) use ($app) {
+                        if ($e) {
+                            $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
+                        }
+                    });
                 };
 
                 $app->addWorker($worker);

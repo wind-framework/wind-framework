@@ -17,7 +17,7 @@ class DbController extends Controller
         $row = yield Db::table('soul')->limit(1, $offset)->fetchOne();
 
         if ($row) {
-            Db::table('soul')->where(['id' => $row['id']])->update(['^hits'=>'hits+1']);
+            yield Db::table('soul')->where(['id' => $row['id']])->update(['^hits'=>'hits+1']);
             return $view->render('soul.twig', ['title'=>$row['title']]);
         } else {
             return "今天不丧。";

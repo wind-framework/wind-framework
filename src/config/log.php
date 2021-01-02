@@ -24,7 +24,8 @@ return [
                 'formatter' => [
                     'class' => LineFormatter::class,
                     'args' => [
-                        'dateFormat' => 'Y-m-d H:i:s'
+                        'dateFormat' => 'Y-m-d H:i:s',
+                        'allowInlineLineBreaks' => true
                     ]
                 ]
             ]
@@ -33,8 +34,8 @@ return [
         'formatter' => [
             'class' => LineFormatter::class,
             'args' => [
-                'format' => null,
-                'dateFormat' => 'Y-m-d H:i:s v'
+                'dateFormat' => 'Y-m-d H:i:s v',
+                'allowInlineLineBreaks' => true
             ]
         ]
     ]

@@ -2,11 +2,14 @@
 
 namespace Framework\Db;
 
-use Amp\Mysql\CommandResult;
 use Amp\Mysql\ConnectionConfig;
 use Amp\Promise;
 use Amp\Sql\Common\ConnectionPool;
+use Amp\Sql\ConnectionException;
+use Amp\Sql\FailureException;
 use Framework\Base\Config;
+use Framework\Db\Event\QueryError;
+use Framework\Db\Event\QueryEvent;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use function Amp\call;
 use function Amp\Mysql\pool;
@@ -78,37 +81,54 @@ class Connection
         return (new QueryBuilder($this))->from($name);
     }
 
-	/**
-	 * @param string $sql
-	 * @param array $params
-	 * @return Promise<\Amp\Mysql\ResultSet>
-	 * @throws \Amp\Sql\ConnectionException
-	 * @throws \Amp\Sql\FailureException
-	 */
+    /**
+     * @param string $sql
+     * @param array $params
+     * @return Promise<\Amp\Mysql\ResultSet>
+     * @throws QueryException
+     * @throws \Amp\Sql\QueryError
+     */
 	public function query(string $sql, array $params=[]): Promise
 	{
-        di()->get(EventDispatcherInterface::class)->dispatch(new QueryEvent($sql, 'Query'));
-		if ($params) {
-			return call(function() use ($sql, $params) {
-				$statement = yield $this->pool->prepare($sql);
-				return yield $statement->execute($params);
-			});
-		} else {
-			return $this->pool->query($sql);
-		}
+	    $eventDispatcher = di()->get(EventDispatcherInterface::class);
+        $eventDispatcher->dispatch(new QueryEvent($sql));
+
+        return call(function() use ($sql, $params, $eventDispatcher) {
+            try {
+                if ($params) {
+                    $statement = yield $this->pool->prepare($sql);
+                    return yield $statement->execute($params);
+                } else {
+                    return yield $this->pool->query($sql);
+                }
+            } catch (ConnectionException|FailureException $e) {
+                $eventDispatcher->dispatch(new QueryError($sql, $e));
+                throw new QueryException($e->getMessage(), $e->getCode(), $e, $sql);
+            }
+        });
 	}
 
 	/**
 	 * @param string $sql
 	 * @param array $params
-	 * @return Promise<CommandResult>
-	 * @throws \Amp\Sql\ConnectionException
-	 * @throws \Amp\Sql\FailureException
+	 * @return Promise<\Amp\Mysql\CommandResult>
+	 * @throws QueryException
+     * @throws \Amp\Sql\QueryError
 	 */
 	public function execute(string $sql, array $params = []): Promise
 	{
-	    di()->get(EventDispatcherInterface::class)->dispatch(new QueryEvent($sql, 'Execute'));
-		return $this->pool->execute($sql, $params);
+        $eventDispatcher = di()->get(EventDispatcherInterface::class);
+        $eventDispatcher->dispatch(new QueryEvent($sql));
+
+	    return call(function() use ($sql, $params, $eventDispatcher) {
+	        try {
+                return yield $this->pool->execute($sql, $params);
+            } catch (ConnectionException|FailureException $e) {
+                $eventDispatcher->dispatch(new QueryError($sql, $e));
+                throw new QueryException($e->getMessage(), $e->getCode(), $e, $sql);
+            }
+        });
+
 	}
 
 	/**

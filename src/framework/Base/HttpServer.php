@@ -3,6 +3,7 @@
 namespace Framework\Base;
 
 use FastRoute\Dispatcher;
+use Framework\Base\Event\SystemError;
 use Framework\Base\Exception\CallableException;
 use Framework\Base\Exception\ExitException;
 use Invoker\Invoker;
@@ -12,11 +13,12 @@ use Invoker\ParameterResolver\DefaultValueResolver;
 use Invoker\ParameterResolver\NumericArrayResolver;
 use Invoker\ParameterResolver\ResolverChain;
 use Invoker\ParameterResolver\TypeHintResolver;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
 use Workerman\Protocols\Http\Response;
 use Workerman\Worker;
-use function Amp\asyncCall;
+use function Amp\call;
 
 class HttpServer extends Worker
 {
@@ -81,36 +83,48 @@ class HttpServer extends Worker
             case Dispatcher::FOUND:
                 list(, $handler, $vars) = $routeInfo;
                 try {
-                    try {
-                        $callable = wrapCallable($handler, false);
-                    } catch (CallableException $e) {
-                        $this->sendPageNotFound($connection);
+                    $callable = wrapCallable($handler, false);
+                } catch (CallableException $e) {
+                    $this->sendPageNotFound($connection);
+                    return;
+                }
+
+                call(function() use ($callable, $connection, $request, $vars) {
+                    $vars[Request::class] = $request;
+
+                    //init() 在此处处理协程的返回状态，所以 init 中可以使用协程，需要在控制器初始化时使用协程请在 init 中使用
+                    if (is_array($callable) && is_object($callable[0]) && method_exists($callable[0], 'init')) {
+                        yield wireCall([$callable[0], 'init'], $vars, $this->invoker);
+                    }
+
+                    return yield wireCall($callable, $vars, $this->invoker);
+                })->onResolve(function($e, $response) use ($connection) {
+                    if ($e === null) {
+                        $connection->send($response);
                         return;
                     }
 
-                    asyncCall(function() use ($callable, $connection, $request, $vars) {
-                        $vars[Request::class] = $request;
-
-                        //init() 在此处处理协程的返回状态，所以 init 中可以使用协程，需要在控制器初始化时使用协程请在 init 中使用
-                        if (is_array($callable) && is_object($callable[0]) && method_exists($callable[0], 'init')) {
-                            yield wireCall([$callable[0], 'init'], $vars, $this->invoker);
+                    if ($e instanceof ExitException) {
+                        $connection->send('');
+                    } else {
+                        $eventDispatcher = $this->app->container->get(EventDispatcherInterface::class);
+                        if ($e instanceof \Exception) {
+                            $this->sendServerError($connection, $e);
+                            $eventDispatcher->dispatch(new SystemError($e));
+                        } else {
+                            $eventDispatcher->dispatch(new SystemError($e));
+                            throw $e;
                         }
+                    }
 
-                        $response = yield wireCall($callable, $vars, $this->invoker);
-                        $connection->send($response);
-                    });
-                } catch (ExitException $e) {
-                    $connection->send('');
-                } catch (\Exception $e) {
-                    $connection->send(new Response(500, [], '<h1>'.$e->getMessage().'</h1><pre>'.$e->getTraceAsString().'</pre>'));
-                }
+                });
                 break;
             case Dispatcher::NOT_FOUND:
                 $this->sendPageNotFound($connection);
                 break;
             case Dispatcher::METHOD_NOT_ALLOWED:
                 //$allowedMethods = $routeInfo[1];
-                $connection->send(new Response(405, [],"Method Not Allowed"));
+                $connection->send(new Response(405, [], 'Method Not Allowed'));
                 break;
         }
     }
@@ -120,6 +134,14 @@ class HttpServer extends Worker
 	 */
     public function sendPageNotFound($connection) {
 	    $connection->send(new Response(404, [], "<h1>404 Not Found</h1><p>The page you looking for is not found.</p>"));
+    }
+
+    /**
+     * @param TcpConnection $connection
+     * @param \Throwable $e
+     */
+    public function sendServerError($connection, $e) {
+        $connection->send(new Response(500, [], '<h1>'.get_class($e).': '.$e->getMessage().'</h1><pre>'.$e->getTraceAsString().'</pre>'));
     }
 
 }

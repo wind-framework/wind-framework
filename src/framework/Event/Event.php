@@ -2,14 +2,7 @@
 
 namespace Framework\Event;
 
-class Event implements \Psr\EventDispatcher\StoppableEventInterface
+abstract class Event
 {
-
-    /**
-     * @inheritDoc
-     */
-    public function isPropagationStopped(): bool
-    {
-    }
 
 }

@@ -6,8 +6,8 @@ class QueueJobEvent extends \Framework\Event\Event
 {
 
     const STATE_GET = 0;
-    const STATE_SUCCEED = 2;
-    const STATE_ERROR = 3;
+    const STATE_SUCCEED = 1;
+    const STATE_ERROR = 2;
     const STATE_FAILED = 3;
 
     public $state;

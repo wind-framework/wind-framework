@@ -14,7 +14,7 @@ class SystemError extends \Framework\Event\Event
 
     public function __toString()
     {
-        return get_class($this->error).': '.$this->error->getMessage()."\n".$this->error->getTraceAsString();
+        return $this->error->__toString();
     }
 
 }

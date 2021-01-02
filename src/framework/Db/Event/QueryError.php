@@ -23,7 +23,7 @@ class QueryError extends \Framework\Event\Event
 
     public function __toString()
     {
-        return $this->sql."\n".get_class($this->exception).': '.$this->exception->getMessage()."\n".$this->exception->getTraceAsString();
+        return $this->sql."\n".$this->exception->__toString();
     }
 
 }

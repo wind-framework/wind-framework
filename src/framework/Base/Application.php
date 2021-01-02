@@ -3,6 +3,8 @@
 namespace Framework\Base;
 
 use DI\ContainerBuilder;
+use Framework\Base\Event\SystemError;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
 use function Amp\asyncCall;
 
@@ -90,6 +92,11 @@ class Application
         }
 
         $this->startTimestamp = time();
+
+        set_exception_handler(function ($ex) {
+            $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
+            $eventDispatcher->dispatch(new SystemError($ex));
+        });
     }
 
     private function runServers()

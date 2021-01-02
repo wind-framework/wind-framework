@@ -29,7 +29,7 @@ class CrontabEvent extends \Framework\Event\Event
             case self::TYPE_EXECUTE: return "{$this->name} begin execute.";
             case self::TYPE_RESULT:
                 if ($this->result instanceof \Throwable) {
-                    return "{$this->name} error with: ".get_class($this->result).': '.$this->result->getMessage()."\n".$this->result->getTraceAsString();
+                    return "{$this->name} error with: ".$this->result->__toString();
                 } else {
                     return "{$this->name} execute successfully.";
                 }

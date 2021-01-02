@@ -30,10 +30,7 @@ class QueueJobEvent extends \Framework\Event\Event
             case self::STATE_SUCCEED: return "Consume Job {$this->job}[{$this->id}] success.";
             case self::STATE_ERROR:
             case self::STATE_FAILED:
-                $ex = get_class($this->error);
-                $code = $this->error->getCode();
-                $msg = $this->error->getMessage();
-                return "Consume Job {$this->job}[{$this->id}] ".($this->state == self::STATE_ERROR ? 'error' : 'failed').": $ex: [$code] $msg";
+                return "Consume Job {$this->job}[{$this->id}] ".($this->state == self::STATE_ERROR ? 'error' : 'failed').': '.$this->error->__toString();
             default:
                 return '';
         }

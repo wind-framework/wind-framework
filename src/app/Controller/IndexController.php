@@ -5,7 +5,7 @@ namespace App\Controller;
 use Amp\Loop;
 use App\Collect\GcRecycle;
 use App\Collect\GcStatusCollect;
-use Framework\Base\Controller;
+use Framework\Web\Controller;
 use Framework\Collector\Collector;
 use Framework\Utils\FileUtil;
 use Framework\View\ViewInterface;

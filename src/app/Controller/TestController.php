@@ -15,7 +15,7 @@ use Psr\Container\ContainerInterface;
 use Psr\SimpleCache\CacheInterface;
 use Workerman\Protocols\Http\Request;
 
-class TestController extends \Framework\Base\Controller
+class TestController extends \Framework\Web\Controller
 {
 
 	public $invoker;
@@ -61,8 +61,9 @@ class TestController extends \Framework\Base\Controller
 	public function http()
     {
         $client = HttpClientBuilder::buildDefault();
+	    $request = new HttpRequest('http://pv.sohu.com/cityjson?ie=utf-8');
 
-        $response = yield $client->request(new HttpRequest('http://pv.sohu.com/cityjson?ie=utf-8'));
+        $response = yield $client->request($request);
 
 
         $status = $response->getStatus();

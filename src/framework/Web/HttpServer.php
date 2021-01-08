@@ -1,8 +1,10 @@
 <?php
 
-namespace Framework\Base;
+namespace Framework\Web;
 
 use FastRoute\Dispatcher;
+use Framework\Base\Application;
+use Framework\Base\Config;
 use Framework\Base\Event\SystemError;
 use Framework\Base\Exception\CallableException;
 use Framework\Base\Exception\ExitException;

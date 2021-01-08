@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use Amp\Promise;
-use Framework\Base\Controller;
+use Framework\Web\Controller;
 use Framework\Db\Db;
 use Framework\View\ViewInterface;
 

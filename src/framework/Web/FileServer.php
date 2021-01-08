@@ -1,10 +1,10 @@
 <?php
 
-namespace Framework\Base;
+namespace Framework\Web;
 
+use Framework\Base\Config;
 use Workerman\Protocols\Http\Request;
 use Workerman\Protocols\Http\Response;
-use Workerman\Worker;
 
 class FileServer
 {

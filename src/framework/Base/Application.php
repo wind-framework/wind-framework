@@ -4,6 +4,7 @@ namespace Framework\Base;
 
 use DI\ContainerBuilder;
 use Framework\Base\Event\SystemError;
+use Framework\Web\HttpServer;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
 use function Amp\asyncCall;

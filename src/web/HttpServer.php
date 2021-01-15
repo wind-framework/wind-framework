@@ -87,7 +87,7 @@ class HttpServer extends Worker
                 try {
                     $callable = wrapCallable($handler, false);
                 } catch (CallableException $e) {
-                    $this->sendPageNotFound($connection);
+                    $this->sendServerError($connection, $e);
                     return;
                 }
 

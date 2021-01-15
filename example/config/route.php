@@ -25,6 +25,6 @@ return function(RouteCollector $r) {
 		$r->addRoute('GET', 'log', 'App\Controller\TestController::log');
 	});
 
-	$r->addRoute('GET', '/static/{filename:.+}', '\Wind\Base\FileServer::sendStatic');
-	$r->addRoute('GET', '/{filename:favicon\.ico}', '\Wind\Base\FileServer::sendStatic');
+	$r->addRoute('GET', '/static/{filename:.+}', '\Wind\Web\FileServer::sendStatic');
+	$r->addRoute('GET', '/{filename:favicon\.ico}', '\Wind\Web\FileServer::sendStatic');
 };

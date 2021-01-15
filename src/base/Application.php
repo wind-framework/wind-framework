@@ -70,7 +70,6 @@ class Application
         self::$instance->initEnv();
         self::$instance->runServers();
         self::$instance->setComponents();
-
     }
 
     public function __construct()
@@ -95,9 +94,12 @@ class Application
 
         $this->startTimestamp = time();
 
+        //Todo: 使用 set_exception_handler 会导致程序不能在异常时输出异常和退出，记录系统错误仍需办法
         set_exception_handler(function ($ex) {
             $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
             $eventDispatcher->dispatch(new SystemError($ex));
+            echo $ex->__toString();
+            exit(250);
         });
     }
 

@@ -1,7 +1,7 @@
 <?php
 
 use Workerman\Worker;
-use Framework\Base\Amp;
+use Wind\Base\Amp;
 
 require __DIR__.'/../vendor/autoload.php';
 

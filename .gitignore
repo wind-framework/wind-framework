@@ -1,4 +1,3 @@
 .idea/
-src/vendor/
-src/runtime/*
-
+example/vendor/
+example/runtime/*

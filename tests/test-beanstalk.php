@@ -3,7 +3,7 @@
 use Workerman\Worker;
 use function Amp\delay;
 use function Amp\asyncCall;
-use Framework\Beanstalk\BeanstalkClient;
+use Wind\Beanstalk\BeanstalkClient;
 
 require __DIR__.'/common.php';
 

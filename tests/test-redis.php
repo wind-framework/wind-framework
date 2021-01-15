@@ -1,7 +1,7 @@
 <?php
 
-use Framework\Base\Config;
-use Framework\Redis\Redis;
+use Wind\Base\Config;
+use Wind\Redis\Redis;
 use Workerman\Lib\Timer;
 use Workerman\Worker;
 use function Amp\asyncCall;

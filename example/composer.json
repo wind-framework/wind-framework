@@ -1,0 +1,91 @@
+{
+    "require": {
+        "wind-framework/cache": "~0.1.0",
+        "wind-framework/collector": "~0.1.0",
+        "wind-framework/crontab": "~0.1.0",
+        "wind-framework/db": "~0.1.0",
+        "wind-framework/event": "~0.1.0",
+        "wind-framework/log": "~0.1.0",
+        "wind-framework/process": "~0.1.0",
+        "wind-framework/queue": "~0.1.0",
+        "wind-framework/redis": "~0.1.0",
+        "wind-framework/task": "~0.1.0",
+        "wind-framework/util": "~0.1.0",
+        "wind-framework/view": "~0.1.0",
+        "twig/twig": "^3.0",
+        "amphp/http-client": "^4.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": false,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../src/base"
+        },
+        {
+            "type": "path",
+            "url": "../src/beanstalk"
+        },
+        {
+            "type": "path",
+            "url": "../src/cache"
+        },
+        {
+            "type": "path",
+            "url": "../src/channel"
+        },
+        {
+            "type": "path",
+            "url": "../src/collector"
+        },
+        {
+            "type": "path",
+            "url": "../src/crontab"
+        },
+        {
+            "type": "path",
+            "url": "../src/db"
+        },
+        {
+            "type": "path",
+            "url": "../src/event"
+        },
+        {
+            "type": "path",
+            "url": "../src/log"
+        },
+        {
+            "type": "path",
+            "url": "../src/process"
+        },
+        {
+            "type": "path",
+            "url": "../src/queue"
+        },
+        {
+            "type": "path",
+            "url": "../src/redis"
+        },
+        {
+            "type": "path",
+            "url": "../src/task"
+        },
+        {
+            "type": "path",
+            "url": "../src/utils"
+        },
+        {
+            "type": "path",
+            "url": "../src/view"
+        },
+        {
+            "type": "path",
+            "url": "../src/web"
+        }
+    ]
+}

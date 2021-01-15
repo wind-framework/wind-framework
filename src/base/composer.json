@@ -1,0 +1,29 @@
+{
+    "name": "wind-framework/base",
+    "description": "Wind framework base core.",
+    "type": "library",
+    "require": {
+        "php": ">=7.2.5",
+        "workerman/workerman": "^4.0",
+        "amphp/amp": "^2.5",
+        "workerman/channel": "^1.0.6",
+        "vlucas/phpdotenv": "^5.2",
+        "php-di/php-di": "^6.3",
+        "psr/event-dispatcher": "^1.0"
+    },
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Pader",
+            "email": "ypnow@163.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Wind\\Framework\\": "."
+        },
+        "files": [
+            "function.php"
+        ]
+    }
+}

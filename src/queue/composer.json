@@ -1,0 +1,23 @@
+{
+    "name": "wind-framework/queue",
+    "description": "Wind framework base core.",
+    "type": "library",
+    "require": {
+        "wind-framework/base": "~0.1.0",
+        "wind-framework/process": "~0.1.0",
+        "wind-framework/redis": "~0.1.0",
+        "wind-framework/beanstalk": "~0.1.0"
+    },
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Pader",
+            "email": "ypnow@163.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Wind\\Queue\\": "."
+        }
+    }
+}

@@ -70,6 +70,7 @@ class Application
         self::$instance->initEnv();
         self::$instance->runServers();
         self::$instance->setComponents();
+
     }
 
     public function __construct()
@@ -106,7 +107,7 @@ class Application
 
         //Channel Server
         if ($server['channel']['enable']) {
-            new \Wind\Channel\Server('127.0.0.1', $server['channel']['port']);
+            new \Channel\Server('127.0.0.1', $server['channel']['port']);
         }
 
         foreach ($server['servers'] as $srv) {

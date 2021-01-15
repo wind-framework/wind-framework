@@ -1,6 +1,6 @@
 {
-    "name": "wind-framework/collector",
-    "description": "Wind framework base core.",
+    "name": "wind-framework/channel",
+    "description": "Wind framework channel.",
     "type": "library",
     "version": "0.1.0",
     "require": {
@@ -15,7 +15,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Wind\\Collector\\": "."
+            "Wind\\Channel\\": "."
         }
     }
 }

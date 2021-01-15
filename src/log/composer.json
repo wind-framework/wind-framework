@@ -2,8 +2,11 @@
     "name": "wind-framework/log",
     "description": "Wind framework base core.",
     "type": "library",
+    "version": "0.1.0",
     "require": {
-        "wind-framework/base": "~0.1.0"
+        "wind-framework/base": "~0.1.0",
+        "monolog/monolog": "^2.1",
+        "wind-framework/task": "~0.1.0"
     },
     "license": "Apache-2.0",
     "authors": [
@@ -14,7 +17,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Wind\\Utils\\": "."
+            "Wind\\Log\\": "."
         }
     }
 }

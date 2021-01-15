@@ -2,6 +2,7 @@
     "name": "wind-framework/base",
     "description": "Wind framework base core.",
     "type": "library",
+    "version": "0.1.0",
     "require": {
         "php": ">=7.2.5",
         "workerman/workerman": "^4.0",
@@ -20,7 +21,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Wind\\Framework\\": "."
+            "Wind\\Base\\": "."
         },
         "files": [
             "function.php"

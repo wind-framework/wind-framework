@@ -4,7 +4,7 @@ namespace Wind\Base;
 
 use Amp\Deferred;
 use Wind\Base\Exception\RequireChannelException;
-use Wind\Channel\Client;
+use \Channel\Client;
 use Workerman\Timer;
 
 /**

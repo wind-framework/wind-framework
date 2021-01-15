@@ -1,0 +1,93 @@
+{
+    "name": "wind-framework/wind-framework",
+    "description": "Pure PHP Coroutine Framework.",
+    "type": "library",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Pader",
+            "email": "ypnow@163.com"
+        }
+    ],
+    "require": {
+        "wind-framework/cache": "*",
+        "wind-framework/collector": "*",
+        "wind-framework/crontab": "*",
+        "wind-framework/db": "*",
+        "wind-framework/event": "*",
+        "wind-framework/log": "*",
+        "wind-framework/process": "*",
+        "wind-framework/queue": "*",
+        "wind-framework/redis": "*",
+        "wind-framework/task": "*",
+        "wind-framework/utils": "*",
+        "wind-framework/view": "*",
+        "wind-framework/web": "*"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "src/base"
+        },
+        {
+            "type": "path",
+            "url": "src/beanstalk"
+        },
+        {
+            "type": "path",
+            "url": "src/cache"
+        },
+        {
+            "type": "path",
+            "url": "src/channel"
+        },
+        {
+            "type": "path",
+            "url": "src/collector"
+        },
+        {
+            "type": "path",
+            "url": "src/crontab"
+        },
+        {
+            "type": "path",
+            "url": "src/db"
+        },
+        {
+            "type": "path",
+            "url": "src/event"
+        },
+        {
+            "type": "path",
+            "url": "src/log"
+        },
+        {
+            "type": "path",
+            "url": "src/process"
+        },
+        {
+            "type": "path",
+            "url": "src/queue"
+        },
+        {
+            "type": "path",
+            "url": "src/redis"
+        },
+        {
+            "type": "path",
+            "url": "src/task"
+        },
+        {
+            "type": "path",
+            "url": "src/utils"
+        },
+        {
+            "type": "path",
+            "url": "src/view"
+        },
+        {
+            "type": "path",
+            "url": "src/web"
+        }
+    ]
+}

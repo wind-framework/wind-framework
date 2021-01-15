@@ -1,3 +1,5 @@
 .idea/
 example/vendor/
 example/runtime/*
+
+/vendor/

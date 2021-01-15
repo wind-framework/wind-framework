@@ -1,5 +1,5 @@
 {
-    "name": "wind-framework/redis",
+    "name": "wind-framework/utils",
     "description": "Wind framework base core.",
     "type": "library",
     "require": {
@@ -14,7 +14,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Wind\\Redis\\": "."
+            "Wind\\Utils\\": "."
         }
     }
 }

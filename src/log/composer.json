@@ -1,5 +1,5 @@
 {
-    "name": "wind-framework/util",
+    "name": "wind-framework/log",
     "description": "Wind framework base core.",
     "type": "library",
     "require": {

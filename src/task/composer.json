@@ -5,7 +5,7 @@
     "require": {
         "wind-framework/base": "~0.1.0",
         "workerman/channel": "^1.0",
-        "wind-framework/util": "~0.1.0"
+        "wind-framework/utils": "~0.1.0"
     },
     "license": "Apache-2.0",
     "authors": [

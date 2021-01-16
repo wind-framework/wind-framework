@@ -16,7 +16,7 @@ class Config {
 
     public function __construct()
     {
-        $this->configDir = BASE_DIR.'/config';
+        $this->configDir = WORK_DIR.'/config';
 
         //Load global config
         $globalConfig = $this->configDir.'/config.php';
@@ -29,7 +29,7 @@ class Config {
         }
 
         //Initialize .env config
-        $this->dotenv = Dotenv::createImmutable(BASE_DIR);
+        $this->dotenv = Dotenv::createImmutable(WORK_DIR);
         $this->dotenv->load();
     }
 

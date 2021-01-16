@@ -6,7 +6,8 @@ use Workerman\Worker;
 require __DIR__.'/vendor/autoload.php';
 
 define('BASE_DIR', __DIR__);
-define('RUNTIME_DIR', __DIR__.'/runtime');
+define('WORK_DIR', substr(__DIR__, 0, 7) == 'phar://' ? getcwd() : __DIR__);
+define('RUNTIME_DIR', WORK_DIR.'/runtime');
 
 Worker::$logFile = RUNTIME_DIR.'/log/workerman.log';
 Worker::$pidFile = RUNTIME_DIR.'/workerman-amphp.pid';

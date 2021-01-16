@@ -24,7 +24,7 @@ class Task
 	public static function execute($callable, ...$args)
 	{
 		if ($callable instanceof \Closure) {
-			throw new \Exception('Can not run closure in Task!');
+			throw new \InvalidArgumentException('Can not run closure in Task!');
 		}
 
 		if (is_array($callable) && is_object($callable[0])) {

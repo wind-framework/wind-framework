@@ -143,7 +143,9 @@ class HttpServer extends Worker
      * @param \Throwable $e
      */
     public function sendServerError($connection, $e) {
-        $connection->send(new Response(500, [], '<h1>'.get_class($e).': '.$e->getMessage().'</h1><pre>'.$e->getTraceAsString().'</pre>'));
+        $connection->send(new Response(500, [], '<h1>'.get_class($e).': '.$e->getMessage().'</h1>'
+            .'<p>in '.$e->getFile().':'.$e->getLine().'</p>'
+            .'<b>Stack trace:</b><pre>'.$e->getTraceAsString().'</pre>'));
     }
 
 }

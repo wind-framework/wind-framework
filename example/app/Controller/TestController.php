@@ -8,7 +8,7 @@ use Amp\Promise;
 use App\Helper\Invoker;
 use App\Job\TestJob;
 use Wind\Base\Config;
-use framework\Log\LogFactory;
+use Wind\Log\LogFactory;
 use Wind\Queue\Queue;
 use Wind\Task\Task;
 use Psr\Container\ContainerInterface;
@@ -28,7 +28,7 @@ class TestController extends \Wind\Web\Controller
 	{
 		$a = [
 		    Task::execute([$this->invoker, 'getCache'], 'ABCDEFG'),
-		    Task::execute([$this->invoker, 'someBlock'], 'ABCDEFG')
+		    compute([$this->invoker, 'someBlock'], 'ABCDEFG')
         ];
 
 		$b = yield Promise\all($a);

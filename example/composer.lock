@@ -3297,7 +3297,7 @@
             "dist": {
                 "type": "path",
                 "url": "../src/task",
-                "reference": "0a327d023a7c9941dc09b5534457f0b0315ac06c"
+                "reference": "12b3964c4c2c3ab736728c36bb45d1617c60e99e"
             },
             "require": {
                 "wind-framework/base": "~0.1.0",
@@ -3308,7 +3308,10 @@
             "autoload": {
                 "psr-4": {
                     "Wind\\Task\\": "."
-                }
+                },
+                "files": [
+                    "function.php"
+                ]
             },
             "license": [
                 "Apache-2.0"

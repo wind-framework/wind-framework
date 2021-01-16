@@ -18,6 +18,9 @@
     "autoload": {
         "psr-4": {
             "Wind\\Task\\": "."
-        }
+        },
+        "files": [
+            "function.php"
+        ]
     }
 }

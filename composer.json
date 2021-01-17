@@ -3,6 +3,7 @@
     "description": "Pure PHP Coroutine Framework.",
     "type": "library",
     "license": "Apache-2.0",
+    "version": "0.1.0",
     "authors": [
         {
             "name": "Pader",
@@ -10,84 +11,21 @@
         }
     ],
     "require": {
-        "wind-framework/cache": "*",
-        "wind-framework/collector": "*",
-        "wind-framework/crontab": "*",
-        "wind-framework/db": "*",
-        "wind-framework/event": "*",
-        "wind-framework/log": "*",
-        "wind-framework/process": "*",
-        "wind-framework/queue": "*",
-        "wind-framework/redis": "*",
-        "wind-framework/task": "*",
-        "wind-framework/utils": "*",
-        "wind-framework/view": "*",
-        "wind-framework/web": "*"
+        "php": ">=7.2.5",
+        "workerman/workerman": "^4.0",
+        "amphp/amp": "^2.5",
+        "workerman/channel": "^1.0.6",
+        "vlucas/phpdotenv": "^5.2",
+        "php-di/php-di": "^6.3",
+        "psr/event-dispatcher": "^1.0"
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "src/base"
-        },
-        {
-            "type": "path",
-            "url": "src/beanstalk"
-        },
-        {
-            "type": "path",
-            "url": "src/cache"
-        },
-        {
-            "type": "path",
-            "url": "src/channel"
-        },
-        {
-            "type": "path",
-            "url": "src/collector"
-        },
-        {
-            "type": "path",
-            "url": "src/crontab"
-        },
-        {
-            "type": "path",
-            "url": "src/db"
-        },
-        {
-            "type": "path",
-            "url": "src/event"
-        },
-        {
-            "type": "path",
-            "url": "src/log"
-        },
-        {
-            "type": "path",
-            "url": "src/process"
-        },
-        {
-            "type": "path",
-            "url": "src/queue"
-        },
-        {
-            "type": "path",
-            "url": "src/redis"
-        },
-        {
-            "type": "path",
-            "url": "src/task"
-        },
-        {
-            "type": "path",
-            "url": "src/utils"
-        },
-        {
-            "type": "path",
-            "url": "src/view"
-        },
-        {
-            "type": "path",
-            "url": "src/web"
+    "autoload": {
+        "psr-4": {
+            "Wind\\Base\\": "src/base/",
+            "Wind\\Event\\": "src/event/",
+            "Wind\\Process\\": "src/process/",
+            "Wind\\Task\\": "src/task/",
+            "Wind\\Utils\\": "src/utils/"
         }
-    ]
+    }
 }

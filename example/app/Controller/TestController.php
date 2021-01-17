@@ -10,6 +10,7 @@ use App\Job\TestJob;
 use Wind\Base\Config;
 use Wind\Log\LogFactory;
 use Wind\Queue\Queue;
+use Wind\Queue\QueueFactory;
 use Wind\Task\Task;
 use Psr\Container\ContainerInterface;
 use Psr\SimpleCache\CacheInterface;
@@ -42,18 +43,21 @@ class TestController extends \Wind\Web\Controller
         return 'Request, id='.$id.', name='.$req->get('name').(yield $cache->get('abc', 'def')).$hello;
 	}
 	
-	public function queue()
+	public function queue(QueueFactory $factory)
 	{
+	    $queue = $factory->get('default');
 		$ret = [];
 
 		$job = new TestJob('Hello World [Low Priority] '.date('Y-m-d H:i:s'));
-		$ret[] = yield Queue::put('default', $job, 2, Queue::PRI_LOW);
+		$ret[] = yield $queue->put($job, 2, Queue::PRI_LOW);
 
 		$job = new TestJob('Hello World [Normal Priority] '.date('Y-m-d H:i:s'));
-		$ret[] = yield Queue::put('default', $job, 2, Queue::PRI_NORMAL);
+		$ret[] = yield $queue->put($job, 2);
 
 		$job = new TestJob('Hello World [High Priority] '.date('Y-m-d H:i:s'));
-		$ret[] = yield Queue::put('default', $job, 2, Queue::PRI_HIGH);
+		$ret[] = yield $queue->put($job, 2, Queue::PRI_HIGH);
+
+		yield $queue->delete($ret[1]);
 		
 		return json_encode($ret);
 	}

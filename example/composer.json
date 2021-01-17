@@ -4,13 +4,9 @@
         "wind-framework/collector": "*",
         "wind-framework/crontab": "*",
         "wind-framework/db": "*",
-        "wind-framework/event": "*",
         "wind-framework/log": "*",
-        "wind-framework/process": "*",
         "wind-framework/queue": "*",
         "wind-framework/redis": "*",
-        "wind-framework/task": "*",
-        "wind-framework/utils": "*",
         "wind-framework/view": "*",
         "amphp/http-client": "^4.5",
         "wind-framework/web": "*",
@@ -24,67 +20,47 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../src/base"
+            "url": "../"
         },
         {
             "type": "path",
-            "url": "../src/beanstalk"
+            "url": "../../beanstalk"
         },
         {
             "type": "path",
-            "url": "../src/cache"
+            "url": "../../cache"
         },
         {
             "type": "path",
-            "url": "../src/channel"
+            "url": "../../collector"
         },
         {
             "type": "path",
-            "url": "../src/collector"
+            "url": "../../crontab"
         },
         {
             "type": "path",
-            "url": "../src/crontab"
+            "url": "../../db"
         },
         {
             "type": "path",
-            "url": "../src/db"
+            "url": "../../log"
         },
         {
             "type": "path",
-            "url": "../src/event"
+            "url": "../../queue"
         },
         {
             "type": "path",
-            "url": "../src/log"
+            "url": "../../redis"
         },
         {
             "type": "path",
-            "url": "../src/process"
+            "url": "../../view"
         },
         {
             "type": "path",
-            "url": "../src/queue"
-        },
-        {
-            "type": "path",
-            "url": "../src/redis"
-        },
-        {
-            "type": "path",
-            "url": "../src/task"
-        },
-        {
-            "type": "path",
-            "url": "../src/utils"
-        },
-        {
-            "type": "path",
-            "url": "../src/view"
-        },
-        {
-            "type": "path",
-            "url": "../src/web"
+            "url": "../../web"
         }
     ]
 }

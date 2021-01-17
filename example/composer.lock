@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ae3413d4ddc8cc48ccf0cd184c266072",
+    "content-hash": "76e9be08513519c0f02534f3051e0f07",
     "packages": [
         {
             "name": "amphp/amp",
@@ -2929,61 +2929,20 @@
             "time": "2020-07-08T17:02:28+00:00"
         },
         {
-            "name": "wind-framework/base",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "../src/base",
-                "reference": "8d5aeddd3d345d7f48ad8c87857f9b7018a2f26e"
-            },
-            "require": {
-                "amphp/amp": "^2.5",
-                "php": ">=7.2.5",
-                "php-di/php-di": "^6.3",
-                "psr/event-dispatcher": "^1.0",
-                "vlucas/phpdotenv": "^5.2",
-                "workerman/channel": "^1.0.6",
-                "workerman/workerman": "^4.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Wind\\Base\\": "."
-                },
-                "files": [
-                    "function.php"
-                ]
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "authors": [
-                {
-                    "name": "Pader",
-                    "email": "ypnow@163.com"
-                }
-            ],
-            "description": "Wind framework base core.",
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
             "name": "wind-framework/beanstalk",
             "version": "0.1.0",
             "dist": {
                 "type": "path",
-                "url": "../src/beanstalk",
-                "reference": "ccddc5433d27c1153917c327a4a9b323e125850f"
+                "url": "../../beanstalk",
+                "reference": "e01f399da8f015fe633aae2d90965e3d33e60d4b"
             },
             "require": {
-                "wind-framework/base": "~0.1.0",
-                "wind-framework/utils": "~0.1.0"
+                "wind-framework/wind-framework": "~0.1.0"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Wind\\Beanstalk\\": "."
+                    "Wind\\Beanstalk\\": "src/"
                 }
             },
             "license": [
@@ -3005,18 +2964,18 @@
             "version": "0.1.0",
             "dist": {
                 "type": "path",
-                "url": "../src/cache",
-                "reference": "272a6682f6c657539e8d36488a573c501379babd"
+                "url": "../../cache",
+                "reference": "83b8cd200cf7629af85a32c96fe2e73aca97ee0b"
             },
             "require": {
                 "psr/simple-cache": "^1.0",
-                "wind-framework/base": "~0.1.0",
-                "wind-framework/redis": "~0.1.0"
+                "wind-framework/redis": "~0.1.0",
+                "wind-framework/wind-framework": "~0.1.0"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Wind\\Cache\\": "."
+                    "Wind\\Cache\\": "src/"
                 }
             },
             "license": [
@@ -3038,16 +2997,16 @@
             "version": "0.1.0",
             "dist": {
                 "type": "path",
-                "url": "../src/collector",
-                "reference": "a276ca1aca3786caa892bd52afde60b93f57060e"
+                "url": "../../collector",
+                "reference": "db1cfe709f2dd3cc9b52d81b76733b4352d5451d"
             },
             "require": {
-                "wind-framework/base": "~0.1.0"
+                "wind-framework/wind-framework": "~0.1.0"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Wind\\Collector\\": "."
+                    "Wind\\Collector\\": "src/"
                 }
             },
             "license": [
@@ -3069,18 +3028,17 @@
             "version": "0.1.0",
             "dist": {
                 "type": "path",
-                "url": "../src/crontab",
-                "reference": "bf947005bffe7a1715719daa42098021f44a5a1d"
+                "url": "../../crontab",
+                "reference": "11571805c9c09a99ab7367874614c128fd072c4a"
             },
             "require": {
                 "dragonmantank/cron-expression": "^3.1",
-                "wind-framework/base": "~0.1.0",
-                "wind-framework/process": "~0.1.0"
+                "wind-framework/wind-framework": "~0.1.0"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Wind\\Crontab\\": "."
+                    "Wind\\Crontab\\": "src/"
                 }
             },
             "license": [
@@ -3102,49 +3060,17 @@
             "version": "0.1.0",
             "dist": {
                 "type": "path",
-                "url": "../src/db",
-                "reference": "80f983bc9eef4956c8669e5da98dba7ec381d895"
+                "url": "../../db",
+                "reference": "36763f8206bdedd0e7ea2c5b778eb8d59630aa7f"
             },
             "require": {
                 "amphp/mysql": "^2.1",
-                "wind-framework/base": "~0.1.0"
+                "wind-framework/wind-framework": "~0.1.0"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Wind\\Db\\": "."
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "authors": [
-                {
-                    "name": "Pader",
-                    "email": "ypnow@163.com"
-                }
-            ],
-            "description": "Wind framework base core.",
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
-            "name": "wind-framework/event",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "../src/event",
-                "reference": "2d6b788811dc1d16213e5d57040f19fd28cf948d"
-            },
-            "require": {
-                "psr/event-dispatcher": "^1.0",
-                "wind-framework/base": "~0.1.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Wind\\Event\\": "."
+                    "Wind\\Db\\": "src/"
                 }
             },
             "license": [
@@ -3166,49 +3092,17 @@
             "version": "0.1.0",
             "dist": {
                 "type": "path",
-                "url": "../src/log",
-                "reference": "be74bc715dbcd040644a23089a28c8f1a1fba7b2"
+                "url": "../../log",
+                "reference": "a8501fa4c906993288cf97645c120bc4413b0a51"
             },
             "require": {
                 "monolog/monolog": "^2.1",
-                "wind-framework/base": "~0.1.0",
-                "wind-framework/task": "~0.1.0"
+                "wind-framework/wind-framework": "~0.1.0"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Wind\\Log\\": "."
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "authors": [
-                {
-                    "name": "Pader",
-                    "email": "ypnow@163.com"
-                }
-            ],
-            "description": "Wind framework base core.",
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
-            "name": "wind-framework/process",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "../src/process",
-                "reference": "35e5002c1c464f4f9f1858079c2835c3cbc03b20"
-            },
-            "require": {
-                "wind-framework/base": "~0.1.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Wind\\Process\\": "."
+                    "Wind\\Log\\": "src/"
                 }
             },
             "license": [
@@ -3230,19 +3124,18 @@
             "version": "0.1.0",
             "dist": {
                 "type": "path",
-                "url": "../src/queue",
-                "reference": "965fcfdfa6cdfe4c2eb684a3a1a651c86fe2dfac"
+                "url": "../../queue",
+                "reference": "b3bea7dfc5244bbc4057fb35f1d6445245b646f0"
             },
             "require": {
-                "wind-framework/base": "~0.1.0",
                 "wind-framework/beanstalk": "~0.1.0",
-                "wind-framework/process": "~0.1.0",
-                "wind-framework/redis": "~0.1.0"
+                "wind-framework/redis": "~0.1.0",
+                "wind-framework/wind-framework": "~0.1.0"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Wind\\Queue\\": "."
+                    "Wind\\Queue\\": "src/"
                 }
             },
             "license": [
@@ -3264,84 +3157,17 @@
             "version": "0.1.0",
             "dist": {
                 "type": "path",
-                "url": "../src/redis",
-                "reference": "b7203fcf5f4d94b5d78a3fa30def30703dde2ace"
+                "url": "../../redis",
+                "reference": "c98bba8cf7a0c79483bfed6cd451966598889db4"
             },
             "require": {
-                "wind-framework/base": "~0.1.0",
+                "wind-framework/wind-framework": "~0.1.0",
                 "workerman/redis": "^1.0"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Wind\\Redis\\": "."
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "authors": [
-                {
-                    "name": "Pader",
-                    "email": "ypnow@163.com"
-                }
-            ],
-            "description": "Wind framework base core.",
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
-            "name": "wind-framework/task",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "../src/task",
-                "reference": "12b3964c4c2c3ab736728c36bb45d1617c60e99e"
-            },
-            "require": {
-                "wind-framework/base": "~0.1.0",
-                "wind-framework/utils": "~0.1.0",
-                "workerman/channel": "^1.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Wind\\Task\\": "."
-                },
-                "files": [
-                    "function.php"
-                ]
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "authors": [
-                {
-                    "name": "Pader",
-                    "email": "ypnow@163.com"
-                }
-            ],
-            "description": "Wind framework base core.",
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
-            "name": "wind-framework/utils",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "../src/utils",
-                "reference": "0df237ac5c8df67d361014579f07247f8401bf16"
-            },
-            "require": {
-                "wind-framework/base": "~0.1.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Wind\\Utils\\": "."
+                    "Wind\\Redis\\": "src/"
                 }
             },
             "license": [
@@ -3363,17 +3189,16 @@
             "version": "0.1.0",
             "dist": {
                 "type": "path",
-                "url": "../src/view",
-                "reference": "bbb532405e419e08022fec5220dd9b75a71f24b1"
+                "url": "../../view",
+                "reference": "d0e31303f0895d0e91f0a26ac4a31b4751b474cb"
             },
             "require": {
-                "wind-framework/base": "~0.1.0",
-                "wind-framework/task": "~0.1.0"
+                "wind-framework/wind-framework": "~0.1.0"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Wind\\View\\": "."
+                    "Wind\\View\\": "src/"
                 }
             },
             "license": [
@@ -3395,18 +3220,17 @@
             "version": "0.1.0",
             "dist": {
                 "type": "path",
-                "url": "../src/web",
-                "reference": "d5d51115dc24b0957fb0c57b5afd2864e492f5a2"
+                "url": "../../web",
+                "reference": "5ecd6718ce6ccde5e6313c2c6483f5fa72ddefb8"
             },
             "require": {
                 "nikic/fast-route": "^1.3",
-                "wind-framework/base": "~0.1.0",
-                "wind-framework/task": "~0.1.0"
+                "wind-framework/wind-framework": "~0.1.0"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Wind\\Web\\": "."
+                    "Wind\\Web\\": "src/"
                 }
             },
             "license": [
@@ -3419,6 +3243,51 @@
                 }
             ],
             "description": "Wind framework base core.",
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "wind-framework/wind-framework",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "..",
+                "reference": "e6ad9b648f23107c17d15a3c72eddb14ee68db04"
+            },
+            "require": {
+                "amphp/amp": "^2.5",
+                "php": ">=7.2.5",
+                "php-di/php-di": "^6.3",
+                "psr/event-dispatcher": "^1.0",
+                "vlucas/phpdotenv": "^5.2",
+                "workerman/channel": "^1.0.6",
+                "workerman/workerman": "^4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Wind\\Base\\": "src/base/",
+                    "Wind\\Event\\": "src/event/",
+                    "Wind\\Process\\": "src/process/",
+                    "Wind\\Task\\": "src/task/",
+                    "Wind\\Utils\\": "src/utils/"
+                },
+                "files": [
+                    "src/base/function.php",
+                    "src/task/function.php"
+                ]
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Pader",
+                    "email": "ypnow@163.com"
+                }
+            ],
+            "description": "Pure PHP Coroutine Framework.",
             "transport-options": {
                 "relative": true
             }

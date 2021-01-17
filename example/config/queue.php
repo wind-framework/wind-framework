@@ -5,13 +5,13 @@ return [
         'driver' => Wind\Queue\Driver\BeanstalkDriver::class,
         'host' => '192.168.4.2',
         'port' => 11300,
-        'tube' => 'rim-queue',
+        'tube' => 'wind-queue',
         'processes' => 1,
         'concurrent' => 4
     ],
     'default' => [
         'driver' => Wind\Queue\Driver\RedisDriver::class,
-        'key' => 'rim-queue',
+        'key' => 'wind:queue',
         'processes' => 1,
         'concurrent' => 4
     ]

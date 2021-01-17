@@ -26,6 +26,10 @@
             "Wind\\Process\\": "src/process/",
             "Wind\\Task\\": "src/task/",
             "Wind\\Utils\\": "src/utils/"
-        }
+        },
+        "files": [
+            "src/base/function.php",
+            "src/task/function.php"
+        ]
     }
 }

@@ -18,6 +18,10 @@ class Config {
     {
         $this->configDir = BASE_DIR.'/config';
 
+        //Initialize .env config
+        $this->dotenv = Dotenv::createImmutable(BASE_DIR);
+        $this->dotenv->load();
+
         //Load global config
         $globalConfig = $this->configDir.'/config.php';
 
@@ -27,10 +31,6 @@ class Config {
                 $this->config = $config;
             }
         }
-
-        //Initialize .env config
-        $this->dotenv = Dotenv::createImmutable(BASE_DIR);
-        $this->dotenv->load();
     }
 
     /**

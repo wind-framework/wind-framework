@@ -19,7 +19,7 @@ class Chan
 	/**
 	 * @var Deferred[]
 	 */
-	private $consumers = [];
+	private $receivers = [];
 
 	/**
 	 * @var Deferred[]
@@ -39,11 +39,11 @@ class Chan
 	{
 		$this->queue->enqueue($data);
 
-		if (count($this->consumers) == 0) {
+		if (count($this->receivers) == 0) {
 			return;
 		}
 
-		while ($consumer = array_shift($this->consumers)) {
+		while ($consumer = array_shift($this->receivers)) {
 			$data = $this->queue->dequeue();
 			$consumer->resolve($data);
 			if ($this->queue->isEmpty()) {
@@ -68,17 +68,17 @@ class Chan
 			$data = $this->queue->dequeue();
 			$defer->resolve($data);
 		} else {
-			$this->consumers[] = $defer;
+			$this->receivers[] = $defer;
 		}
 
 		return $defer->promise();
 	}
 
 	/**
-	 * 获取一个消费者
+	 * 获取一个接收者
 	 *
-	 * 适用于生产者在只有在有消费者消费数据时才写入数据的场景，
-	 * 通过 getConsume() 获取到一个消费者后，调用 ->resolve() 向消费者发送数据。
+	 * 适用于生产者在只有在有接收者消费数据时才写入数据的场景，
+	 * 通过 getReceiver() 获取到一个消费者后，调用 ->resolve() 向消费者发送数据。
 	 *
 	 * ```
 	 * while (true) {
@@ -89,12 +89,12 @@ class Chan
 	 *
 	 * @return \Amp\Promise<Deferred>
 	 */
-	public function getConsumer()
+	public function getReceiver()
 	{
 		$defer = new Deferred();
 
-		if (count($this->consumers) > 0) {
-			$defer->resolve(array_shift($this->consumers));
+		if (count($this->receivers) > 0) {
+			$defer->resolve(array_shift($this->receivers));
 		} else {
 			$this->getters[] = $defer;
 		}

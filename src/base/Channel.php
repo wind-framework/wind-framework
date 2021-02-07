@@ -65,7 +65,7 @@ class Channel
         };
 
         Timer::add(0.5, function() {
-            Client::connect('127.0.0.1', $this->config['port']);
+            Client::connect($this->config['addr'] ?? '127.0.0.1', $this->config['port'] ?? 2206);
         }, [], false);
 
         return $this->connectDefer->promise();

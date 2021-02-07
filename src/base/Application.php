@@ -109,7 +109,7 @@ class Application
 
         //Channel Server
         if ($server['channel']['enable']) {
-            new \Channel\Server('127.0.0.1', $server['channel']['port']);
+            new \Channel\Server($server['channel']['addr'] ?? '127.0.0.1', $server['channel']['port'] ?? 2206);
         }
 
         foreach ($server['servers'] as $srv) {

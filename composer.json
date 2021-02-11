@@ -14,10 +14,10 @@
         "php": ">=7.2.5",
         "workerman/workerman": "^4.0",
         "amphp/amp": "^2.5",
-        "workerman/channel": "^1.0.6",
         "vlucas/phpdotenv": "^5.2",
         "php-di/php-di": "^6.3",
-        "psr/event-dispatcher": "^1.0"
+        "psr/event-dispatcher": "^1.0",
+        "pader/channel": "^1.2"
     },
     "autoload": {
         "psr-4": {

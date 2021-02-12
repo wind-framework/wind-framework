@@ -73,4 +73,15 @@ class Config {
         return $this->config[$config] = require $path;
     }
 
+    /**
+     * Check is config file exists
+     *
+     * @param string $config
+     * @return bool
+     */
+    public function exists($config)
+    {
+        return is_file($this->configDir.'/'.$config.'.php');
+    }
+
 }

@@ -79,7 +79,11 @@ class Application
 
         //Container
         $builder = new ContainerBuilder();
-        $builder->addDefinitions($this->config->get('definitions'));
+
+        if ($this->config->exists('definitions')) {
+            $builder->addDefinitions($this->config->get('definitions'));
+        }
+    
         $container = $builder->build();
         $container->set(Config::class, $this->config);
         $this->container = $container;

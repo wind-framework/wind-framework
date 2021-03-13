@@ -13,8 +13,7 @@ class Component implements \Wind\Base\Component
 
     public static function provide($app)
     {
-        $config = $app->container->get(Config::class);
-        $processes = $config->get('process');
+        $processes = $app->config->get('process');
 
         if ($processes) {
             foreach ($processes as $class) {

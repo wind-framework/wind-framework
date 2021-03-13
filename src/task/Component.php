@@ -5,6 +5,7 @@ namespace Wind\Task;
 use Wind\Base\Channel;
 use Wind\Base\Config;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Wind\Base\Exception\ExitException;
 use Workerman\Worker;
 use function Amp\asyncCall;
 use function Amp\call;
@@ -49,7 +50,7 @@ class Component implements \Wind\Base\Component
                     $eventDispatcher->dispatch(new TaskExecuteEvent($worker->id, $callableName));
 
                     call($callable, ...$data['args'])->onResolve(function($e, $result) use ($data, $channel) {
-                        if ($e === null) {
+                        if ($e === null || $e instanceof ExitException) {
                             $channel->publish(Task::class.'@'.$data['id'], [true, $result]);
                         } else {
                             $channel->publish(Task::class.'@'.$data['id'], [false, [

@@ -2,6 +2,7 @@
 
 use Amp\Promise;
 use Wind\Base\Application;
+use Wind\Base\Config;
 use Wind\Base\Exception\CallableException;
 
 if (!function_exists('str_contains')) {
@@ -89,4 +90,15 @@ function wrapCallable($callable, $persistent=true) {
 		$instance = $persistent ? di()->get($class) : di()->make($class);
 		return [$instance, $method];
     }
+}
+
+/**
+ * 读取配置
+ *
+ * @param string $key
+ * @param mixed $defaultValue
+ * @return mixed
+ */
+function config($key, $defaultValue=null) {
+    return di()->get(Config::class)->get($key, $defaultValue);
 }

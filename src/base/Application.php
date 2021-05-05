@@ -97,12 +97,67 @@ class Application
 
         $this->startTimestamp = time();
 
-        //Todo: 使用 set_exception_handler 会导致程序不能在异常时输出异常和退出，记录系统错误仍需办法
+        //Error handlers
+        $friendlyErrorType = function ($type) {
+            switch ($type) {
+                case E_ERROR:
+                    return 'E_ERROR';
+                case E_WARNING:
+                    return 'E_WARNING';
+                case E_PARSE:
+                    return 'E_PARSE';
+                case E_NOTICE:
+                    return 'E_NOTICE';
+                case E_CORE_ERROR:
+                    return 'E_CORE_ERROR';
+                case E_CORE_WARNING:
+                    return 'E_CORE_WARNING';
+                case E_COMPILE_ERROR:
+                    return 'E_COMPILE_ERROR';
+                case E_COMPILE_WARNING:
+                    return 'E_COMPILE_WARNING';
+                case E_USER_ERROR:
+                    return 'E_USER_ERROR';
+                case E_USER_WARNING:
+                    return 'E_USER_WARNING';
+                case E_USER_NOTICE:
+                    return 'E_USER_NOTICE';
+                case E_STRICT:
+                    return 'E_STRICT';
+                case E_RECOVERABLE_ERROR:
+                    return 'E_RECOVERABLE_ERROR';
+                case E_DEPRECATED:
+                    return 'E_DEPRECATED';
+                case E_USER_DEPRECATED:
+                    return 'E_USER_DEPRECATED';
+            }
+            return "";
+        };
+
+        set_error_handler(function ($errno, $errstr, $errfile, $errline) use ($friendlyErrorType) {
+            $errName = $friendlyErrorType($errno);
+            $error = "$errName: $errstr in $errfile:$errline";
+            $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
+            $eventDispatcher->dispatch(new SystemError($error));
+            return false;
+        }, E_ALL ^ E_NOTICE | E_STRICT);
+
         set_exception_handler(function ($ex) {
             $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
             $eventDispatcher->dispatch(new SystemError($ex));
             echo $ex->__toString();
             exit(250);
+        });
+
+        register_shutdown_function(function () use ($friendlyErrorType) {
+            $error = error_get_last();
+            //过滤掉会被 set_error_handler 捕获到错误
+            if ($error && ($error['type'] & (E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_STRICT))) {
+                $errName = $friendlyErrorType($error['type']);
+                $error = "$errName: {$error['message']} in {$error['file']}:{$error['line']}";
+                $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
+                $eventDispatcher->dispatch(new SystemError($error));
+            }
         });
     }
 

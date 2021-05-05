@@ -7,14 +7,22 @@ class SystemError extends \Wind\Event\Event
 
     public $error;
 
-    public function __construct(\Throwable $e)
+    /**
+     * SystemError constructor.
+     * @param \Throwable|string $e
+     */
+    public function __construct($e)
     {
         $this->error = $e;
     }
 
     public function __toString()
     {
-        return $this->error->__toString();
+        if ($this->error instanceof \Throwable) {
+            return $this->error->__toString();
+        } else {
+            return $this->error;
+        }
     }
 
 }

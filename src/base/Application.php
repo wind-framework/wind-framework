@@ -4,7 +4,6 @@ namespace Wind\Base;
 
 use DI\ContainerBuilder;
 use Wind\Base\Event\SystemError;
-use Wind\Web\HttpServer;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
 use function Amp\asyncCall;
@@ -116,19 +115,23 @@ class Application
             new \Channel\Server($server['channel']['addr'] ?? '127.0.0.1', $server['channel']['port'] ?? 2206);
         }
 
+        $supportServers = [
+            'http' => \Wind\Web\HttpServer::class
+        ];
+
         foreach ($server['servers'] as $srv) {
         	if (isset($srv['enable']) && $srv['enable'] === false) {
         		break;
 	        }
 
-            switch ($srv['type']) {
-                case 'http':
-                    $worker = new HttpServer('http://'.$srv['listen']);
-                    $worker->count = $srv['worker_num'];
-                    $worker->reusePort = false;
-                    $this->addWorker($worker);
-                    break;
+        	if (!isset($supportServers[$srv['type']])) {
+                throw new \RuntimeException("Unsupported server type '{$srv['type']}'.");
             }
+
+            $worker = new $supportServers[$srv['type']]($srv['listen'], $srv['context_options'] ?? []);
+            $worker->count = $srv['worker_num'];
+            $worker->reusePort = $srv['reuse_port'] ?? false;
+            $this->addWorker($worker);
         }
     }
 

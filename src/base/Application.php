@@ -67,6 +67,7 @@ class Application
 
         self::$instance = new Application();
         self::$instance->initEnv();
+        self::$instance->initErrorHandlers();
         self::$instance->runServers();
         self::$instance->setComponents();
     }
@@ -96,7 +97,10 @@ class Application
         }
 
         $this->startTimestamp = time();
+    }
 
+    private function initErrorHandlers()
+    {
         //Error handlers
         $friendlyErrorType = function ($type) {
             switch ($type) {

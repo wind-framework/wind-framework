@@ -20,24 +20,6 @@ function di() {
 }
 
 /**
- * 对协程 callable 进行依赖注入调用
- *
- * @param callable $callable
- * @param array $args
- * @param \Invoker\Invoker $invoker 指定自定义的 Invoker 调用，否则使用全局容器
- * @return Promise
- */
-function wireCall($callable, $args=[], $invoker=null) {
-	return \Amp\call(function() use ($callable, $args, $invoker) {
-		$ret = ($invoker ?: di())->call($callable, $args);
-		if ($ret instanceof \Generator || $ret instanceof Promise) {
-			$ret = yield from $ret;
-		}
-		return $ret;
-	});
-}
-
-/**
  * 等于普通模式的 exit() 函数
  *
  * @param int $code

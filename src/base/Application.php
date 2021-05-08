@@ -3,6 +3,7 @@
 namespace Wind\Base;
 
 use DI\ContainerBuilder;
+use DI\Definition\Exception\InvalidDefinition;
 use Wind\Base\Event\SystemError;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
@@ -138,29 +139,34 @@ class Application
             return "";
         };
 
-        set_error_handler(function ($errno, $errstr, $errfile, $errline) use ($friendlyErrorType) {
+        $dispatchError = function($error) {
+            try {
+                $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
+                $eventDispatcher->dispatch(new SystemError($error));
+            } catch (InvalidDefinition $e) {
+            }
+        };
+
+        set_error_handler(function ($errno, $errstr, $errfile, $errline) use ($friendlyErrorType, $dispatchError) {
             $errName = $friendlyErrorType($errno);
             $error = "$errName: $errstr in $errfile:$errline";
-            $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
-            $eventDispatcher->dispatch(new SystemError($error));
+            $dispatchError($error);
             return false;
         }, E_ALL ^ E_NOTICE | E_STRICT);
 
-        set_exception_handler(function ($ex) {
-            $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
-            $eventDispatcher->dispatch(new SystemError($ex));
+        set_exception_handler(function ($ex) use ($dispatchError) {
+            $dispatchError($ex);
             echo $ex->__toString();
             exit(250);
         });
 
-        register_shutdown_function(function () use ($friendlyErrorType) {
+        register_shutdown_function(function () use ($friendlyErrorType, $dispatchError) {
             $error = error_get_last();
             //过滤掉会被 set_error_handler 捕获到错误
             if ($error && ($error['type'] & (E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_STRICT))) {
                 $errName = $friendlyErrorType($error['type']);
                 $error = "$errName: {$error['message']} in {$error['file']}:{$error['line']}";
-                $eventDispatcher = $this->container->get(EventDispatcherInterface::class);
-                $eventDispatcher->dispatch(new SystemError($error));
+                $dispatchError($error);
             }
         });
     }

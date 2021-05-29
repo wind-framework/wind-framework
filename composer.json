@@ -17,7 +17,8 @@
         "vlucas/phpdotenv": "^5.2",
         "php-di/php-di": "^6.3",
         "psr/event-dispatcher": "^1.0",
-        "workerman/channel": "^1.1"
+        "workerman/channel": "^1.1",
+        "opis/closure": "^3.6"
     },
     "autoload": {
         "psr-4": {

@@ -4,6 +4,7 @@ namespace Wind\Task;
 
 use Amp\Deferred;
 use Amp\Promise;
+use Opis\Closure\SerializableClosure;
 use Wind\Base\Channel;
 use Wind\Utils\StrUtil;
 use function Amp\call;
@@ -23,14 +24,6 @@ class Task
 	 */
 	public static function execute($callable, ...$args)
 	{
-		if ($callable instanceof \Closure) {
-			throw new \InvalidArgumentException('Can not run closure in Task!');
-		}
-
-		if (is_array($callable) && is_object($callable[0])) {
-			$callable[0] = get_class($callable[0]);
-		}
-
 		return call(static function() use ($callable, $args) {
 			$id = self::eventId();
 			$defer = new Deferred();
@@ -52,7 +45,14 @@ class Task
 				}
 			});
 
-            $channel->enqueue(Task::class, ['id'=>$id, 'callable'=>$callable, 'args'=>$args]);
+            if ($callable instanceof \Closure) {
+                $callable = serialize(new SerializableClosure($callable));
+                $type = 'closure';
+            } elseif (is_array($callable) && is_object($callable[0])) {
+                $callable[0] = get_class($callable[0]);
+            }
+
+            $channel->enqueue(Task::class, [$id, $type ?? '', $callable, $args]);
 
 			return $defer->promise();
 		});

@@ -43,17 +43,24 @@ class Component implements \Wind\Base\Component
                 $channel = $app->container->get(Channel::class);
 
                 $channel->watch(Task::class, static function($data) use ($worker, $app, $channel) {
-                    $callable = wrapCallable($data['callable']);
-                    $callableName = is_array($data['callable']) ? join('::', $data['callable']) : $data['callable'];
+                    list($id, $type, $callable, $args) = $data;
+
+                    if ($type == 'closure') {
+                        $callableName = 'Closure';
+                        $callable = unserialize($callable)->getClosure();
+                    } else {
+                        $callableName = is_array($callable) ? join('::', $callable) : $callable;
+                        $callable = wrapCallable($callable);
+                    }
 
                     $eventDispatcher = $app->container->get(EventDispatcherInterface::class);
                     $eventDispatcher->dispatch(new TaskExecuteEvent($worker->id, $callableName));
 
-                    call($callable, ...$data['args'])->onResolve(function($e, $result) use ($data, $channel) {
+                    call($callable, ...$args)->onResolve(function($e, $result) use ($id, $channel) {
                         if ($e === null || $e instanceof ExitException) {
-                            $channel->publish(Task::class.'@'.$data['id'], [true, $result]);
+                            $channel->publish(Task::class.'@'.$id, [true, $result]);
                         } else {
-                            $channel->publish(Task::class.'@'.$data['id'], [false, [
+                            $channel->publish(Task::class.'@'.$id, [false, [
                                 'exception' => get_class($e),
                                 'message' => $e->getMessage(),
                                 'code' => $e->getCode(),

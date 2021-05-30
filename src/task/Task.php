@@ -47,12 +47,11 @@ class Task
 
             if ($callable instanceof \Closure) {
                 $callable = new SerializableClosure($callable);
-                $type = 'closure';
             } elseif (is_array($callable) && is_object($callable[0])) {
                 $callable[0] = get_class($callable[0]);
             }
 
-            $channel->enqueue(Task::class, [$id, $type ?? '', $callable, $args]);
+            $channel->enqueue(Task::class, [$id, $callable, $args]);
 
 			return $defer->promise();
 		});

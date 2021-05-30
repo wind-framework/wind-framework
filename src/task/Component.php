@@ -2,6 +2,7 @@
 
 namespace Wind\Task;
 
+use Opis\Closure\SerializableClosure;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Wind\Base\Channel;
 use Wind\Base\Config;
@@ -43,9 +44,9 @@ class Component implements \Wind\Base\Component
                 $channel = $app->container->get(Channel::class);
 
                 $channel->watch(Task::class, static function($data) use ($worker, $app, $channel) {
-                    list($id, $type, $callable, $args) = $data;
+                    list($id, $callable, $args) = $data;
 
-                    if ($type == 'closure') {
+                    if ($callable instanceof SerializableClosure) {
                         $callableName = 'Closure';
                         $callable = $callable->getClosure();
                     } else {

@@ -46,7 +46,7 @@ class Task
 			});
 
             if ($callable instanceof \Closure) {
-                $callable = serialize(new SerializableClosure($callable));
+                $callable = new SerializableClosure($callable);
                 $type = 'closure';
             } elseif (is_array($callable) && is_object($callable[0])) {
                 $callable[0] = get_class($callable[0]);

@@ -2,9 +2,9 @@
 
 namespace Wind\Task;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Wind\Base\Channel;
 use Wind\Base\Config;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Wind\Base\Exception\ExitException;
 use Workerman\Worker;
 use function Amp\asyncCall;
@@ -47,7 +47,7 @@ class Component implements \Wind\Base\Component
 
                     if ($type == 'closure') {
                         $callableName = 'Closure';
-                        $callable = unserialize($callable)->getClosure();
+                        $callable = $callable->getClosure();
                     } else {
                         $callableName = is_array($callable) ? join('::', $callable) : $callable;
                         $callable = wrapCallable($callable);

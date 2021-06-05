@@ -34,15 +34,7 @@ class Task
             $channel->on($returnEvent, static function($data) use ($defer, $returnEvent, $channel) {
                 $channel->unsubscribe($returnEvent);
 				list($state, $return) = $data;
-				if ($state) {
-					$defer->resolve($return);
-				} else {
-					if (class_exists($return['exception'])) {
-						$defer->fail(new $return['exception']($return['message'], $return['code']));
-					} else {
-						$defer->fail(new \Exception($return['message'], $return['code']));
-					}
-				}
+				$state ? $defer->resolve($return) : $defer->fail($return);
 			});
 
             if ($callable instanceof \Closure) {

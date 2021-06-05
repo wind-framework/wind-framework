@@ -61,12 +61,7 @@ class Component implements \Wind\Base\Component
                         if ($e === null || $e instanceof ExitException) {
                             $channel->publish(Task::class.'@'.$id, [true, $result]);
                         } else {
-                            $channel->publish(Task::class.'@'.$id, [false, [
-                                'exception' => get_class($e),
-                                'message' => $e->getMessage(),
-                                'code' => $e->getCode(),
-                                'trace' => $e->getTraceAsString()
-                            ]]);
+                            $channel->publish(Task::class.'@'.$id, [false, $e]);
                         }
                     });
                 });

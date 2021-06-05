@@ -156,8 +156,7 @@ class Application
 
         set_exception_handler(function ($ex) use ($dispatchError) {
             $dispatchError($ex);
-            echo $ex->__toString();
-            exit(250);
+            fmtException($ex, config('max_stack_trace', 5));
         });
 
         register_shutdown_function(function () use ($friendlyErrorType, $dispatchError) {
@@ -181,7 +180,8 @@ class Application
         }
 
         $supportServers = [
-            'http' => \Wind\Web\HttpServer::class
+            'http' => \Wind\Web\HttpServer::class,
+            'websocket' => \Wind\Web\WebSocketServer::class,
         ];
 
         foreach ($server['servers'] as $srv) {

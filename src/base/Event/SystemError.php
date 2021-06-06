@@ -19,7 +19,7 @@ class SystemError extends \Wind\Event\Event
     public function __toString()
     {
         if ($this->error instanceof \Throwable) {
-            return fmtException($this->error, config('max_stack_trace', 5));
+            return fmtException($this->error, config('max_stack_trace'));
         } else {
             return $this->error;
         }

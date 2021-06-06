@@ -156,7 +156,7 @@ class Application
 
         set_exception_handler(function ($ex) use ($dispatchError) {
             $dispatchError($ex);
-            fmtException($ex, config('max_stack_trace', 5));
+            echo fmtException($ex, config('max_stack_trace'));
         });
 
         register_shutdown_function(function () use ($friendlyErrorType, $dispatchError) {

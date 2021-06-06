@@ -93,14 +93,24 @@ function config($key, $defaultValue=null) {
 function fmtException(Throwable $e, $maxStackTrace) {
     $string = get_class($e).': '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine()."\r\n"
         .'Stack trace:'."\r\n";
-    
+
     $ts = 0;
     foreach ($e->getTrace() as $i => $row) {
-        $string .= '#'.$i.' '.(isset($row['file']) ? $row['file'].'('.$row['line'].')' : '[internal function]').': '
-            ."{$row['class']}{$row['type']}{$row['function']}()"."\r\n";
+        $string .= '#'.$i.' '.(isset($row['file']) ? $row['file'].'('.$row['line'].')' : '[internal function]').': ';
+
+        if (isset($row['class'])) {
+            $string .= "{$row['class']}{$row['type']}{$row['function']}()\r\n";
+        } else {
+            $string .= "{$row['function']}()\r\n";
+        }
+
         if (++$ts == $maxStackTrace) {
             break;
         }
+    }
+
+    if ($ts < $maxStackTrace) {
+        $string .= "{main}\r\n";
     }
 
     return $string;

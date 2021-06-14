@@ -2,7 +2,6 @@
 
 namespace Wind\Process;
 
-use Wind\Base\Config;
 use Wind\Base\Event\SystemError;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
@@ -19,19 +18,27 @@ class Component implements \Wind\Base\Component
             foreach ($processes as $class) {
                 /* @var $process Process */
                 $process = $app->container->make($class);
+                $isStatable = isset(class_uses($process)[Statable::class]);
+
                 $worker = new Worker();
                 $worker->name = $process->name ?: $class;
                 $worker->count = $process->count;
-                $worker->onWorkerStart = static function ($worker) use ($process, $class, $app) {
+                $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStatable) {
                     $app->startComponents($worker);
+
                     call([$process, 'run'])->onResolve(function($e) use ($app) {
                         if ($e) {
                             $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
                         }
                     });
+
+                    $isStatable && $process->onGetState();
                 };
 
                 $app->addWorker($worker);
+
+                //Statable count
+                $isStatable && ProcessStat::addStatableCount($worker->count);
             }
         }
     }

@@ -15,7 +15,6 @@ class ProcessStat
     public static function addStatableCount($num)
     {
         self::$statableCount += $num;
-        echo self::$statableCount."\n";
     }
 
     public static function get($timeout=5)

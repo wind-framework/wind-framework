@@ -3,6 +3,8 @@
 namespace Wind\Base;
 
 use Dotenv\Dotenv;
+use Dotenv\Repository\Adapter\EnvConstAdapter;
+use Dotenv\Repository\RepositoryBuilder;
 
 class Config {
 
@@ -19,7 +21,12 @@ class Config {
         $this->configDir = BASE_DIR.'/config';
 
         //Initialize .env config
-        $this->dotenv = Dotenv::createImmutable(BASE_DIR);
+        $repository = RepositoryBuilder::createWithNoAdapters()
+            ->addAdapter(EnvConstAdapter::class)
+            ->immutable()
+            ->make();
+
+        $this->dotenv = Dotenv::create($repository, BASE_DIR);
         $this->dotenv->load();
 
         //Load global config
@@ -35,7 +42,7 @@ class Config {
 
     /**
      * Get config from key
-     * 
+     *
      * @param string $key
      * @param mixed $defaultValue
      * @return mixed

@@ -15,7 +15,7 @@ use function Amp\asyncCall;
  * 应用程序为进程内全局只有一个
  *
  * @package Wind\Base
- * 
+ *
  * @property \DI\Container $container
  * @property Config $config
  * @property Worker[] $workers
@@ -84,7 +84,7 @@ class Application
         if ($this->config->exists('definitions')) {
             $builder->addDefinitions($this->config->get('definitions'));
         }
-    
+
         $container = $builder->build();
         $container->set(Config::class, $this->config);
         $this->container = $container;
@@ -194,7 +194,7 @@ class Application
             }
 
             $worker = new $supportServers[$srv['type']]($srv['listen'], $srv['context_options'] ?? []);
-            $worker->count = $srv['worker_num'];
+            $worker->count = $srv['worker_num'] ?? 1;
             $worker->reusePort = $srv['reuse_port'] ?? false;
             $this->addWorker($worker);
         }

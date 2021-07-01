@@ -148,6 +148,12 @@ class Application
         };
 
         set_error_handler(function ($errno, $errstr, $errfile, $errline) use ($friendlyErrorType, $dispatchError) {
+            if (!(error_reporting() & $errno)) {
+                // This error code is not included in error_reporting, so let it fall
+                // through to the standard PHP error handler
+                return false;
+            }
+
             $errName = $friendlyErrorType($errno);
             $error = "$errName: $errstr in $errfile:$errline";
             $dispatchError($error);
@@ -162,7 +168,7 @@ class Application
         register_shutdown_function(function () use ($friendlyErrorType, $dispatchError) {
             $error = error_get_last();
             //过滤掉会被 set_error_handler 捕获到错误
-            if ($error && ($error['type'] & (E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_STRICT))) {
+            if ($error && !(error_reporting() & $error['type']) && ($error['type'] & (E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_STRICT))) {
                 $errName = $friendlyErrorType($error['type']);
                 $error = "$errName: {$error['message']} in {$error['file']}:{$error['line']}";
                 $dispatchError($error);

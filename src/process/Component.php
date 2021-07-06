@@ -12,34 +12,37 @@ class Component implements \Wind\Base\Component
 
     public static function provide($app)
     {
-        $processes = $app->config->get('process');
+        //Not run custom process for cli mode.
+        if (defined('WIND_CLI')) {
+            return;
+        }
 
-        if ($processes) {
-            foreach ($processes as $class) {
-                /* @var $process Process */
-                $process = $app->container->make($class);
-                $isStatable = isset(class_uses($process)[Stateful::class]);
+        $processes = $app->config->get('process', []);
 
-                $worker = new Worker();
-                $worker->name = $process->name ?: $class;
-                $worker->count = $process->count;
-                $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStatable) {
-                    $app->startComponents($worker);
+        foreach ($processes as $class) {
+            /* @var $process Process */
+            $process = $app->container->make($class);
+            $isStatable = isset(class_uses($process)[Stateful::class]);
 
-                    call([$process, 'run'])->onResolve(function($e) use ($app) {
-                        if ($e) {
-                            $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
-                        }
-                    });
+            $worker = new Worker();
+            $worker->name = $process->name ?: $class;
+            $worker->count = $process->count;
+            $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStatable) {
+                $app->startComponents($worker);
 
-                    $isStatable && $process->onGetState();
-                };
+                call([$process, 'run'])->onResolve(function($e) use ($app) {
+                    if ($e) {
+                        $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
+                    }
+                });
 
-                $app->addWorker($worker);
+                $isStatable && $process->onGetState();
+            };
 
-                //Statable count
-                $isStatable && ProcessState::addStateCount($worker->count);
-            }
+            $app->addWorker($worker);
+
+            //Statable count
+            $isStatable && ProcessState::addStateCount($worker->count);
         }
     }
 

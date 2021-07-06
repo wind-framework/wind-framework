@@ -69,7 +69,28 @@ class Application
         self::$instance = new Application();
         self::$instance->initEnv();
         self::$instance->initErrorHandlers();
-        self::$instance->runServers();
+        self::$instance->startChannel();
+
+        //Command detect
+        global $argv;
+        $cmdArgs = [];
+
+        if (isset($argv[1]) && !in_array($argv[1], ['start', 'stop', 'restart', 'reload', 'status', 'connections'])) {
+            $cmdArgs = array_slice($argv, 1);
+            if ($cmdArgs[0] != 'help' && $cmdArgs[0] != '?') {
+                $argv = [$argv[0], 'start', '-q'];
+                define('WIND_CLI', true);
+            }
+        }
+
+        if (defined('WIND_CLI')) {
+            self::$instance->runCommand($cmdArgs);
+        } else {
+            self::$instance->runServers();
+        }
+
+        unset($cmdArgs);
+
         self::$instance->setComponents();
     }
 
@@ -176,21 +197,29 @@ class Application
         });
     }
 
-    private function runServers()
+    /**
+     * Start the channel server
+     */
+    private function startChannel()
     {
-        $server = $this->config->get('server');
+        $channel = $this->config->get('server.channel');
 
         //Channel Server
-        if ($server['channel']['enable']) {
-            new \Channel\Server($server['channel']['addr'] ?? '127.0.0.1', $server['channel']['port'] ?? 2206);
+        if ($channel['enable']) {
+            new \Channel\Server($channel['addr'] ?? '127.0.0.1', $channel['port'] ?? 2206);
         }
+    }
+
+    private function runServers()
+    {
+        $servers = $this->config->get('server.servers');
 
         $supportServers = [
             'http' => \Wind\Web\HttpServer::class,
             'websocket' => \Wind\Web\WebSocketServer::class,
         ];
 
-        foreach ($server['servers'] as $srv) {
+        foreach ($servers as $srv) {
         	if (isset($srv['enable']) && $srv['enable'] === false) {
         		break;
 	        }
@@ -204,6 +233,13 @@ class Application
             $worker->reusePort = $srv['reuse_port'] ?? false;
             $this->addWorker($worker);
         }
+    }
+
+    private function runCommand($args)
+    {
+        Worker::$pidFile = sys_get_temp_dir().'/workerman-'.uniqid().'.pid';
+        $worker = CommandWorker::instance($args);
+        $this->addWorker($worker);
     }
 
     private function setComponents()

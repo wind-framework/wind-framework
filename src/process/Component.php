@@ -18,7 +18,7 @@ class Component implements \Wind\Base\Component
             foreach ($processes as $class) {
                 /* @var $process Process */
                 $process = $app->container->make($class);
-                $isStatable = isset(class_uses($process)[Statable::class]);
+                $isStatable = isset(class_uses($process)[Stateful::class]);
 
                 $worker = new Worker();
                 $worker->name = $process->name ?: $class;
@@ -38,7 +38,7 @@ class Component implements \Wind\Base\Component
                 $app->addWorker($worker);
 
                 //Statable count
-                $isStatable && ProcessStat::addStatableCount($worker->count);
+                $isStatable && ProcessState::addStateCount($worker->count);
             }
         }
     }

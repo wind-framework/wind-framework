@@ -7,14 +7,14 @@ use Wind\Base\Channel;
 use Wind\Utils\StrUtil;
 use Workerman\Timer;
 
-class ProcessStat
+class ProcessState
 {
 
-    protected static $statableCount = 0;
+    protected static $stateCount = 0;
 
-    public static function addStatableCount($num)
+    public static function addStateCount($num)
     {
-        self::$statableCount += $num;
+        self::$stateCount += $num;
     }
 
     public static function get($timeout=5)
@@ -25,7 +25,7 @@ class ProcessStat
         $channel = di()->get(Channel::class);
 
         $id = StrUtil::randomString(16);
-        $countDown = self::$statableCount;
+        $countDown = self::$stateCount;
         $event = 'wind.stat.report.'.$id;
 
         //超时设置

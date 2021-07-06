@@ -7,7 +7,7 @@ use Wind\Base\Channel;
 /**
  * Wind Framework Statable Process
  */
-trait Statable
+trait Stateful
 {
 
     /**

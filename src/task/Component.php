@@ -7,6 +7,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Wind\Base\Channel;
 use Wind\Base\Config;
 use Wind\Base\Exception\ExitException;
+use Wind\Log\LogFactory;
 use Workerman\Worker;
 
 use function Amp\asyncCallable;
@@ -74,7 +75,11 @@ class Component implements \Wind\Base\Component
 	 * @inheritDoc
 	 */
 	public static function start($worker) {
+        $container = di();
+        //Reset LogFactory, this fix log AsyncHandler has been initialized before worker start.
+        if ($container->has(LogFactory::class)) {
+            $container->set(LogFactory::class, new LogFactory());
+        }
 	}
-
 
 }

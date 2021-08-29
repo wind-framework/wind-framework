@@ -7,7 +7,8 @@ use DI\Definition\Exception\InvalidDefinition;
 use Wind\Base\Event\SystemError;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
-use function Amp\asyncCall;
+
+use function Amp\defer;
 
 /**
  * 应用程序
@@ -60,8 +61,16 @@ class Application
         return self::$instance;
     }
 
+    /**
+     * Start the wind framework application
+     */
     public static function start()
     {
+        if (PHP_VERSION_ID < 80100) {
+            echo "Error: Wind framework require PHP version >= 8.1.0.\n";
+            exit(1);
+        }
+
         if (self::$instance !== null) return;
 
         Worker::$eventLoopClass = Amp::class;
@@ -71,6 +80,8 @@ class Application
         self::$instance->initErrorHandlers();
         self::$instance->runServers();
         self::$instance->setComponents();
+
+        Worker::runAll();
     }
 
     public function __construct()
@@ -250,7 +261,7 @@ class Application
     public function startComponents(Worker $worker)
     {
         foreach ($this->components as $component) {
-        	asyncCall([$component, 'start'], $worker);
+        	defer([$component, 'start'], $worker);
         }
     }
 

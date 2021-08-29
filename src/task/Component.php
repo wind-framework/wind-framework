@@ -8,8 +8,8 @@ use Wind\Base\Channel;
 use Wind\Base\Config;
 use Wind\Base\Exception\ExitException;
 use Workerman\Worker;
-use function Amp\asyncCall;
-use function Amp\call;
+
+use function Amp\asyncCallable;
 
 class Component implements \Wind\Base\Component
 {
@@ -40,32 +40,31 @@ class Component implements \Wind\Base\Component
 
 			$app->startComponents($worker);
 
-			asyncCall(static function() use ($worker, $app) {
-                $channel = $app->container->get(Channel::class);
+            $channel = $app->container->get(Channel::class);
 
-                $channel->watch(Task::class, static function($data) use ($worker, $app, $channel) {
-                    list($id, $callable, $args) = $data;
+            $channel->watch(Task::class, asyncCallable(static function($data) use ($worker, $app, $channel) {
+                list($id, $callable, $args) = $data;
 
-                    if ($callable instanceof SerializableClosure) {
-                        $callableName = 'Closure';
-                        $callable = $callable->getClosure();
-                    } else {
-                        $callableName = is_array($callable) ? join('::', $callable) : $callable;
-                        $callable = wrapCallable($callable);
-                    }
+                if ($callable instanceof SerializableClosure) {
+                    $callableName = 'Closure';
+                    $callable = $callable->getClosure();
+                } else {
+                    $callableName = is_array($callable) ? join('::', $callable) : $callable;
+                    $callable = wrapCallable($callable);
+                }
 
-                    $eventDispatcher = $app->container->get(EventDispatcherInterface::class);
-                    $eventDispatcher->dispatch(new TaskExecuteEvent($worker->id, $callableName));
+                $eventDispatcher = $app->container->get(EventDispatcherInterface::class);
+                $eventDispatcher->dispatch(new TaskExecuteEvent($worker->id, $callableName));
 
-                    call($callable, ...$args)->onResolve(function($e, $result) use ($id, $channel) {
-                        if ($e === null || $e instanceof ExitException) {
-                            $channel->publish(Task::class.'@'.$id, [true, $result]);
-                        } else {
-                            $channel->publish(Task::class.'@'.$id, [false, $e]);
-                        }
-                    });
-                });
-            });
+                try {
+                    $result = call_user_func_array($callable, $args);
+                    $channel->publish(Task::class.'@'.$id, [true, $result]);
+                } catch (ExitException $e) {
+                    $channel->publish(Task::class.'@'.$id, [true, null]);
+                } catch (\Throwable $e) {
+                    $channel->publish(Task::class.'@'.$id, [false, $e]);
+                }
+            }));
 		};
 
 		$app->addWorker($worker);

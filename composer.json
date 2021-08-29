@@ -3,7 +3,7 @@
     "description": "Pure PHP Coroutine Framework.",
     "type": "library",
     "license": "Apache-2.0",
-    "version": "0.2.1",
+    "version": "1.0.0-dev",
     "authors": [
         {
             "name": "Pader",
@@ -11,9 +11,9 @@
         }
     ],
     "require": {
-        "php": ">=7.2.5",
+        "php": ">=8.1.0",
         "workerman/workerman": "^4.0",
-        "amphp/amp": "^2.5",
+        "amphp/amp": "v3.x-dev",
         "vlucas/phpdotenv": "^5.2",
         "php-di/php-di": "^6.3",
         "psr/event-dispatcher": "^1.0",

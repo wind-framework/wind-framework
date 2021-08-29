@@ -5,7 +5,8 @@ namespace Wind\Process;
 use Wind\Base\Event\SystemError;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
-use function Amp\call;
+
+use function Amp\async;
 
 class Component implements \Wind\Base\Component
 {
@@ -26,7 +27,7 @@ class Component implements \Wind\Base\Component
                 $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStatable) {
                     $app->startComponents($worker);
 
-                    call([$process, 'run'])->onResolve(function($e) use ($app) {
+                    async([$process, 'run'])->onResolve(function($e) use ($app) {
                         if ($e) {
                             $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
                         }

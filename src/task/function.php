@@ -5,7 +5,7 @@
  *
  * @param callable $callable
  * @param mixed ...$args
- * @return \Amp\Promise
+ * @return mixed
  */
 function compute($callable, ...$args) {
     return \Wind\Task\Task::execute($callable, ...$args);

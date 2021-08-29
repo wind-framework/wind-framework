@@ -3,7 +3,6 @@
 namespace Wind\Event;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
-use function Amp\call;
 
 class EventDispatcher implements EventDispatcherInterface
 {
@@ -41,18 +40,16 @@ class EventDispatcher implements EventDispatcherInterface
      * Provide all relevant listeners with an event to process.
      *
      * @param object $event The object to process.
-     * @return \Amp\Promise
+     * @return void
      */
     public function dispatch(object $event)
     {
-        return call(function() use ($event) {
-            $eventClass = get_class($event);
-            if (isset($this->eventListeners[$eventClass])) {
-                foreach ($this->eventListeners[$eventClass] as $listener) {
-                    yield call([$listener, 'handle'], $event);
-                }
+        $eventClass = get_class($event);
+        if (isset($this->eventListeners[$eventClass])) {
+            foreach ($this->eventListeners[$eventClass] as $listener) {
+                call_user_func([$listener, 'handle'], $event);
             }
-        });
+        }
     }
 
 }

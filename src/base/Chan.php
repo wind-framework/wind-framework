@@ -82,7 +82,7 @@ class Chan
 	 *
 	 * ```
 	 * while (true) {
-	 *     $defer = yield $chan->getConsumer();
+	 *     $defer = await($chan->getReceiver());
 	 *     $defer->resolve('Hello World');
 	 * }
 	 * ```

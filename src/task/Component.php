@@ -2,6 +2,7 @@
 
 namespace Wind\Task;
 
+use Amp\Promise;
 use Opis\Closure\SerializableClosure;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Wind\Base\Channel;
@@ -11,6 +12,7 @@ use Wind\Log\LogFactory;
 use Workerman\Worker;
 
 use function Amp\asyncCallable;
+use function Amp\await;
 
 class Component implements \Wind\Base\Component
 {
@@ -59,6 +61,11 @@ class Component implements \Wind\Base\Component
 
                 try {
                     $result = call_user_func_array($callable, $args);
+
+                    if ($result instanceof Promise) {
+                        $result = await($result);
+                    }
+
                     $channel->publish(Task::class.'@'.$id, [true, $result]);
                 } catch (ExitException $e) {
                     $channel->publish(Task::class.'@'.$id, [true, null]);

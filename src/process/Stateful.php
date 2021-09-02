@@ -11,7 +11,7 @@ trait Stateful
 {
 
     /**
-     * Undocumented function
+     * Call getState on obtain
      *
      * @return void
      */

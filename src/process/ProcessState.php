@@ -3,9 +3,14 @@
 namespace Wind\Process;
 
 use Amp\Deferred;
+use DI\DependencyException;
+use DI\NotFoundException;
+use Throwable;
 use Wind\Base\Channel;
 use Wind\Utils\StrUtil;
 use Workerman\Timer;
+
+use function Amp\await;
 
 class ProcessState
 {
@@ -17,6 +22,12 @@ class ProcessState
         self::$stateCount += $num;
     }
 
+    /**
+     * Get Process State Data
+     *
+     * @param int $timeout
+     * @return array
+     */
     public static function get($timeout=5)
     {
         $stats = [];
@@ -52,7 +63,7 @@ class ProcessState
 
         $channel->publish('wind.stat.get', ['id'=>$id]);
 
-        return $defer->promise();
+        return await($defer->promise());
     }
 
 }

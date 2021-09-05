@@ -3,7 +3,6 @@
     "description": "Pure PHP Coroutine Framework.",
     "type": "library",
     "license": "Apache-2.0",
-    "version": "1.0.0-dev",
     "authors": [
         {
             "name": "Pader",

@@ -12,7 +12,7 @@ class Component implements \Wind\Base\Component
     public static function provide($app)
     {
         $app->container->set(EventDispatcherInterface::class, autowire(EventDispatcher::class));
-        $dispatcher = $app->container->get(EventDispatcherInterface::class);
+        $dispatcher = $app->container->get(EventDispatcher::class);
         $config = $app->container->get(Config::class);
 
         $listeners = $config->get('listener', []);

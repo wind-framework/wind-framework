@@ -1,15 +1,8 @@
 <?php
 
-use Amp\Promise;
 use Wind\Base\Application;
 use Wind\Base\Config;
 use Wind\Base\Exception\CallableException;
-
-if (!function_exists('str_contains')) {
-    function str_contains($str, $search) {
-        return strpos($str, $search) !== false;
-    }
-}
 
 function getApp() {
     return Application::getInstance();

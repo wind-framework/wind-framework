@@ -69,21 +69,14 @@ class Amp implements EventInterface {
                 $this->_eventSignal[$fd_key] = $event;
                 return true;
             case self::EV_TIMER:
+                $event = $this->driver->repeat($fd * 1000, fn() => call_user_func_array($func, (array)$args));
+                $this->_eventTimer[self::$_timerId] = $event;
+                return self::$_timerId++;
             case self::EV_TIMER_ONCE:
-                $param = [$func, (array)$args, $flag, self::$_timerId];
-                $event = $this->driver->repeat($fd * 1000, function () use ($param) {
-                    $timer_id = $param[3];
-                    if ($param[2] === self::EV_TIMER_ONCE) {
-                        //Loop::delay() can also do the trick.
-                        $this->driver->cancel($this->_eventTimer[$timer_id]);
-                        unset($this->_eventTimer[$timer_id]);
-                    }
-                    try {
-                        call_user_func_array($param[0], $param[1]);
-                    } catch (\Throwable $e) {
-                        Worker::log($e);
-                        exit(250);
-                    }
+                $timerId = self::$_timerId;
+                $event = $this->driver->delay($fd * 1000, function () use ($func, $args, $timerId) {
+                    unset($this->_eventTimer[$timerId]);
+                    call_user_func_array($func, (array)$args);
                 });
                 $this->_eventTimer[self::$_timerId] = $event;
                 return self::$_timerId++;

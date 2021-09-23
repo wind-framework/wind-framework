@@ -18,12 +18,12 @@ class Component implements \Wind\Base\Component
             foreach ($processes as $class) {
                 /* @var $process Process */
                 $process = $app->container->make($class);
-                $isStatable = isset(class_uses($process)[Stateful::class]);
+                $isStateful = method_exists($process, 'onGetState') && method_exists($process, 'getState');
 
                 $worker = new Worker();
                 $worker->name = $process->name ?: $class;
                 $worker->count = $process->count;
-                $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStatable) {
+                $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStateful) {
                     $app->startComponents($worker);
 
                     call([$process, 'run'])->onResolve(function($e) use ($app) {
@@ -32,13 +32,12 @@ class Component implements \Wind\Base\Component
                         }
                     });
 
-                    $isStatable && $process->onGetState();
+                    $isStateful && $process->onGetState();
                 };
 
                 $app->addWorker($worker);
 
-                //Statable count
-                $isStatable && ProcessState::addStateCount($worker->count);
+                $isStateful && ProcessState::addStateCount($worker->count);
             }
         }
     }

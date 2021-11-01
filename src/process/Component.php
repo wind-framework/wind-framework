@@ -18,19 +18,26 @@ class Component implements \Wind\Base\Component
             foreach ($processes as $class) {
                 /* @var $process Process */
                 $process = $app->container->make($class);
+
                 $isStateful = method_exists($process, 'onGetState') && method_exists($process, 'getState');
+                $isMergedProcess = $process instanceof MergedProcess;
 
                 $worker = new Worker();
                 $worker->name = $process->name ?: $class;
-                $worker->count = $process->count;
-                $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStateful) {
+                !$isMergedProcess && $worker->count = $process->count;
+
+                $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStateful, $isMergedProcess) {
                     $app->startComponents($worker);
 
-                    call([$process, 'run'])->onResolve(function($e) use ($app) {
-                        if ($e) {
-                            $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
-                        }
-                    });
+                    if ($isMergedProcess) {
+                        $process->run();
+                    } else {
+                        call([$process, 'run'])->onResolve(function($e) use ($app) {
+                            if ($e) {
+                                $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
+                            }
+                        });
+                    }
 
                     $isStateful && $process->onGetState();
                 };

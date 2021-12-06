@@ -19,29 +19,35 @@ class Component implements \Wind\Base\Component
             foreach ($processes as $class) {
                 /** @var Process $process */
                 $process = $app->container->make($class);
-                $isStatable = isset(class_uses($process)[Stateful::class]);
+
+                $isStateful = method_exists($process, 'onGetState') && method_exists($process, 'getState');
+                $isMergedProcess = $process instanceof MergedProcess;
 
                 $worker = new Worker();
                 $worker->name = $process->name ?: $class;
-                $worker->count = $process->count;
-                $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStatable) {
+                !$isMergedProcess && $worker->count = $process->count;
+
+                $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStateful, $isMergedProcess) {
                     $app->startComponents($worker);
 
-                    async(static function() use ($process, $app) {
-                        try {
-                            $process->run();
-                        } catch (\Throwable $e) {
-                            $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
-                        }
-                    });
+                    if ($isMergedProcess) {
+                        $process->run();
+                    } else {
+                        async(static function() use ($process, $app) {
+                            try {
+                                $process->run();
+                            } catch (\Throwable $e) {
+                                $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
+                            }
+                        });
+                    }
 
-                    $isStatable && $process->onGetState();
+                    $isStateful && $process->onGetState();
                 };
 
                 $app->addWorker($worker);
 
-                //Statable count
-                $isStatable && ProcessState::addStateCount($worker->count);
+                $isStateful && ProcessState::addStateCount($worker->count);
             }
         }
     }

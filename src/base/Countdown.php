@@ -34,7 +34,7 @@ class Countdown
     public function countdown()
     {
         if ($this->count > 0 && --$this->count == 0) {
-            $this->deferred->complete(null);
+            $this->deferred->complete();
         }
         return $this->count;
     }

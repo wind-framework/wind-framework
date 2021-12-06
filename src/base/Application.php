@@ -8,8 +8,6 @@ use Wind\Base\Event\SystemError;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
 
-use function Amp\defer;
-
 /**
  * 应用程序
  *
@@ -261,7 +259,7 @@ class Application
     public function startComponents(Worker $worker)
     {
         foreach ($this->components as $component) {
-        	defer([$component, 'start'], $worker);
+        	defer(static fn() => $component::start($worker));
         }
     }
 

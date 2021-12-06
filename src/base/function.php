@@ -1,8 +1,11 @@
 <?php
 
+use Revolt\EventLoop;
 use Wind\Base\Application;
 use Wind\Base\Config;
 use Wind\Base\Exception\CallableException;
+
+use function Amp\async;
 
 function getApp() {
     return Application::getInstance();
@@ -107,4 +110,12 @@ function fmtException(Throwable $e, $maxStackTrace) {
     }
 
     return $string;
+}
+
+function defer(\Closure $callback) {
+    return EventLoop::defer($callback);
+}
+
+function asyncCallable(callable $callback) {
+    return static fn(...$args) => async(static fn() => $callback(...$args));
 }

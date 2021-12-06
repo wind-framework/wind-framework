@@ -2,12 +2,10 @@
 
 namespace Wind\Task;
 
-use Amp\Deferred;
+use Amp\DeferredFuture;
 use Opis\Closure\SerializableClosure;
 use Wind\Base\Channel;
 use Wind\Utils\StrUtil;
-
-use function Amp\await;
 
 class Task
 {
@@ -25,14 +23,15 @@ class Task
 	public static function execute($callable, ...$args)
 	{
         $id = self::eventId();
-        $defer = new Deferred();
+        $defer = new DeferredFuture();
         $returnEvent = Task::class.'@'.$id;
 
         $channel = di()->get(Channel::class);
+
         $channel->on($returnEvent, static function($data) use ($defer, $returnEvent, $channel) {
             $channel->unsubscribe($returnEvent);
             list($state, $return) = $data;
-            $state ? $defer->resolve($return) : $defer->fail($return);
+            $state ? $defer->complete($return) : $defer->error($return);
         });
 
         if ($callable instanceof \Closure) {
@@ -43,7 +42,7 @@ class Task
 
         $channel->enqueue(Task::class, [$id, $callable, $args]);
 
-        return await($defer->promise());
+        return $defer->getFuture()->await();
 	}
 
 	private static function eventId()

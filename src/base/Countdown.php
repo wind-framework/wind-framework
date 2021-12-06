@@ -2,7 +2,7 @@
 
 namespace Wind\Base;
 
-use Amp\Deferred;
+use Amp\DeferredFuture;
 
 /**
  * Countdown
@@ -23,7 +23,7 @@ class Countdown
             throw new \InvalidArgumentException("Countdown \$count must great than, $count given.");
         }
         $this->count = $count;
-        $this->deferred = new Deferred();
+        $this->deferred = new DeferredFuture();
     }
 
     /**
@@ -34,7 +34,7 @@ class Countdown
     public function countdown()
     {
         if ($this->count > 0 && --$this->count == 0) {
-            $this->deferred->resolve();
+            $this->deferred->complete(null);
         }
         return $this->count;
     }
@@ -45,13 +45,13 @@ class Countdown
     }
 
     /**
-     * Countdown promise resolve when count to 0
+     * Countdown future resolve when count to 0
      *
-     * @return \Amp\Promise
+     * @return \Amp\Future
      */
-    public function promise()
+    public function getFuture()
     {
-        return $this->deferred->promise();
+        return $this->deferred->getFuture();
     }
 
 }

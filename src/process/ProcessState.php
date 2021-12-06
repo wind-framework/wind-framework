@@ -2,7 +2,7 @@
 
 namespace Wind\Process;
 
-use Amp\Deferred;
+use Amp\DeferredFuture;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Throwable;
@@ -31,7 +31,7 @@ class ProcessState
     public static function get($timeout=5)
     {
         $stats = [];
-        $defer = new Deferred();
+        $defer = new DeferredFuture();
 
         $channel = di()->get(Channel::class);
 
@@ -43,7 +43,7 @@ class ProcessState
         $timerId = Timer::add($timeout, function() use (&$countDown, $event, $defer, &$response, $channel) {
             if ($countDown > 0) {
                 $channel->unsubscribe($event);
-                $defer->resolve($response);
+                $defer->complete($response);
             }
         }, [], false);
 
@@ -57,13 +57,13 @@ class ProcessState
             if (--$countDown == 0) {
                 Timer::del($timerId);
                 $channel->unsubscribe($event);
-                $defer->resolve($stats);
+                $defer->complete($stats);
             }
         });
 
         $channel->publish('wind.stat.get', ['id'=>$id]);
 
-        return await($defer->promise());
+        return $defer->getFuture()->await();
     }
 
 }

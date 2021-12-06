@@ -2,7 +2,7 @@
 
 namespace Wind\Base;
 
-use Amp\Deferred;
+use Amp\DeferredFuture;
 
 /**
  * 多协程之间数据发送与接收通道
@@ -17,12 +17,12 @@ class Chan
 	private $queue;
 
 	/**
-	 * @var Deferred[]
+	 * @var DeferredFuture[]
 	 */
 	private $receivers = [];
 
 	/**
-	 * @var Deferred[]
+	 * @var DeferredFuture[]
 	 */
 	private $getters = [];
 
@@ -45,7 +45,7 @@ class Chan
 
 		while ($consumer = array_shift($this->receivers)) {
 			$data = $this->queue->dequeue();
-			$consumer->resolve($data);
+			$consumer->complete($data);
 			if ($this->queue->isEmpty()) {
 				break;
 			}
@@ -55,23 +55,23 @@ class Chan
 	/**
 	 * 从通道中接收数据
 	 *
-	 * @return \Amp\Promise
+	 * @return \Amp\Future
 	 */
 	public function receive()
 	{
-		$defer = new Deferred();
+		$defer = new DeferredFuture();
 
 		if (count($this->getters) > 0) {
 			$getter = array_shift($this->getters);
-			$getter->resolve($defer);
+			$getter->complete($defer);
 		} elseif (!$this->queue->isEmpty()) {
 			$data = $this->queue->dequeue();
-			$defer->resolve($data);
+			$defer->complete($data);
 		} else {
 			$this->receivers[] = $defer;
 		}
 
-		return $defer->promise();
+		return $defer->getFuture();
 	}
 
 	/**
@@ -87,19 +87,19 @@ class Chan
 	 * }
 	 * ```
 	 *
-	 * @return \Amp\Promise<Deferred>
+	 * @return \Amp\Future<Deferred>
 	 */
 	public function getReceiver()
 	{
-		$defer = new Deferred();
+		$defer = new DeferredFuture();
 
 		if (count($this->receivers) > 0) {
-			$defer->resolve(array_shift($this->receivers));
+			$defer->complete(array_shift($this->receivers));
 		} else {
 			$this->getters[] = $defer;
 		}
 
-		return $defer->promise();
+		return $defer->getFuture();
 	}
 
 	public function isEmpty()

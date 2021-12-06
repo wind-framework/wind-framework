@@ -2,9 +2,10 @@
 
 namespace Wind\Base;
 
-use Amp\Deferred;
+use Amp\DeferredFuture;
+use Amp\Future;
 use Wind\Base\Exception\RequireChannelException;
-use \Channel\Client;
+use Channel\Client;
 use Workerman\Timer;
 
 /**
@@ -24,7 +25,7 @@ class Channel
 {
 
     /**
-     * @var Deferred
+     * @var DeferredFuture
      */
     private $connectDefer;
 
@@ -41,17 +42,22 @@ class Channel
         }
     }
 
+    /**
+     * Get connect Future
+     *
+     * @return Future<Amp\T>
+     */
     protected function connect()
     {
         if ($this->connectDefer) {
-            return $this->connectDefer->promise();
+            return $this->connectDefer->getFuture();
         }
 
-        $this->connectDefer = new Deferred();
+        $this->connectDefer = new DeferredFuture();
 
         Client::$onConnect = function()  {
             $this->connected = true;
-            $this->connectDefer->resolve();
+            $this->connectDefer->complete(null);
         };
 
         Client::$onClose = function()  {
@@ -59,7 +65,7 @@ class Channel
             //已连接状态代表之前的 connectDefer 已经是 resolved 状态，此时需刷新 connectDefer 来让后面的发送等待
             //否则继续延用之前的 pending 状态的 connectDefer
             if ($this->connected) {
-                $this->connectDefer = new Deferred();
+                $this->connectDefer = new DeferredFuture();
             }
             $this->connected = false;
         };
@@ -68,14 +74,18 @@ class Channel
             Client::connect($this->config['addr'] ?? '127.0.0.1', $this->config['port'] ?? 2206);
         }, [], false);
 
-        return $this->connectDefer->promise();
+        return $this->connectDefer->getFuture();
     }
 
     public function __call($name, $arguments)
     {
-        $this->connect()->onResolve(function() use ($name, $arguments) {
-            call_user_func_array([Client::class, $name], $arguments);
-        });
+        $future = $this->connect();
+
+        if (!$future->isComplete()) {
+            $future->await();
+        }
+
+        call_user_func_array([Client::class, $name], $arguments);
     }
 
 }

@@ -17,7 +17,7 @@ class Component implements \Wind\Base\Component
 
         if ($processes) {
             foreach ($processes as $class) {
-                /* @var $process Process */
+                /** @var Process $process */
                 $process = $app->container->make($class);
                 $isStatable = isset(class_uses($process)[Stateful::class]);
 
@@ -27,8 +27,10 @@ class Component implements \Wind\Base\Component
                 $worker->onWorkerStart = static function ($worker) use ($process, $app, $isStatable) {
                     $app->startComponents($worker);
 
-                    async([$process, 'run'])->onResolve(function($e) use ($app) {
-                        if ($e) {
+                    async(static function() use ($process, $app) {
+                        try {
+                            $process->run();
+                        } catch (\Throwable $e) {
                             $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
                         }
                     });

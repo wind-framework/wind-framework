@@ -18,8 +18,8 @@ abstract class Process
     public $count = 1;
 
     /**
-     * 进程执行代码，支持协程
-     * @return void|\Generator|\Amp\Promise
+     * 进程执行业务逻辑代码
+     * @return void
      */
     public abstract function run();
 

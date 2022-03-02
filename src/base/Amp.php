@@ -126,6 +126,9 @@ class Amp implements EventInterface {
      * {@inheritdoc}
      */
     public function destroy() {
+        foreach ($this->_eventSignal as $id) {
+            EventLoop::cancel($id);
+        }
         EventLoop::getDriver()->stop();
     }
 

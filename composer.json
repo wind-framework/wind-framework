@@ -31,5 +31,10 @@
             "src/base/function.php",
             "src/task/function.php"
         ]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.2.x-dev"
+        }
     }
 }

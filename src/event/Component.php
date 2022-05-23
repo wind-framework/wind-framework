@@ -2,23 +2,21 @@
 
 namespace Wind\Event;
 
-use Wind\Base\Config;
 use Psr\EventDispatcher\EventDispatcherInterface;
-use function DI\autowire;
 
 class Component implements \Wind\Base\Component
 {
 
     public static function provide($app)
     {
-        $app->container->set(EventDispatcherInterface::class, autowire(EventDispatcher::class));
-        $dispatcher = $app->container->get(EventDispatcher::class);
-        $config = $app->container->get(Config::class);
+        $dispatcher = new EventDispatcher();
+        $app->container->set(EventDispatcher::class, $dispatcher);
+        $app->container->set(EventDispatcherInterface::class, $dispatcher);
 
-        $listeners = $config->get('listener', []);
+        $listeners = $app->config->get('listener', []);
 
         foreach ($listeners as $listenerClass) {
-            $listener = di()->make($listenerClass);
+            $listener = $app->container->make($listenerClass);
             $dispatcher->addListener($listener);
         }
     }
@@ -26,4 +24,5 @@ class Component implements \Wind\Base\Component
     public static function start($worker)
     {
     }
+
 }

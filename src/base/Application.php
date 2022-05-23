@@ -6,6 +6,7 @@ use DI\ContainerBuilder;
 use DI\Definition\Exception\InvalidDefinition;
 use Wind\Base\Event\SystemError;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Revolt\EventLoop;
 use Workerman\Worker;
 
 /**
@@ -89,6 +90,7 @@ class Application
 
         //Container
         $builder = new ContainerBuilder();
+        $builder->useAnnotations(false);
 
         if ($this->config->exists('definitions')) {
             $builder->addDefinitions($this->config->get('definitions'));
@@ -156,7 +158,12 @@ class Application
             }
         };
 
-        set_error_handler(function ($errno, $errstr, $errfile, $errline) use ($friendlyErrorType, $dispatchError) {
+        $displayError = static function ($ex) use ($dispatchError) {
+            $dispatchError($ex);
+            echo fmtException($ex, config('max_stack_trace'));
+        };
+
+        set_error_handler(static function ($errno, $errstr, $errfile, $errline) use ($friendlyErrorType, $dispatchError) {
             if (!(error_reporting() & $errno)) {
                 // This error code is not included in error_reporting, so let it fall
                 // through to the standard PHP error handler
@@ -169,12 +176,10 @@ class Application
             return false;
         }, E_ALL ^ E_NOTICE | E_STRICT);
 
-        set_exception_handler(function ($ex) use ($dispatchError) {
-            $dispatchError($ex);
-            echo fmtException($ex, config('max_stack_trace'));
-        });
+        set_exception_handler($displayError);
+        EventLoop::setErrorHandler($displayError);
 
-        register_shutdown_function(function () use ($friendlyErrorType, $dispatchError) {
+        register_shutdown_function(static function () use ($friendlyErrorType, $dispatchError) {
             $error = error_get_last();
             //过滤掉会被 set_error_handler 捕获到错误
             if ($error && !(error_reporting() & $error['type']) && ($error['type'] & (E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_STRICT))) {

@@ -78,12 +78,12 @@ class Chan
 	 * 获取一个接收者
 	 *
 	 * 适用于生产者在只有在有接收者消费数据时才写入数据的场景，
-	 * 通过 getReceiver() 获取到一个消费者后，调用 ->resolve() 向消费者发送数据。
+	 * 通过 getReceiver() 获取到一个消费者后，调用 ->complete() 向消费者发送数据。
 	 *
 	 * ```
 	 * while (true) {
-	 *     $defer = await($chan->getReceiver());
-	 *     $defer->resolve('Hello World');
+	 *     $defer = $chan->getReceiver()->await();
+	 *     $defer->complete('Hello World');
 	 * }
 	 * ```
 	 *

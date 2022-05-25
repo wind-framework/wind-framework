@@ -199,9 +199,14 @@ class Application
                 throw new \RuntimeException("Unsupported server type '{$srv['type']}'.");
             }
 
-            $worker = new $supportServers[$srv['type']]($srv['listen'], $srv['context_options'] ?? []);
+            $worker = new $supportServers[$srv['type']]($srv['listen'], $srv);
             $worker->count = $srv['worker_num'] ?? 1;
             $worker->reusePort = $srv['reuse_port'] ?? false;
+
+            if (!empty($srv['ssl'])) {
+                $worker->transport = 'ssl';
+            }
+
             $this->addWorker($worker);
         }
     }

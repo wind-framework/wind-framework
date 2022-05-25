@@ -14,8 +14,6 @@ use function Amp\call;
 class Component implements \Wind\Base\Component
 {
 
-    private static $enable = true;
-
 	/**
 	 * 启动 TaskWorker 进程
 	 *
@@ -26,7 +24,6 @@ class Component implements \Wind\Base\Component
 	    $count = $config->get('server.task_worker.worker_num', 0);
 
 	    if ($count == 0) {
-            self::$enable = false;
 	        return;
         }
 
@@ -61,6 +58,10 @@ class Component implements \Wind\Base\Component
                         if ($e === null || $e instanceof ExitException) {
                             $channel->publish(Task::class.'@'.$id, [true, $result]);
                         } else {
+                            /* @var \Exception $e */
+                            //Todo: Can not publish Throwable that include Closure.
+                            echo $e->__toString();
+                            self::flattenExceptionBacktrace($e);
                             $channel->publish(Task::class.'@'.$id, [false, $e]);
                         }
                     });
@@ -77,5 +78,40 @@ class Component implements \Wind\Base\Component
 	public static function start($worker) {
 	}
 
+    /**
+     * Make any PHP Exception serializable by flattening complex values in backtrace.
+     *
+     * @see https://gist.github.com/Thinkscape/805ba8b91cdce6bcaf7c
+     * @param \Exception $exception
+     */
+    private static function flattenExceptionBacktrace(\Exception $exception) {
+        $traceProperty = (new \ReflectionClass('Exception'))->getProperty('trace');
+        $traceProperty->setAccessible(true);
+
+        $flatten = function(&$value, $key) {
+            if ($value instanceof \Closure) {
+                $closureReflection = new \ReflectionFunction($value);
+                $value = sprintf(
+                    '(Closure at %s:%s)',
+                    $closureReflection->getFileName(),
+                    $closureReflection->getStartLine()
+                );
+            } elseif (is_object($value)) {
+                $value = sprintf('object(%s)', get_class($value));
+            } elseif (is_resource($value)) {
+                $value = sprintf('resource(%s)', get_resource_type($value));
+            }
+        };
+
+        do {
+            $trace = $traceProperty->getValue($exception);
+            foreach($trace as &$call) {
+                array_walk_recursive($call['args'], $flatten);
+            }
+            $traceProperty->setValue($exception, $trace);
+        } while($exception = $exception->getPrevious());
+
+        $traceProperty->setAccessible(false);
+    }
 
 }

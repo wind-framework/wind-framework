@@ -69,8 +69,8 @@ class Application
         self::$instance = new Application();
         self::$instance->initEnv();
         self::$instance->initErrorHandlers();
-        self::$instance->runServers();
         self::$instance->setComponents();
+        self::$instance->runServers();
     }
 
     public function __construct()
@@ -234,12 +234,6 @@ class Application
     {
         if (in_array($component, $this->components)) {
             return;
-        }
-
-        $ref = new \ReflectionClass($component);
-
-        if (!$ref->isSubclassOf(Component::class)) {
-            throw new \Exception("Component $component is not a implement of ".Component::class.".");
         }
 
         call_user_func([$component, 'provide'], $this);

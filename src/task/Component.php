@@ -105,8 +105,10 @@ class Component implements \Wind\Base\Component
 
         do {
             $trace = $traceProperty->getValue($exception);
-            foreach($trace as &$call) {
-                array_walk_recursive($call['args'], $flatten);
+            foreach ($trace as &$call) {
+                if (!empty($call['args'])) {
+                    array_walk_recursive($call['args'], $flatten);
+                }
             }
             $traceProperty->setValue($exception, $trace);
         } while($exception = $exception->getPrevious());

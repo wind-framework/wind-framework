@@ -11,7 +11,7 @@ class EventDispatcher implements EventDispatcherInterface
     protected $eventListeners = [];
 
     /**
-     * @param Listener|callable $listener
+     * @param Listener $listener
      */
     public function addListener(Listener $listener)
     {
@@ -23,7 +23,7 @@ class EventDispatcher implements EventDispatcherInterface
     }
 
     /**
-     * @param Listener $listener
+     * @param ?Listener $listener
      */
     public function removeListener(Listener $listener=null)
     {

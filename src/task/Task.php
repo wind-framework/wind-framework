@@ -3,7 +3,7 @@
 namespace Wind\Task;
 
 use Amp\DeferredFuture;
-use Opis\Closure\SerializableClosure;
+use Laravel\SerializableClosure\SerializableClosure;
 use Wind\Base\Channel;
 use Wind\Utils\StrUtil;
 

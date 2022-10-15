@@ -3,7 +3,7 @@
 namespace Wind\Task;
 
 use Amp\Future;
-use Opis\Closure\SerializableClosure;
+use Laravel\SerializableClosure\SerializableClosure;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Wind\Base\Channel;
 use Wind\Base\Config;

@@ -6,7 +6,7 @@ use Revolt\EventLoop;
 use Revolt\EventLoop\Driver;
 use Workerman\Events\EventInterface;
 
-class Amp implements EventInterface {
+class Revolt implements EventInterface {
 
     /**
      * Socket onReadable/onWritable events.
@@ -140,6 +140,7 @@ class Amp implements EventInterface {
             $this->driver->cancel($id);
         }
         $this->driver->stop();
+        pcntl_signal(SIGINT, SIG_IGN);
     }
 
     /**

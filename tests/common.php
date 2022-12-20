@@ -1,11 +1,11 @@
 <?php
 
 use Workerman\Worker;
-use Wind\Base\Amp;
+use Wind\Base\Revolt;
 
 require __DIR__.'/../vendor/autoload.php';
 
-Worker::$eventLoopClass = Amp::class;
+Worker::$eventLoopClass = Revolt::class;
 Worker::$pidFile = __DIR__.'/../runtime/test.pid';
 Worker::$logFile = __DIR__.'/../runtime/test.log';
 

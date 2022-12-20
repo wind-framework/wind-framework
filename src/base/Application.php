@@ -72,7 +72,7 @@ class Application
 
         if (self::$instance !== null) return;
 
-        Worker::$eventLoopClass = Amp::class;
+        Worker::$eventLoopClass = Revolt::class;
 
         self::$instance = new Application();
         self::$instance->initEnv();

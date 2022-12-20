@@ -12,7 +12,7 @@
     "require": {
         "php": ">=8.1.0",
         "workerman/workerman": "^4.0",
-        "amphp/amp": "v3.x-dev",
+        "amphp/amp": "^3.0",
         "vlucas/phpdotenv": "^5.2",
         "php-di/php-di": "^6.3",
         "psr/event-dispatcher": "^1.0",

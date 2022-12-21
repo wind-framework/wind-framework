@@ -7,6 +7,8 @@ use DI\Definition\Exception\InvalidDefinition;
 use Wind\Base\Event\SystemError;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Revolt\EventLoop;
+use Wind\Annotation\Collectable;
+use Wind\Annotation\Scanner;
 use Workerman\Worker;
 
 /**
@@ -77,6 +79,7 @@ class Application
         self::$instance = new Application();
         self::$instance->initEnv();
         self::$instance->initErrorHandlers();
+        self::$instance->initAnnotation();
         self::$instance->runServers();
         self::$instance->setComponents();
 
@@ -188,6 +191,23 @@ class Application
                 $dispatchError($error);
             }
         });
+    }
+
+    private function initAnnotation()
+    {
+        $map = $this->config->get('annotation_map');
+        if ($map) {
+            $scanner = new Scanner();
+            foreach ($map as $ns => $path) {
+                $scanner->addMap($ns, $path);
+            }
+            foreach ($scanner->scan() as $a) {
+                $attribute = $a['attribute']->newInstance();
+                if ($attribute instanceof Collectable) {
+                    $attribute->collect($a['reference']);
+                }
+            }
+        }
     }
 
     private function runServers()

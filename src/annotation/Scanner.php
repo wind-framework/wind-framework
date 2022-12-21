@@ -57,20 +57,16 @@ class Scanner
 
                 foreach ($ref->getAttributes() as $attr) {
                     yield [
-                        'reference' => $class,
-                        'target' => Attribute::TARGET_CLASS,
-                        'arguments' => $attr->getArguments(),
-                        'name' => $attr->getName()
+                        'reference' => $ref,
+                        'attribute' => $attr
                     ];
                 }
 
                 foreach ($ref->getMethods() as $method) {
                     foreach ($method->getAttributes() as $attr) {
                         yield [
-                            'reference' => $class.'::'.$method->getName(),
-                            'target' => Attribute::TARGET_METHOD,
-                            'arguments' => $attr->getArguments(),
-                            'name' => $attr->getName()
+                            'reference' => $method,
+                            'attribute' => $attr
                         ];
                     }
                 }

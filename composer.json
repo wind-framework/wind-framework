@@ -27,7 +27,8 @@
             "Wind\\Process\\": "src/process/",
             "Wind\\Task\\": "src/task/",
             "Wind\\Log\\": "src/log/",
-            "Wind\\Utils\\": "src/utils/"
+            "Wind\\Utils\\": "src/utils/",
+            "Wind\\Annotation\\": "src/annotation/"
         },
         "files": [
             "src/base/function.php",

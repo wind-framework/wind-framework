@@ -43,8 +43,8 @@ abstract class MergedProcess
             $process = $app->container->make($class);
 
             for ($i=0; $i<$process->count; $i++) {
-                async(fn($e) => $process->run())
-                    ->catch(fn() => $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e)));
+                async(fn() => $process->run())
+                    ->catch(fn($e) => $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e)));
             }
         }
     }

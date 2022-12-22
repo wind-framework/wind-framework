@@ -80,8 +80,8 @@ class Application
         self::$instance->initEnv();
         self::$instance->initErrorHandlers();
         self::$instance->initAnnotation();
-        self::$instance->runServers();
         self::$instance->setComponents();
+        self::$instance->runServers();
 
         Worker::runAll();
     }
@@ -267,12 +267,6 @@ class Application
     {
         if (in_array($component, $this->components)) {
             return;
-        }
-
-        $ref = new \ReflectionClass($component);
-
-        if (!$ref->isSubclassOf(Component::class)) {
-            throw new \Exception("Component $component is not a implement of ".Component::class.".");
         }
 
         call_user_func([$component, 'provide'], $this);

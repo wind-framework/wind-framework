@@ -67,6 +67,9 @@ class Component implements \Wind\Base\Component
                 } catch (ExitException $e) {
                     $channel->publish(Task::class.'@'.$id, [true, null]);
                 } catch (\Throwable $e) {
+                    //Todo: Can not publish Throwable that include Closure.
+                    echo $e->__toString();
+                    self::flattenExceptionBacktrace($e);
                     $channel->publish(Task::class.'@'.$id, [false, $e]);
                 }
             }));
@@ -85,5 +88,43 @@ class Component implements \Wind\Base\Component
             $container->set(LogFactory::class, new LogFactory());
         }
 	}
+
+    /**
+     * Make any PHP Exception serializable by flattening complex values in backtrace.
+     *
+     * @see https://gist.github.com/Thinkscape/805ba8b91cdce6bcaf7c
+     * @param \Exception $exception
+     */
+    private static function flattenExceptionBacktrace(\Exception $exception) {
+        $traceProperty = (new \ReflectionClass('Exception'))->getProperty('trace');
+        $traceProperty->setAccessible(true);
+
+        $flatten = function(&$value, $key) {
+            if ($value instanceof \Closure) {
+                $closureReflection = new \ReflectionFunction($value);
+                $value = sprintf(
+                    '(Closure at %s:%s)',
+                    $closureReflection->getFileName(),
+                    $closureReflection->getStartLine()
+                );
+            } elseif (is_object($value)) {
+                $value = sprintf('object(%s)', get_class($value));
+            } elseif (is_resource($value)) {
+                $value = sprintf('resource(%s)', get_resource_type($value));
+            }
+        };
+
+        do {
+            $trace = $traceProperty->getValue($exception);
+            foreach ($trace as &$call) {
+                if (!empty($call['args'])) {
+                    array_walk_recursive($call['args'], $flatten);
+                }
+            }
+            $traceProperty->setValue($exception, $trace);
+        } while($exception = $exception->getPrevious());
+
+        $traceProperty->setAccessible(false);
+    }
 
 }

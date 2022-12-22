@@ -10,9 +10,12 @@ interface Collectable
 
     /**
      * Collect attribute
-     *
-     * @param \ReflectionClass|\ReflectionMethod $reference
      */
-    public function collect($reference);
+    public function collectClass(\ReflectionClass $reference);
+
+    /**
+     * Collect attribute
+     */
+    public function collectMethod(\ReflectionMethod $reference);
 
 }

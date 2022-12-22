@@ -14,7 +14,14 @@ class Scanner
 
     private $map = [];
 
-    public function addMap($namespace, $path)
+    public function addMap($map)
+    {
+        foreach ($map as $ns => $path) {
+            $this->addNamespace($ns, $path);
+        }
+    }
+
+    public function addNamespace($namespace, $path)
     {
         $namespace = rtrim($namespace, '\\');
         $path = rtrim($path, '/\\');
@@ -57,7 +64,7 @@ class Scanner
 
                 foreach ($ref->getAttributes() as $attr) {
                     yield [
-                        'reference' => $ref,
+                        'ref' => $ref,
                         'attribute' => $attr
                     ];
                 }
@@ -65,7 +72,7 @@ class Scanner
                 foreach ($ref->getMethods() as $method) {
                     foreach ($method->getAttributes() as $attr) {
                         yield [
-                            'reference' => $method,
+                            'ref' => $method,
                             'attribute' => $attr
                         ];
                     }

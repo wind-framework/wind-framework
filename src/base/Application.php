@@ -195,16 +195,20 @@ class Application
 
     private function initAnnotation()
     {
-        $map = $this->config->get('annotation_map');
+        $map = $this->config->get('annotation.scan');
         if ($map) {
             $scanner = new Scanner();
-            foreach ($map as $ns => $path) {
-                $scanner->addMap($ns, $path);
-            }
+            $scanner->addMap($map);
             foreach ($scanner->scan() as $a) {
                 $attribute = $a['attribute']->newInstance();
                 if ($attribute instanceof Collectable) {
-                    $attribute->collect($a['reference']);
+                    if ($a['ref'] instanceof \ReflectionClass) {
+                        $attribute->collectClass($a['ref']);
+                    } elseif ($a['ref'] instanceof \ReflectionMethod) {
+                        $attribute->collectMethod($a['ref']);
+                    } else {
+                        throw new \RuntimeException('Unknown annotation collect type for '.get_class($attribute));
+                    }
                 }
             }
         }

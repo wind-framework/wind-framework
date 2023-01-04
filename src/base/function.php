@@ -94,8 +94,10 @@ function fmtException(Throwable $e, $maxStackTrace) {
     $string = get_class($e).': '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine()."\r\n"
         .'Stack trace:'."\r\n";
 
+    $trace = $e->getTrace();
+
     $ts = 0;
-    foreach ($e->getTrace() as $i => $row) {
+    foreach ($trace as $i => $row) {
         $string .= '#'.$i.' '.(isset($row['file']) ? $row['file'].'('.$row['line'].')' : '[internal function]').': ';
 
         if (isset($row['class'])) {
@@ -109,7 +111,13 @@ function fmtException(Throwable $e, $maxStackTrace) {
         }
     }
 
-    if ($ts < $maxStackTrace) {
+    if (($n = count($trace)) && $n > $ts) {
+        $string .= "#$ts Hide ".($n - $ts)." more trace..\r\n";
+    }
+
+    if ($previous = $e->getPrevious()) {
+        $string .= "Previous ".fmtException($previous, $maxStackTrace);
+    } elseif ($ts < $maxStackTrace) {
         $string .= "{main}\r\n";
     }
 

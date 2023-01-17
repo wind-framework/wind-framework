@@ -93,7 +93,7 @@ class Application
 
         //Container
         $builder = new ContainerBuilder();
-        $builder->useAnnotations(false);
+        $builder->useAttributes(false);
 
         if ($this->config->exists('definitions')) {
             $builder->addDefinitions($this->config->get('definitions'));

@@ -7,6 +7,7 @@ use Monolog\Logger;
 class LogFactory
 {
 
+    /** @var \Monolog\Handler\HandlerInterface[][] */
     private $handlers = [];
 
     /**
@@ -69,14 +70,7 @@ class LogFactory
             $this->handlers[$group] = $handlers;
         }
 
-        // create a log channel
-        $log = new Logger($name);
-
-        foreach ($this->handlers[$group] as $h) {
-            $log->pushHandler($h);
-        }
-
-        return $log;
+        return new Logger($name, $this->handlers[$group]);
     }
 
 }

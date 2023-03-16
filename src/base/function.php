@@ -4,6 +4,8 @@ use Amp\Promise;
 use Wind\Base\Application;
 use Wind\Base\Config;
 use Wind\Base\Exception\CallableException;
+use Wind\Base\TouchableTimeout;
+use Wind\Base\TouchableTimeoutToken;
 
 if (!function_exists('str_contains')) {
     function str_contains($str, $search) {
@@ -122,4 +124,33 @@ function fmtException(Throwable $e, $maxStackTrace) {
     }
 
     return $string;
+}
+
+/**
+ * Create a timeout can be touch to recalculate timer
+ *
+ * Example:
+ * ```
+ * $touchable = new TouchableTimeoutToken();
+ *
+ * // recalculate timer after 4 seconds, touch can call multiple times.
+ * delay(4000)->onResolve(function() use ($touchable) {
+ *     $touchable->touch();
+ * });
+ *
+ * // will timeout after 9 seconds
+ * yield touchableTimeout($promise, 5000, $touchable);
+ * ```
+ *
+ * @return Promise
+ */
+function touchableTimeout(Promise $promise, int $timeout, ?TouchableTimeoutToken $touchable=null) {
+    if (!$touchable) {
+        return Promise\timeout($promise, $timeout);
+    }
+
+    $tt = new TouchableTimeout($promise, $timeout);
+    $touchable->subscribe($tt);
+
+    return $tt->promise();
 }

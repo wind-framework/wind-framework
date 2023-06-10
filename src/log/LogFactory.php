@@ -17,9 +17,7 @@ class LogFactory
     /** Log Writer Process async mode */
     const ASYNC_LOG_WRITER = 1;
 
-    /**
-     * \Monolog\Handler\AbstractHandler
-     */
+    /** @var \Monolog\Handler\HandlerInterface[][] */
     private $handlers = [];
 
     /**

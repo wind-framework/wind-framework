@@ -28,7 +28,7 @@ $worker->onWorkerStart = function() {
             $client->useTube('test');
 
             for ($i=0; $i<100; $i++) {
-                delay(1000);
+                delay(1);
                 echo "--producer ";
                 $id = $client->put("Hello World");
                 echo $id."--\n";
@@ -50,7 +50,7 @@ $worker->onWorkerStart = function() {
 
         /*
         defer(function() use ($client) {
-            delay(2000);
+            delay(2);
             echo "Close..\n";
             $client->close();
         });
@@ -83,7 +83,7 @@ $worker->onWorkerStart = function() {
             while ($data = $client->reserve()) {
                 print_r($data);
                 $client->delete($data['id']);
-                delay(10);
+                delay(0.01);
             }
         } catch (\Exception $e) {
             echo dumpException($e);

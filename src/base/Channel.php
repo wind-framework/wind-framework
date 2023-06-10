@@ -12,14 +12,14 @@ use Workerman\Timer;
  * Class Channel
  * @package Wind\Base
  *
- * @method on($event, $callback)
- * @method subscribe($events)
- * @method unsubscribe($events)
- * @method publish($events, $data)
- * @method watch($channels, $callback, $autoReserve=true)
- * @method unwatch($channels)
- * @method enqueue($channels, $data)
- * @method reserve()
+ * @method void on($event, $callback)
+ * @method void subscribe($events)
+ * @method void unsubscribe($events)
+ * @method void publish($events, $data)
+ * @method void watch($channels, $callback, $autoReserve=true)
+ * @method void unwatch($channels)
+ * @method void enqueue($channels, $data)
+ * @method void reserve()
  */
 class Channel
 {

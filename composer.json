@@ -17,7 +17,7 @@
         "php-di/php-di": "^7.0",
         "psr/event-dispatcher": "^1.0",
         "workerman/channel": "^1.1",
-        "monolog/monolog": "^2.1",
+        "monolog/monolog": "^3.0",
         "laravel/serializable-closure": "^1.2"
     },
     "autoload": {

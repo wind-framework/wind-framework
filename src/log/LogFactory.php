@@ -3,10 +3,23 @@
 namespace Wind\Log;
 
 use Monolog\Logger;
+use RuntimeException;
+use Wind\Log\Handler\LogWriterHandler;
+use Wind\Log\Handler\TaskWorkerHandler;
+use Wind\Utils\ArrayUtil;
 
 class LogFactory
 {
 
+    /** Task Worker async mode */
+    const ASYNC_TASK_WORKER = 0;
+
+    /** Log Writer Process async mode */
+    const ASYNC_LOG_WRITER = 1;
+
+    /**
+     * \Monolog\Handler\AbstractHandler
+     */
     private $handlers = [];
 
     /**
@@ -18,7 +31,21 @@ class LogFactory
      */
     public function get($name='app', $group='default')
     {
-        if (!isset($this->handlers[$group])) {
+        $handlers = $this->getHandlers($group);
+        return new Logger($name, $handlers);
+    }
+
+    /**
+     * Get handlers for group
+     *
+     * @param string $group
+     * @return \MonoLog\Handler\HandlerInterface[]
+     */
+    public function getHandlers($group)
+    {
+        if (isset($this->handlers[$group])) {
+            $handlers = $this->handlers[$group];
+        } else {
             $setting = \config('log.'.$group);
 
             if (empty($setting)) {
@@ -38,45 +65,57 @@ class LogFactory
                 throw new \Exception("No handlers config for logger group '$group'!");
             }
 
-            $task = defined('TASK_WORKER');
             $handlers = [];
 
-            foreach ($setting['handlers'] as $h) {
-                $sync = empty($h['async']);
+            foreach ($setting['handlers'] as $i => $hc) {
+                $async = $hc['async'] ?? null;
+                $args = $hc['args'] ?? [];
 
-                if ($sync || $task) {
-                    $args = $h['args'] ?? [];
-                    $handler = di()->make($h['class'], $args);
-                    //在 Task 中同步模式要放入 TaskWrapHandler
-                    //这里的主要作用是区分 Task 本身的业务写同步日志还是异步的调用，如果是异步调用则不写
-                    $task && $handler = (new TaskWrapHandler())->setHandler($handler, $sync);
+                if ($async === null) {
+                    $handler = di()->make($hc['class'], $args);
+                } elseif ($async === self::ASYNC_TASK_WORKER || $async === true) {
+                    if (defined('TASK_WORKER')) {
+                        //已经是 Task Worker 进程中则直接调用该 Handler 同步写入，无需走 TaskWorkerHandler 中转
+                        $handler = di()->make($hc['class'], $args);
+                    } else {
+                        $handler = $this->instanceAsyncHandler(TaskWorkerHandler::class, $group, $i, $args);
+                    }
+                } elseif ($async === self::ASYNC_LOG_WRITER) {
+                    if (defined('LOG_WRITER_PROCESS')) {
+                        //LogWriter 进程本身获取的原始 Handler，无需走 LogWriterHandler 中转
+                        $handler = di()->make($hc['class'], $args);
+                    } else {
+                        $handler = $this->instanceAsyncHandler(LogWriterHandler::class, $group, $i, $args);
+                    }
                 } else {
-                    $level = $h['args']['level'] ?? Logger::DEBUG;
-                    $bubble = $h['args']['bubble'] ?? true;
-                    $handler = new AsyncHandler($level, $bubble);
-                    $handler->setGroup($group);
+                    throw new RuntimeException("Unknown async option for log group '$group'.");
                 }
 
-                $fmt = $h['formatter'] ?? $setting['formatter'] ?? false;
+                $fmt = $hc['formatter'] ?? $setting['formatter'] ?? false;
                 if ($fmt) {
                     $formatter = di()->make($fmt['class'], $fmt['args'] ?? []);
                     $handler->setFormatter($formatter);
                 }
 
-                $handlers[] = $handler;
+                $handlers[$i] = $handler;
             }
 
-            $this->handlers[$group] = $handlers;
+            return $handlers;
+        }
+    }
+
+    /**
+     * @return \Wind\Log\Handler\AsyncAbstractHandler
+     */
+    private function instanceAsyncHandler(string $handlerClass, string $group, int $index, array $args)
+    {
+        $parameters = ['group'=>$group, 'index'=>$index];
+
+        if ($args) {
+            $parameters = $parameters + ArrayUtil::intersectKeys($args, ['level', 'bubble']);
         }
 
-        // create a log channel
-        $log = new Logger($name);
-
-        foreach ($this->handlers[$group] as $h) {
-            $log->pushHandler($h);
-        }
-
-        return $log;
+        return di()->make($handlerClass, $parameters);
     }
 
 }

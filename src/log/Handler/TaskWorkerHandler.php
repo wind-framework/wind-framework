@@ -14,12 +14,11 @@ class TaskWorkerHandler extends AsyncAbstractHandler
 
     protected function write(LogRecord $record): void
     {
-        //将日志发送至 TaskWorker 处理
-        Task::execute([self::class, 'log'], $this->group, $this->index, $record);
+        Task::submit([self::class, 'log'], $this->group, $this->index, $record);
     }
 
     /**
-     * 调用原 Handler 处理日志记录
+     * Call original handler to process
      *
      * @param string $group
      * @param int $index

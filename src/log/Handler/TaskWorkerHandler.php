@@ -14,6 +14,11 @@ class TaskWorkerHandler extends AsyncAbstractHandler
 
     protected function write(LogRecord $record): void
     {
+        // reset LogFactory to prevent call TaskWorkerHandler in TaskWorker
+        if (defined('TASK_WORKER')) {
+            di()->get(LogFactory::class)->reset();
+        }
+
         Task::submit([self::class, 'log'], $this->group, $this->index, $record);
     }
 

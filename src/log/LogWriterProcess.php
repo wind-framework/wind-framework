@@ -20,6 +20,9 @@ class LogWriterProcess extends Process
         $channel = di()->get(Channel::class);
         $logFactory = di()->get(LogFactory::class);
 
+        // reset LogFactory to prevent call LogWriterHandler in LogWriterProcess
+        $logFactory->reset();
+
         $channel->watch(LogWriterHandler::QUEUE_CHANNEL, function($data) use ($logFactory) {
             [$group, $index, $record] = $data;
             $handler = $logFactory->getHandlers($group)[$index];

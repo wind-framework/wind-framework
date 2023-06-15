@@ -3,7 +3,7 @@
 namespace Wind\Log;
 
 use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
+use Monolog\Level;
 
 /**
  * 用于 MonoLog 的控制台输入 Handler
@@ -12,7 +12,7 @@ use Monolog\Logger;
 class StdoutHandler extends StreamHandler
 {
 
-    public function __construct($level = Logger::DEBUG, $bubble = true)
+    public function __construct($level = Level::Debug, $bubble = true)
     {
         parent::__construct('php://stdout', $level, $bubble);
     }

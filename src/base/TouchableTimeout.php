@@ -5,7 +5,6 @@ namespace Wind\Base;
 use Amp\Deferred;
 use Amp\Loop;
 use Amp\Promise;
-use Amp\Success;
 use Amp\TimeoutException;
 
 /**
@@ -22,6 +21,8 @@ final class TouchableTimeout
      * @var Deferred
      */
     private $deferred;
+
+    private $promise;
 
     /**
      * @var string
@@ -53,6 +54,8 @@ final class TouchableTimeout
                 $this->deferred = null;
             }
         });
+
+        $this->promise = $promise;
     }
 
     /**
@@ -92,11 +95,7 @@ final class TouchableTimeout
      */
     public function promise()
     {
-        if ($this->deferred) {
-            return $this->deferred->promise();
-        } else {
-            return new Success();
-        }
+        return $this->promise;
     }
 
 }

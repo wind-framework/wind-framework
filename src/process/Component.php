@@ -2,10 +2,9 @@
 
 namespace Wind\Process;
 
-use Wind\Base\Event\SystemError;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
-use function Amp\call;
+
+use function Amp\asyncCall;
 
 class Component implements \Wind\Base\Component
 {
@@ -18,6 +17,10 @@ class Component implements \Wind\Base\Component
             foreach ($processes as $class) {
                 /* @var $process Process */
                 $process = $app->container->make($class);
+
+                if (!$process instanceof Process) {
+                    throw new \RuntimeException("$class is not instance of Process.");
+                }
 
                 $isStateful = method_exists($process, 'onGetState') && method_exists($process, 'getState');
                 $isMergedProcess = $process instanceof MergedProcess;
@@ -32,11 +35,7 @@ class Component implements \Wind\Base\Component
                     if ($isMergedProcess) {
                         $process->run();
                     } else {
-                        call([$process, 'run'])->onResolve(function($e) use ($app) {
-                            if ($e) {
-                                $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
-                            }
-                        });
+                        asyncCall([$process, 'run']);
                     }
 
                     $isStateful && $process->onGetState();

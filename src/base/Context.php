@@ -1,11 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Wind\Base;
 
+use Revolt\EventLoop\FiberLocal;
 use Workerman\Protocols\Http\Request;
 
 /**
- * Class Context
+ * Wind Context
+ *
+ * Store data in each separately coroutine context.
+ *
  * @package Wind\Base
  *
  * @property Request $request
@@ -14,20 +20,63 @@ use Workerman\Protocols\Http\Request;
 class Context
 {
 
-    private $container = [];
+    private static FiberLocal $local;
 
-    public function __get($name)
+    /**
+     * Initialize context storage
+     * @return FiberLocal
+     */
+    public static function init(): FiberLocal
     {
-        if (isset($this->container[$name])) {
-            return $this->container[$name];
+        return self::$local ??= new FiberLocal(static fn() => new \stdClass());
+    }
+
+    /**
+     * Get value from current context
+     *
+     * @param string $name
+     * @return mixed
+     */
+    public static function get($name)
+    {
+        $object = self::$local?->get();
+
+        if ($object !== null && property_exists($object, $name)) {
+            return $object->$name;
         } else {
-            throw new \Exception("No found '$name' in Context container.");
+            throw new \Exception("Undefined name '$name' in current context.");
         }
     }
 
-    public function __set($name, $value)
+    /**
+     * Set value of name in current context
+     *
+     * @param string $name
+     * @param mixed $value
+     */
+    public static function set($name, $value)
     {
-        $this->container[$name] = $value;
+        $object = self::init()->get();
+        $object->$name = $value;
+    }
+
+    /**
+     * Unset value of name in current context
+     *
+     * @param string $name
+     */
+    public static function unset($name)
+    {
+        $object = self::init()->get();
+        unset($object->$name);
+    }
+
+    /**
+     * Clear data in current context
+     */
+    public static function clear()
+    {
+        self::$local?->clear();
     }
 
 }

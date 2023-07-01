@@ -14,14 +14,8 @@ use function Amp\async;
  *
  * Merged Process can run multiple process's code in one process.
  */
-abstract class MergedProcess
+abstract class MergedProcess extends Process
 {
-
-    /**
-     * 进程的标题，留空则为类名
-     * @var string
-     */
-    public $name;
 
     /**
      * Multiple process class names
@@ -43,8 +37,7 @@ abstract class MergedProcess
             $process = $app->container->make($class);
 
             for ($i=0; $i<$process->count; $i++) {
-                async(fn() => $process->run())
-                    ->catch(fn($e) => $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e)));
+                async(static fn() => $process->run())->catch(static fn($e) => throw $e);
             }
         }
     }

@@ -20,6 +20,10 @@ class Component implements \Wind\Base\Component
                 /** @var Process $process */
                 $process = $app->container->make($class);
 
+                if (!$process instanceof Process) {
+                    throw new \RuntimeException("$class is not instance of Process.");
+                }
+
                 $isStateful = method_exists($process, 'onGetState') && method_exists($process, 'getState');
                 $isMergedProcess = $process instanceof MergedProcess;
 
@@ -33,13 +37,7 @@ class Component implements \Wind\Base\Component
                     if ($isMergedProcess) {
                         $process->run();
                     } else {
-                        async(static function() use ($process, $app) {
-                            try {
-                                $process->run();
-                            } catch (\Throwable $e) {
-                                $app->container->get(EventDispatcherInterface::class)->dispatch(new SystemError($e));
-                            }
-                        });
+                        async(static fn() => $process->run())->catch(static fn($e) => throw $e);
                     }
 
                     $isStateful && $process->onGetState();

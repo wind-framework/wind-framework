@@ -32,10 +32,23 @@ class Context
     }
 
     /**
+     * Check name exists in current context
+     *
+     * @param string $name
+     * @return bool
+     */
+    public static function has($name)
+    {
+        $object = self::$local?->get();
+        return $object !== null && property_exists($object, $name);
+    }
+
+    /**
      * Get value from current context
      *
      * @param string $name
      * @return mixed
+     * @throws \Exception
      */
     public static function get($name)
     {
@@ -45,6 +58,24 @@ class Context
             return $object->$name;
         } else {
             throw new \Exception("Undefined name '$name' in current context.");
+        }
+    }
+
+    /**
+     * Get value from current context or return default
+     *
+     * @param string $name
+     * @param mixed $default
+     * @return mixed
+     */
+    public static function getOrDefault($name, $default=null)
+    {
+        $object = self::$local?->get();
+
+        if ($object !== null && property_exists($object, $name)) {
+            return $object->$name;
+        } else {
+            return $default;
         }
     }
 

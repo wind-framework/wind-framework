@@ -26,7 +26,7 @@ abstract class MergedProcess extends Process
 
     /**
      * 进程执行代码，支持协程
-     * @return void|\Generator|\Amp\Promise
+     * @return void
      */
     public function run()
     {

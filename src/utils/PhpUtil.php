@@ -10,7 +10,7 @@ class PhpUtil {
     /**
      * Check does class has trait inside
      *
-     * @param string $class
+     * @param class-string $class
      * @param string $trait
      * @return bool true if class or parents used trait, false otherwise.
      */
@@ -33,6 +33,26 @@ class PhpUtil {
         } while ($class = get_parent_class($class));
 
         return false;
+    }
+
+    /**
+     * Get class and all parents traits
+     *
+     * @param object|class-string $class
+     * @return array
+     */
+    public static function getTraits($class)
+    {
+        $parentClasses = class_parents($class);
+        $traits = class_uses($class);
+
+        if ($parentClasses) {
+            foreach ($parentClasses as $pClass) {
+                $traits = array_merge($traits, class_uses($pClass));
+            }
+        }
+
+        return array_unique($traits);
     }
 
 }

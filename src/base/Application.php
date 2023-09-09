@@ -64,13 +64,17 @@ class Application
 
     /**
      * Start the wind framework application
+     *
+     * @param string $mode 'server' or 'console'
      */
-    public static function start()
+    public static function start($mode='server')
     {
         if (PHP_VERSION_ID < 80100) {
             echo "Error: Wind framework require PHP version >= 8.1.0.\n";
             exit(1);
         }
+
+        define('WIND_MODE', $mode);
 
         if (self::$instance !== null) return;
 
@@ -81,9 +85,11 @@ class Application
         self::$instance->initErrorHandlers();
         self::$instance->initAnnotation();
         self::$instance->setComponents();
-        self::$instance->runServers();
 
-        Worker::runAll();
+        if (WIND_MODE == 'server') {
+            self::$instance->runServers();
+            Worker::runAll();
+        }
     }
 
     public function __construct()
@@ -261,7 +267,6 @@ class Application
      * 添加自定义组件
      *
      * @param string $component 自定义组件的入口类名
-     * @throws
      */
     public function addComponent($component)
     {

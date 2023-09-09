@@ -3,9 +3,12 @@
 namespace Wind\Task;
 
 use Amp\DeferredFuture;
+use Amp\Future;
 use Laravel\SerializableClosure\SerializableClosure;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Revolt\EventLoop;
 use Wind\Base\Channel;
+use Wind\Base\Exception\ExitException;
 
 class Task
 {
@@ -52,12 +55,23 @@ class Task
     public static function submit($callable, ...$args)
     {
         self::run($callable, $args, static function($state, $return) {
-            !$state && EventLoop::queue(static fn () => throw $return);
+            if (!$state) {
+                if (WIND_MODE == 'server') {
+                    EventLoop::queue(static fn () => throw $return);
+                } else {
+                    throw $return;
+                }
+            }
         });
     }
 
     private static function run($callable, $args, $callback)
     {
+        if (WIND_MODE == 'console') {
+            self::runInProcess($callable, $args, $callback);
+            return;
+        }
+
 		if (self::$pid === '') {
 			self::$pid = getmypid();
 		}
@@ -80,6 +94,34 @@ class Task
         }
 
         $channel->enqueue(Task::class, [$id, $callable, $args]);
+    }
+
+    private static function runInProcess($callable, $args, $callback)
+    {
+        if ($callable instanceof \Closure) {
+            $callableName = 'Closure';
+        } else {
+            $callableName = is_array($callable) ? join('::', $callable) : $callable;
+            $callable = wrapCallable($callable);
+        }
+
+        $eventDispatcher = di()->get(EventDispatcherInterface::class);
+        $eventDispatcher->dispatch(new TaskExecuteEvent(0, $callableName));
+
+        try {
+            $result = call_user_func_array($callable, $args);
+
+            if ($result instanceof Future) {
+                $result = $result->await();
+            }
+
+            $callback(true, $result);
+
+        } catch (ExitException $e) {
+            $callback(true, null);
+        } catch (\Throwable $e) {
+            $callback(false, $e);
+        }
     }
 
 }

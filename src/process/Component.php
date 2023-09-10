@@ -2,8 +2,6 @@
 
 namespace Wind\Process;
 
-use Wind\Base\Event\SystemError;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Workerman\Worker;
 
 use function Amp\async;
@@ -13,6 +11,11 @@ class Component implements \Wind\Base\Component
 
     public static function provide($app)
     {
+        //Process component only work in server mode
+        if (WIND_MODE != 'server') {
+            return;
+        }
+
         $processes = $app->config->get('process');
 
         if ($processes) {

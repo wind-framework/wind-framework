@@ -201,10 +201,21 @@ class Application
 
     private function initAnnotation()
     {
-        $map = $this->config->get('annotation.scan');
+        $map = $this->config->get('annotation.scan_ns_paths');
         if ($map) {
             $scanner = new Scanner();
-            $scanner->addMap($map);
+
+            foreach ($map as $ns => $path) {
+                //filter by wind mode
+                if (str_contains($ns, '@')) {
+                    [$ns, $mode] = explode('@', $ns);
+                    if ($mode != WIND_MODE) {
+                        return;
+                    }
+                }
+                $scanner->addNamespace($ns, $path);
+            }
+
             foreach ($scanner->scan() as $a) {
                 $attribute = $a['attribute']->newInstance();
                 if ($attribute instanceof Collectable) {

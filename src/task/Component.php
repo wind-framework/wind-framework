@@ -22,6 +22,11 @@ class Component implements \Wind\Base\Component
 	 * @param \Wind\Base\Application $app
 	 */
 	public static function provide($app) {
+        //Task only work in server mode
+        if (WIND_MODE != 'server') {
+            return;
+        }
+
 	    $config = $app->container->get(Config::class);
 	    $count = $config->get('server.task_worker.worker_num', 0);
 
@@ -82,6 +87,11 @@ class Component implements \Wind\Base\Component
 	 * @inheritDoc
 	 */
 	public static function start($worker) {
+        //Task only work in server mode
+        if (WIND_MODE != 'server') {
+            return;
+        }
+
         $container = di();
         //Reset LogFactory, this fix log AsyncHandler has been initialized before worker start.
         if ($container->has(LogFactory::class)) {

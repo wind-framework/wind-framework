@@ -69,7 +69,8 @@ class LogFactory
         $handlers = [];
 
         foreach ($setting['handlers'] as $i => $hc) {
-            $async = $hc['async'] ?? false;
+            // async logger handler only work in server mode
+            $async = WIND_MODE == 'server' ? ($hc['async'] ?? false) : false;
             $args = $hc['args'] ?? [];
 
             if ($async === false) {

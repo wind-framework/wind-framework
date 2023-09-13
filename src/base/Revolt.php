@@ -42,35 +42,42 @@ class Revolt implements EventInterface {
     /**
      * {@inheritdoc}
      */
-    public function add($fd, $flag, $func, $args = null) {
+    public function add($fd, $flag, $func, $args = []) {
         switch ($flag) {
             case self::EV_READ:
                 $fd_key = intval($fd);
-                //In Workerman the first parameter should be socket stream.
-                $event =  $this->driver->onReadable($fd, fn($id, $socket) => $func($socket));
+                //Don't return any thing in revolt callback closure, so don't use fn().
+                //else will get InvalidCallbackError: Non-null return value received from callback
+                $event =  $this->driver->onReadable($fd, function() use ($fd, $func) {
+                    $func($fd);
+                });
                 $this->_allEvents[$fd_key][$flag] = $event;
                 return true;
             case self::EV_WRITE:
                 $fd_key = intval($fd);
-                //In Workerman the first parameter should be socket stream.
-                $event = $this->driver->onWritable($fd, fn ($id, $socket) => $func($socket));
+                $event = $this->driver->onWritable($fd, function() use ($fd, $func) {
+                    $func($fd);
+                });
                 $this->_allEvents[$fd_key][$flag] = $event;
                 return true;
             case self::EV_SIGNAL:
                 $fd_key = intval($fd);
-                //In Workerman the first parameter should be signal.
-                $event = $this->driver->onSignal($fd, fn($id, $signal) => $func($signal));
+                $event = $this->driver->onSignal($fd, function() use ($fd, $func) {
+                    $func($fd);
+                });
                 $this->_eventSignal[$fd_key] = $event;
                 return true;
             case self::EV_TIMER:
-                $event = $this->driver->repeat($fd, fn() => call_user_func_array($func, (array)$args));
+                $event = $this->driver->repeat($fd, function() use ($func, $args) {
+                    $func(...$args);
+                });
                 $this->_eventTimer[self::$_timerId] = $event;
                 return self::$_timerId++;
             case self::EV_TIMER_ONCE:
                 $timerId = self::$_timerId;
                 $event = $this->driver->delay($fd, function () use ($func, $args, $timerId) {
                     unset($this->_eventTimer[$timerId]);
-                    call_user_func_array($func, (array)$args);
+                    $func(...$args);
                 });
                 $this->_eventTimer[self::$_timerId] = $event;
                 return self::$_timerId++;

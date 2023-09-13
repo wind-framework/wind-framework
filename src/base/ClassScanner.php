@@ -96,7 +96,9 @@ class ClassScanner
                 /** @psalm-suppress ArgumentTypeCoercion */
                 $ref = new \ReflectionClass($class);
 
-                if ($this->types !== self::TYPE_ALL) {
+                if ($this->types === self::TYPE_ALL) {
+                    yield $ref;
+                } else {
                     if (($this->types & self::TYPE_CLASS) !== 0 && $ref->isInstantiable()) {
                         yield $ref;
                     } elseif (($this->types & self::TYPE_ABSTRACT) !== 0 && $ref->isAbstract()) {

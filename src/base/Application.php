@@ -78,8 +78,6 @@ class Application
 
         if (self::$instance !== null) return;
 
-        Worker::$eventLoopClass = Revolt::class;
-
         self::$instance = new Application();
         self::$instance->initEnv();
         self::$instance->initErrorHandlers();
@@ -88,6 +86,7 @@ class Application
 
         if (WIND_MODE == 'server') {
             self::$instance->runServers();
+            Worker::$eventLoopClass = Revolt::class;
             Worker::runAll();
         }
     }

@@ -209,7 +209,7 @@ class Application
                 if (str_contains($ns, '@')) {
                     [$ns, $mode] = explode('@', $ns);
                     if ($mode != WIND_MODE) {
-                        return;
+                        continue;
                     }
                 }
                 $scanner->addNamespace($ns, $path);

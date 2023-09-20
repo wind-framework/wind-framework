@@ -20,8 +20,8 @@ interface SimpleTextCommand
     /**
      * Decode buffer from server, and resolve deferred future
      *
-     * @param string $buffer Buffer received from server
+     * @param string|\Throwable $buffer Buffer received from server
      */
-    public function resolve(string $buffer);
+    public function resolve(string|\Throwable $buffer);
 
 }

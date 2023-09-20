@@ -5,6 +5,8 @@ namespace Wind\Socket;
 use Amp\Socket\Socket;
 use Revolt\EventLoop;
 
+use function Amp\delay;
+
 /**
  * Wind Framework Simple Text Client
  *
@@ -48,6 +50,13 @@ abstract class SimpleTextClient {
      */
     protected int $reconnectDelay = 2;
 
+    /**
+     * Reconnect max limit, or exception will be throw
+     */
+    protected int $reconnectMaxLimit = 5;
+
+    private int $reconnectCount = 0;
+
     public function __construct()
     {
         $this->queue = new \SplQueue;
@@ -62,12 +71,19 @@ abstract class SimpleTextClient {
 
         $this->status = self::STATUS_CONNECTING;
 
+        CONNECT:
+
         try {
             $this->socket = $this->createSocket();
         } catch (\Throwable $e) {
             if ($this->autoReconnect) {
-                EventLoop::delay($this->reconnectDelay, $this->connect(...));
-                return;
+                if (++$this->reconnectCount < $this->reconnectMaxLimit) {
+                    delay($this->reconnectDelay);
+                    $this->reconnectCount += 1;
+                    goto CONNECT;
+                } else {
+                    throw $e;
+                }
             } else {
                 throw $e;
             }
@@ -76,6 +92,8 @@ abstract class SimpleTextClient {
         $this->authenticate();
 
         $this->status = self::STATUS_CONNECTED;
+
+        $this->reconnectCount = 0;
 
         //resume queue
         if ($this->queuePaused) {
@@ -126,47 +144,20 @@ abstract class SimpleTextClient {
             $this->queue->enqueue($cmd);
             $this->process();
         } else {
-            $this->send($cmd);
+            try {
+                $buffer = $this->send($cmd);
+                $cmd->resolve($buffer);
+            } catch (\Throwable $e) {
+                $cmd->resolve($e);
+            }
         }
 
         return $cmd->getFuture()->await();
     }
 
     /**
-     * Send the command
+     * Processing the queue
      */
-    private function send(SimpleTextCommand $cmd)
-    {
-        // echo "Send: ".$cmd->encode();
-
-        $this->socket->write($cmd->encode());
-        $buffer = $this->socket->read();
-
-        if ($buffer === null) {
-            echo "Redis connection is closed\n";
-            echo 'Readable: '.($this->socket->isReadable() ? 'true' : 'false')."\n";
-            echo 'Writeable: '.($this->socket->isWritable() ? 'true' : 'false')."\n";
-            echo 'IsClosed: '.($this->socket->isClosed() ? 'true' : 'false')."\n";
-
-            if ($this->autoReconnect) {
-                $this->queuePaused = true;
-                $this->queue->enqueue($cmd);
-
-                $this->socket->close();
-                $this->status = self::STATUS_CLOSED;
-
-                $this->connect();
-            } else {
-                $this->close();
-                throw new \Exception('Connection lost while send command.');
-            }
-
-            return;
-        }
-
-        $cmd->resolve($buffer);
-    }
-
     protected function process()
     {
         if ($this->processing || $this->queue->isEmpty() || $this->queuePaused) {
@@ -177,12 +168,58 @@ abstract class SimpleTextClient {
 
         EventLoop::queue(function() {
             while (!$this->queue->isEmpty()) {
-                /** @var Command $command */
+                if ($this->queuePaused) {
+                    break;
+                }
+
+                /** @var SimpleTextCommand $cmd */
                 $cmd = $this->queue->dequeue();
-                $this->send($cmd);
+
+                try {
+                    $buffer = $this->send($cmd);
+                    $cmd->resolve($buffer);
+                } catch (\Throwable $e) {
+                    if ($this->autoReconnect) {
+                        $this->queuePaused = true;
+                        $this->queue->enqueue($cmd);
+
+                        $this->socket->close();
+                        $this->status = self::STATUS_CLOSED;
+
+                        $this->connect();
+                    } else {
+                        $this->close();
+                        $cmd->resolve(new SimpleTextClientException('Connection lost while send command.', 0, $e));
+                    }
+                }
             }
             $this->processing = false;
         });
+    }
+
+    /**
+     * Send the command and get response
+     *
+     * @return string
+     */
+    private function send(SimpleTextCommand $cmd)
+    {
+        if ($this->socket->isClosed()) {
+            throw new SimpleTextClientException('Connection already closed.');
+        }
+
+        try {
+            $this->socket->write($cmd->encode());
+            $buffer = $this->socket->read();
+        } catch (\Throwable $e) {
+            throw new SimpleTextClientException($e->getMessage(), 0, $e);
+        }
+
+        if ($buffer === null) {
+            throw new SimpleTextClientException('Connection lost while send command.');
+        }
+
+        return $buffer;
     }
 
 }

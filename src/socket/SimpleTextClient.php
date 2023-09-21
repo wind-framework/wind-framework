@@ -227,9 +227,27 @@ abstract class SimpleTextClient {
             throw new SimpleTextClientException('Connection already closed.');
         }
 
+        $buffer = '';
+
         try {
             $this->socket->write($cmd->encode());
-            $buffer = $this->socket->read();
+            $limit = null;
+
+            READ:
+            $data = $this->socket->read(limit: $limit);
+
+            if ($data !== null) {
+                $buffer .= $data;
+                if ($limit === null) {
+                    $limit = $this->bytes($data);
+                    if ($limit > 0) {
+                        goto READ;
+                    }
+                }
+            } else {
+                $buffer = null;
+            }
+
         } catch (\Throwable $e) {
             throw new SimpleTextClientException($e->getMessage(), 0, $e);
         }
@@ -239,6 +257,17 @@ abstract class SimpleTextClient {
         }
 
         return $buffer;
+    }
+
+    /**
+     * The number of bytes that still need to be read, 0 means finished
+     *
+     * @param string $buffer First buffer read
+     * @return int
+     */
+    protected function bytes(string $buffer): int
+    {
+        return 0;
     }
 
 }

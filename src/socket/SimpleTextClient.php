@@ -2,7 +2,10 @@
 
 namespace Wind\Socket;
 
+use Amp\Socket\ConnectException;
+use Amp\Socket\DnsSocketConnector;
 use Amp\Socket\Socket;
+use Amp\Socket\SocketConnector;
 use Revolt\EventLoop;
 
 use function Amp\delay;
@@ -13,6 +16,8 @@ use function Amp\delay;
  * Helps create clients by simple text protocols, with queues, reconnect, and easy-to-implement transactions.
  */
 abstract class SimpleTextClient {
+
+    private static $connector;
 
     protected Socket $socket;
 
@@ -38,7 +43,7 @@ abstract class SimpleTextClient {
     /**
      * Is command queue paused
      */
-    protected bool $queuePaused = false;
+    protected bool $queuePaused = true;
 
     /**
      * Whether to reconnect when connection is lost
@@ -48,14 +53,12 @@ abstract class SimpleTextClient {
     /**
      * Reconnect delay after connection lost
      */
-    protected int $reconnectDelay = 2;
+    protected int $reconnectDelay = 3;
 
     /**
      * Reconnect max limit, or exception will be throw
      */
-    protected int $reconnectMaxLimit = 5;
-
-    private int $reconnectCount = 0;
+    protected int $reconnectMaxAttempts = 5;
 
     public function __construct()
     {
@@ -71,20 +74,22 @@ abstract class SimpleTextClient {
 
         $this->status = self::STATUS_CONNECTING;
 
+        if (self::$connector === null) {
+            self::$connector = new DnsSocketConnector();
+        }
+
+        $attempts = 0;
+
         CONNECT:
 
         try {
-            $this->socket = $this->createSocket();
-        } catch (\Throwable $e) {
-            if ($this->autoReconnect) {
-                if (++$this->reconnectCount < $this->reconnectMaxLimit) {
-                    delay($this->reconnectDelay);
-                    $this->reconnectCount += 1;
-                    goto CONNECT;
-                } else {
-                    throw $e;
-                }
+            $this->socket = $this->createSocket(self::$connector);
+        } catch (ConnectException $e) {
+            if ($this->autoReconnect && ++$attempts < $this->reconnectMaxAttempts) {
+                delay($this->reconnectDelay);
+                goto CONNECT;
             } else {
+                $this->status = self::STATUS_CLOSED;
                 throw $e;
             }
         }
@@ -92,8 +97,6 @@ abstract class SimpleTextClient {
         $this->authenticate();
 
         $this->status = self::STATUS_CONNECTED;
-
-        $this->reconnectCount = 0;
 
         //resume queue
         if ($this->queuePaused) {
@@ -117,8 +120,10 @@ abstract class SimpleTextClient {
 
     /**
      * Create connect socket
+     *
+     * @param SocketConnector $connector
      */
-    protected abstract function createSocket(): Socket;
+    protected abstract function createSocket(SocketConnector $connector): Socket;
 
     /**
      * Authenticate socket connect
@@ -140,6 +145,10 @@ abstract class SimpleTextClient {
      */
     protected function execute(SimpleTextCommand $cmd, $direct=false)
     {
+        if ($this->status == self::STATUS_CLOSED) {
+            $this->connect();
+        }
+
         if (!$direct) {
             $this->queue->enqueue($cmd);
             $this->process();
@@ -186,13 +195,23 @@ abstract class SimpleTextClient {
                         $this->socket->close();
                         $this->status = self::STATUS_CLOSED;
 
-                        $this->connect();
+                        try {
+                            $this->connect();
+                        } catch (ConnectException $e) {
+                            //make all queue error
+                            $error = new SimpleTextClientException('Failed to reconnect to server.', 0, $e);
+                            while (!$this->queue->isEmpty()) {
+                                $cmd = $this->queue->dequeue();
+                                $cmd->resolve($error);
+                            }
+                        }
                     } else {
                         $this->close();
                         $cmd->resolve(new SimpleTextClientException('Connection lost while send command.', 0, $e));
                     }
                 }
             }
+
             $this->processing = false;
         });
     }

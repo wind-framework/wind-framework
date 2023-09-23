@@ -48,7 +48,7 @@ abstract class SimpleTextClient {
     /**
      * Whether to reconnect when connection is lost
      */
-    protected bool $autoReconnect = false;
+    protected bool $autoReconnect = true;
 
     /**
      * Reconnect delay after connection lost

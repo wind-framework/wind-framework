@@ -18,41 +18,30 @@ use Workerman\Worker;
  *
  * @package Wind\Base
  *
- * @property \DI\Container $container
- * @property Config $config
  * @property Worker[] $workers
- * @property int startTimestamp
  */
 class Application
 {
+
+    public readonly \DI\Container $container;
+
+    public readonly Config $config;
+
+    /**
+     * The Framework Start Timestamp
+     */
+    public readonly int $startTimestamp;
+
+    /**
+     * @var Application
+     */
+    private static $instance;
 
     /**
      * @var Worker[]
      */
     private $workers = [];
     private $components = [];
-
-    /**
-     * @var \DI\Container
-     */
-    private $container;
-
-    /**
-     * @var Config
-     */
-    private $config;
-
-    /**
-     * The Framework Start Timestamp
-     *
-     * @var int
-     */
-    private $startTimestamp;
-
-    /**
-     * @var Application
-     */
-    private static $instance;
 
     /**
      * @return Application
@@ -292,12 +281,16 @@ class Application
     /**
      * 在 Worker 启动时初始化系统组件
      *
-     * @param Worker $worker
+     * @param ?Worker $worker
      */
-    public function startComponents(Worker $worker)
+    public function startComponents(?Worker $worker=null)
     {
         foreach ($this->components as $component) {
-        	defer(static fn() => $component::start($worker));
+            if ($worker) {
+                defer(static fn() => $component::start($worker));
+            } else {
+                $component::start($worker);
+            }
         }
     }
 

@@ -22,7 +22,7 @@ interface Component
      *
      * 每个 Worker 启动后执行一次
      *
-     * @param Worker $worker
+     * @param ?Worker $worker 在 console 模式下 $worker 为 null
      * @return void
      */
     public static function start($worker);

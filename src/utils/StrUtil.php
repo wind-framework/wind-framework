@@ -7,7 +7,7 @@ class StrUtil
 
     /**
      * Generate random string
-     * 
+     *
      * @param int $length
      * @return string
      */
@@ -21,5 +21,16 @@ class StrUtil
         }
         return $str;
     }
-    
+
+    /**
+     * 分割多行字符串为数组
+     *
+     * @param string $text
+     * @return array
+     */
+    public static function splitMultiLines($text)
+    {
+        return preg_split('/\r\n|\r|\n/m', $text);
+    }
+
 }

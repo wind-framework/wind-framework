@@ -31,7 +31,18 @@ function done($code=0) {
  * @return mixed
  */
 function env($key, $defaultValue=null) {
-    return array_key_exists($key, $_ENV) ? $_ENV[$key] : $defaultValue;
+    return di()->get(Config::class)->env($key) ?? $defaultValue;
+}
+
+/**
+ * 读取配置
+ *
+ * @param string $key
+ * @param mixed $defaultValue
+ * @return mixed
+ */
+function config($key, $defaultValue=null) {
+    return di()->get(Config::class)->get($key, $defaultValue);
 }
 
 /**
@@ -71,17 +82,6 @@ function wrapCallable($callable, $persistent=true) {
     } catch (ReflectionException $e) {
         throw new CallableException($e->getMessage());
     }
-}
-
-/**
- * 读取配置
- *
- * @param string $key
- * @param mixed $defaultValue
- * @return mixed
- */
-function config($key, $defaultValue=null) {
-    return di()->get(Config::class)->get($key, $defaultValue);
 }
 
 function fmtException(Throwable $e, $maxStackTrace) {

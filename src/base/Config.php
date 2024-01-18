@@ -12,22 +12,22 @@ class Config {
     protected $config = [];
 
     /**
-     * @var Dotenv
+     * @var \Dotenv\Repository\RepositoryInterface
      */
-    protected $dotenv;
+    private $repository;
 
     public function __construct()
     {
         $this->configDir = BASE_DIR.'/config';
 
         //Initialize .env config
-        $repository = RepositoryBuilder::createWithNoAdapters()
+        $this->repository = RepositoryBuilder::createWithNoAdapters()
             ->addAdapter(EnvConstAdapter::class)
             ->immutable()
             ->make();
 
-        $this->dotenv = Dotenv::create($repository, BASE_DIR);
-        $this->dotenv->load();
+        $dotenv = Dotenv::create($this->repository, BASE_DIR);
+        $dotenv->safeLoad();
 
         //Load global config
         $globalConfig = $this->configDir.'/config.php';
@@ -89,6 +89,28 @@ class Config {
     public function exists($config)
     {
         return is_file($this->configDir.'/'.$config.'.php');
+    }
+
+    /**
+     * Read the value of environment variable
+     *
+     * @param string $key
+     * @return mixed
+     */
+    public function env($key)
+    {
+        $value = $this->repository->get($key);
+
+        if (is_string($value)) {
+            return match(strtolower($value)) {
+                'true', '(true)' => true,
+                'false', '(false)' => false,
+                'null', '(null)' => null,
+                default => $value
+            };
+        } else {
+            return $value;
+        }
     }
 
 }

@@ -14,20 +14,22 @@ class Config {
     /**
      * @var \Dotenv\Repository\RepositoryInterface
      */
-    private $repository;
+    private static $repository;
 
     public function __construct()
     {
+        if (self::$repository === null) {
+            //Initialize .env config
+            self::$repository = RepositoryBuilder::createWithNoAdapters()
+                ->addAdapter(EnvConstAdapter::class)
+                ->immutable()
+                ->make();
+
+            $dotenv = Dotenv::create(self::$repository, BASE_DIR);
+            $dotenv->safeLoad();
+        }
+
         $this->configDir = BASE_DIR.'/config';
-
-        //Initialize .env config
-        $this->repository = RepositoryBuilder::createWithNoAdapters()
-            ->addAdapter(EnvConstAdapter::class)
-            ->immutable()
-            ->make();
-
-        $dotenv = Dotenv::create($this->repository, BASE_DIR);
-        $dotenv->safeLoad();
 
         //Load global config
         $globalConfig = $this->configDir.'/config.php';
@@ -97,9 +99,9 @@ class Config {
      * @param string $key
      * @return mixed
      */
-    public function env($key)
+    public static function env($key)
     {
-        $value = $this->repository->get($key);
+        $value = self::$repository->get($key);
 
         if (is_string($value)) {
             return match(strtolower($value)) {

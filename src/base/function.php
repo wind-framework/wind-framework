@@ -31,7 +31,7 @@ function done($code=0) {
  * @return mixed
  */
 function env($key, $defaultValue=null) {
-    return di()->get(Config::class)->env($key) ?? $defaultValue;
+    return Config::env($key) ?? $defaultValue;
 }
 
 /**

@@ -20,16 +20,7 @@ use Workerman\Protocols\Http\Request;
 class Context
 {
 
-    private static FiberLocal $local;
-
-    /**
-     * Initialize context storage
-     * @return FiberLocal
-     */
-    public static function init(): FiberLocal
-    {
-        return self::$local ??= new FiberLocal(static fn() => new \stdClass());
-    }
+    private static ?FiberLocal $local = null;
 
     /**
      * Check name exists in current context
@@ -39,8 +30,7 @@ class Context
      */
     public static function has($name)
     {
-        $object = self::$local?->get();
-        return $object !== null && property_exists($object, $name);
+        return self::$local !== null && property_exists(self::$local->get(), $name);
     }
 
     /**
@@ -87,7 +77,8 @@ class Context
      */
     public static function set($name, $value)
     {
-        $object = self::init()->get();
+	    self::$local ??= new FiberLocal(static fn() => new \stdClass());
+        $object = self::$local->get();
         $object->$name = $value;
     }
 
@@ -98,8 +89,10 @@ class Context
      */
     public static function unset($name)
     {
-        $object = self::init()->get();
-        unset($object->$name);
+		if (self::$local !== null) {
+			$object = self::$local->get();
+			unset($object->$name);
+		}
     }
 
     /**

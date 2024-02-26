@@ -23,15 +23,18 @@ function done($code=0) {
     throw new \Wind\Base\Exception\ExitException('', $code);
 }
 
-/**
- * 读取 env 配置
- *
- * @param string $key
- * @param mixed $defaultValue
- * @return mixed
- */
-function env($key, $defaultValue=null) {
-    return Config::env($key) ?? $defaultValue;
+if (!function_exists('env')) {
+    /**
+     * 读取 env 配置
+     *
+     * @param string $key
+     * @param mixed $defaultValue
+     * @return mixed
+     */
+    function env($key, $defaultValue=null)
+    {
+        return Config::env($key) ?? $defaultValue;
+    }
 }
 
 /**

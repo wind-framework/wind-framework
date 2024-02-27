@@ -74,9 +74,14 @@ class Application
         self::$instance->setComponents();
 
         if (WIND_MODE == 'server') {
-            self::$instance->runServers();
-            Worker::$eventLoopClass = Revolt::class;
-            Worker::runAll();
+			try {
+				self::$instance->runServers();
+				Worker::$eventLoopClass = Revolt::class;
+				Worker::runAll();
+			} catch (\Throwable $e) {
+				echo $e;
+				exit(1);
+			}
         }
     }
 

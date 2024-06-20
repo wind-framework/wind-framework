@@ -140,16 +140,16 @@ abstract class SimpleTextClient {
     /**
      * Execute the command and wait the result
      *
-     * @param bool $direct Directly send command without into the queue
+     * @param bool $withoutQueue Directly send command without into the queue
      * @return mixed
      */
-    protected function execute(SimpleTextCommand $cmd, $direct=false)
+    protected function execute(SimpleTextCommand $cmd, $withoutQueue=false)
     {
         if ($this->status == self::STATUS_CLOSED) {
             $this->connect();
         }
 
-        if (!$direct) {
+        if (!$withoutQueue) {
             $this->queue->enqueue($cmd);
             $this->process();
         } else {
@@ -246,6 +246,10 @@ abstract class SimpleTextClient {
                 }
             } else {
                 $buffer = null;
+            }
+
+            if ($cmd instanceof AtomicCallback) {
+                $cmd->callback();
             }
 
         } catch (\Throwable $e) {

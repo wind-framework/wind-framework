@@ -18,4 +18,14 @@ class ArrayUtil
         }
     }
 
+    public static function has($arr, \Closure $callback)
+    {
+        foreach ($arr as $row) {
+            if ($callback($row)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

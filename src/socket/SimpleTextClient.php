@@ -231,19 +231,32 @@ abstract class SimpleTextClient {
 
         try {
             $this->socket->write($cmd->encode());
+
+            $packetSize = 0;
             $limit = null;
 
             READ:
             $data = $this->socket->read(limit: $limit);
+            // echo "==========read=========\n$data\n";
 
             if ($data !== null) {
                 $buffer .= $data;
-                if ($limit === null) {
-                    $limit = $this->bytes($data);
+
+                if ($packetSize == 0) {
+                    $packetSize = $this->bytes($buffer);
+                    // echo "---------packet size: $limit--------\n";
+                }
+
+                if ($packetSize == 0) {
+                    goto READ;
+                } elseif ($packetSize > 0) {
+                    $limit = $packetSize - strlen($buffer);
+                    // echo "---------left: $limit--------\n";
                     if ($limit > 0) {
                         goto READ;
                     }
                 }
+
             } else {
                 $buffer = null;
             }
@@ -264,14 +277,14 @@ abstract class SimpleTextClient {
     }
 
     /**
-     * The number of bytes that still need to be read, 0 means finished
+     * Parse total packet length from buffer
      *
-     * @param string $buffer First buffer read
-     * @return int
+     * @param string $buffer Enough buffer to read size
+     * @return int -1 means not supported, 0 means still need more buffer, or other number means total packet length
      */
     protected function bytes(string $buffer): int
     {
-        return 0;
+        return -1;
     }
 
 }

@@ -13,7 +13,7 @@ use Wind\Base\Exception\ExitException;
 class Task
 {
 
-	private static $pid = '';
+	private static $pid = false;
 	private static $eventId = 0;
 
 	/**
@@ -72,8 +72,13 @@ class Task
             return;
         }
 
-		if (self::$pid === '') {
-			self::$pid = getmypid();
+		if (self::$pid === false) {
+            if (config('server.task_worker.worker_num') == 0) {
+                $callback(false, new \RuntimeException('Task worker is disabled because config worker_num=0.'));
+                return;
+            } else {
+			    self::$pid = getmypid();
+            }
 		}
 
 		$id = self::$pid.'-'.(++self::$eventId);

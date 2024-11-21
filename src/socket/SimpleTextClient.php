@@ -110,7 +110,7 @@ abstract class SimpleTextClient {
      */
     public function close()
     {
-        if (!$this->socket->isClosed()) {
+        if (isset($this->socket) && !$this->socket->isClosed()) {
             $this->socket->close();
         }
 
